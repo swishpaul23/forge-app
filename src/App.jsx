@@ -95,7 +95,7 @@ const TEMPLATES = [
 // ============================================================
 // MOCK DATA
 // ============================================================
-const buildWall = () => {
+const buildWall = (withMockData = false) => {
   const out = [];
   const now = new Date();
   for (let i = 41; i >= 0; i--) {
@@ -103,7 +103,8 @@ const buildWall = () => {
     const r = Math.random();
     out.push({
       date: d.toISOString().split("T")[0],
-      score: i > 2 ? (r > 0.15 ? Math.floor(r * 40 + 60) : 0) : null,
+      // Only generate fake scores if explicitly requested (never for real users)
+      score: withMockData && i > 2 ? (r > 0.15 ? Math.floor(r * 40 + 60) : 0) : null,
       day: 42 - i,
       isToday: i === 0,
     });
@@ -3323,28 +3324,10 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           <div className="srow-desc">Permanently delete your account and all data. This cannot be undone.</div>
           <button className="btn btn-g" style={{borderColor:"var(--err)60",color:"var(--err)",background:"var(--err)12"}}
             onClick={async()=>{
-              if (!window.confirm("Are you sure? This will permanently delete your account and all your data. There is no undo.")) return;
-              if (!window.confirm("Last chance — are you absolutely sure?")) return;
-              try {
-                if (!sb) throw new Error("Not connected");
-                // Get current session token
-                const { data: { session } } = await sb.auth.getSession();
-                if (!session) throw new Error("Not logged in");
-                // Call edge function to fully delete auth user + all data
-                const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${session.access_token}`,
-                    "Content-Type": "application/json",
-                  },
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.error || "Deletion failed");
-                // Sign out locally
-                await sb.auth.signOut();
-              } catch(e) { alert("Error deleting account: " + e.message); }
+              if (!window.confirm("To delete your account, email us at support@forge.app and we'll remove it within 24 hours.\n\nPress OK to be signed out now, or Cancel to stay.")) return;
+              if (sb) await sb.auth.signOut();
             }}>
-            Delete My Account
+            Request Account Deletion
           </button>
         </div>
 
