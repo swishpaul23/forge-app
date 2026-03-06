@@ -2349,23 +2349,34 @@ const groupByMonth = (wall) => {
   return Object.values(months);
 };
 
-const COMPLETED_CHALLENGES = [
-  { id:"cc1", name:"75 HARD", tag:"ENDURANCE", totalDays:75, completedDate:"2024-11-15", consistency:91, bestStreak:75 },
-  { id:"cc2", name:"30 DAY HARD", tag:"FOUNDATION", totalDays:30, completedDate:"2024-09-01", consistency:87, bestStreak:30 },
-  { id:"cc3", name:"NO AI 30 DAYS", tag:"DISCIPLINE", totalDays:30, completedDate:"2024-07-20", consistency:100, bestStreak:30 },
-];
+const COMPLETED_CHALLENGES = []; // populated from DB in future
 
 const Wall = ({ challenge, challenges }) => {
+  // If user has no challenge yet, show empty state
+  if (!challenges.main) return (
+    <div className="page">
+      <div className="a0">
+        <div className="pg-tag">Proof of Work</div>
+        <div className="pg-title">The Wall</div>
+      </div>
+      <div style={{marginTop:64,textAlign:"center",padding:"48px 0"}}>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,color:"var(--text-3)",letterSpacing:".04em",marginBottom:12}}>Nothing Here Yet</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",letterSpacing:".12em",textTransform:"uppercase"}}>Come back when you've started a challenge</div>
+      </div>
+    </div>
+  );
+
   const strong  = challenge.wall.filter(d => d.score && d.score >= 75).length;
   const missed  = challenge.wall.filter(d => d.score === 0).length;
   const grouped = groupByMonth(challenge.wall);
-  const allChallenges = [challenges.main, ...challenges.secondary];
+  const allChallenges = [challenges.main, ...challenges.secondary].filter(Boolean);
 
-  // Scoreboard totals
-  const totalDaysLogged  = challenge.wall.filter(d => d.score !== null).length;
+  // Scoreboard totals — only real data, zeros for new users
   const totalCompleted   = COMPLETED_CHALLENGES.length;
-  const bestConsistency  = Math.max(...COMPLETED_CHALLENGES.map(c => c.consistency), challenge.consistency);
-  const totalDaysForged  = COMPLETED_CHALLENGES.reduce((s,c) => s + c.totalDays, 0) + challenge.dayNum;
+  const bestConsistency  = totalCompleted > 0
+    ? Math.max(...COMPLETED_CHALLENGES.map(c => c.consistency), challenge.consistency)
+    : challenge.consistency || 0;
+  const totalDaysForged  = COMPLETED_CHALLENGES.reduce((s,c) => s + c.totalDays, 0) + (challenge.dayNum || 0);
 
   return (
     <div className="page">
@@ -3303,6 +3314,37 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           <button className="btn btn-g" style={{borderColor:"var(--err)44",color:"var(--err)"}}
             onClick={()=>sb&&sb.auth.signOut()}>
             Sign Out
+          </button>
+        </div>
+
+        {/* Delete Account */}
+        <div className="srow a5" style={{borderColor:"var(--err)50",background:"var(--err)08"}}>
+          <div className="srow-title" style={{color:"var(--err)"}}>Delete Account</div>
+          <div className="srow-desc">Permanently delete your account and all data. This cannot be undone.</div>
+          <button className="btn btn-g" style={{borderColor:"var(--err)60",color:"var(--err)",background:"var(--err)12"}}
+            onClick={async()=>{
+              if (!window.confirm("Are you sure? This will permanently delete your account and all your data. There is no undo.")) return;
+              if (!window.confirm("Last chance — are you absolutely sure?")) return;
+              try {
+                if (!sb) throw new Error("Not connected");
+                // Get current session token
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) throw new Error("Not logged in");
+                // Call edge function to fully delete auth user + all data
+                const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+                  method: "POST",
+                  headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "Content-Type": "application/json",
+                  },
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || "Deletion failed");
+                // Sign out locally
+                await sb.auth.signOut();
+              } catch(e) { alert("Error deleting account: " + e.message); }
+            }}>
+            Delete My Account
           </button>
         </div>
 
