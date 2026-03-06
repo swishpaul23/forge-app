@@ -269,7 +269,7 @@ const makeCSS = () => `
   .lvl-dot { width:5px; height:5px; border-radius:50%; }
 
   /* PAGE */
-  .page { padding:36px 32px; width:100%; max-width:900px; box-sizing:border-box; }
+  .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; }
 
   /* PAGE HEADER */
   .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
@@ -2566,7 +2566,7 @@ const AIInsight = ({ tone, mission }) => {
 // ============================================================
 // HOME
 // ============================================================
-const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge }) => {
+const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday }) => {
   const safekpis = challenge.kpis || [];
   const done  = safekpis.filter(k => kpis[k.key]).length;
   const total = safekpis.length;
@@ -2704,7 +2704,110 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
           recoveryUsed={recoveryUsed}
         />
       )}
+
+      {/* ── Fixed Log Day Bar ── */}
+      <LogDayBar
+        done={done} total={total} logged={loggedToday}
+        onLog={() => onLogDay && onLogDay(done, total)}
+      />
     </div>
+  );
+};
+
+// ============================================================
+// LOG DAY BAR
+// ============================================================
+const LogDayBar = ({ done, total, logged, onLog }) => {
+  const [showCaution, setShowCaution] = useState(false);
+  const allDone   = total > 0 && done === total;
+  const noneDone  = done === 0;
+  const partDone  = done > 0 && done < total;
+
+  const handleClick = () => {
+    if (logged || noneDone) return;
+    if (allDone) { onLog(); return; }
+    if (partDone) setShowCaution(true);
+  };
+
+  return (
+    <>
+      {/* Caution popup */}
+      {showCaution && (
+        <div className="overlay" onClick={()=>setShowCaution(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:420,padding:32}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--warn)",marginBottom:8}}>⚠ Incomplete Day</div>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:32,letterSpacing:".02em",marginBottom:12}}>Not All Tasks Done</div>
+            <div style={{fontSize:14,color:"var(--text-1)",lineHeight:1.6,marginBottom:24}}>
+              You've completed <strong style={{color:"var(--text-0)"}}>{done} of {total} tasks</strong>. Logging now will record this as a partial day on your wall.
+              <br/><br/>
+              Are you sure you want to log today as-is?
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button className="btn btn-a" style={{background:"var(--warn)",borderColor:"var(--warn)",color:"#080807"}}
+                onClick={()=>{ setShowCaution(false); onLog(); }}>
+                Log Anyway
+              </button>
+              <button className="btn btn-g" onClick={()=>setShowCaution(false)}>
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* The bar */}
+      <div style={{
+        position:"fixed", bottom:0, left:58, right:0,
+        background:"var(--bg-1)", borderTop:"1px solid var(--border-0)",
+        padding:"12px 28px", display:"flex", alignItems:"center",
+        justifyContent:"space-between", zIndex:80,
+        backdropFilter:"blur(8px)",
+      }}>
+        {/* Progress summary */}
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <div style={{
+            fontFamily:"'Bebas Neue',sans-serif", fontSize:28, lineHeight:1,
+            color: allDone ? "var(--ok)" : partDone ? "var(--accent)" : "var(--text-3)",
+          }}>
+            {done}/{total}
+          </div>
+          <div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".14em",textTransform:"uppercase",
+              color: allDone ? "var(--ok)" : partDone ? "var(--accent)" : "var(--text-2)"}}>
+              {logged ? "Day Logged ✓" : allDone ? "All tasks done" : noneDone ? "No tasks done yet" : `${total-done} remaining`}
+            </div>
+            <div style={{width:120,height:2,background:"var(--bg-3)",borderRadius:1,marginTop:4,overflow:"hidden"}}>
+              <div style={{height:"100%",borderRadius:1,transition:"width .4s ease",
+                width: total > 0 ? `${(done/total)*100}%` : "0%",
+                background: allDone ? "var(--ok)" : "var(--accent)",
+              }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Button */}
+        {logged ? (
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",
+            textTransform:"uppercase",color:"var(--ok)",display:"flex",alignItems:"center",gap:6}}>
+            ✓ Logged Today
+          </div>
+        ) : (
+          <button
+            disabled={noneDone}
+            onClick={handleClick}
+            className="btn btn-a"
+            style={{
+              padding:"10px 28px", fontSize:14, letterSpacing:".06em",
+              opacity: noneDone ? 0.35 : 1,
+              cursor: noneDone ? "not-allowed" : "pointer",
+              boxShadow: allDone ? "0 0 16px var(--accent-mid)" : "none",
+              transition:"all .2s",
+            }}>
+            {allDone ? "✓ Log Perfect Day" : "Log Day →"}
+          </button>
+        )}
+      </div>
+    </>
   );
 };
 
@@ -2724,7 +2827,7 @@ const groupByMonth = (wall) => {
 
 const COMPLETED_CHALLENGES = []; // populated from DB in future
 
-const Wall = ({ challenge, challenges }) => {
+const Wall = ({ challenge, challenges, checkins = {} }) => {
   // If user has no challenge yet, show empty state
   if (!challenges.main) return (
     <div className="page">
@@ -2739,9 +2842,31 @@ const Wall = ({ challenge, challenges }) => {
     </div>
   );
 
-  const strong  = challenge.wall.filter(d => d.score && d.score >= 75).length;
-  const missed  = challenge.wall.filter(d => d.score === 0).length;
-  const grouped = groupByMonth(challenge.wall);
+  // Build wall from real checkin data
+  const today = new Date().toISOString().split("T")[0];
+  const startDate = challenges.main?.created_at
+    ? new Date(challenges.main.created_at).toISOString().split("T")[0]
+    : today;
+
+  const wallDays = (() => {
+    const days = [];
+    const start = new Date(startDate + "T00:00:00");
+    const end   = new Date(today + "T00:00:00");
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      const dateStr = d.toISOString().split("T")[0];
+      days.push({
+        date: dateStr,
+        score: checkins[dateStr] !== undefined ? checkins[dateStr] : null,
+        isToday: dateStr === today,
+        day: Math.floor((d - start) / 86400000) + 1,
+      });
+    }
+    return days;
+  })();
+
+  const strong  = wallDays.filter(d => d.score !== null && d.score >= 75).length;
+  const missed  = wallDays.filter(d => d.score === 0).length;
+  const grouped = groupByMonth(wallDays);
   const allChallenges = [challenges.main, ...challenges.secondary].filter(Boolean);
 
   // Scoreboard totals — only real data, zeros for new users
@@ -2843,7 +2968,7 @@ const Wall = ({ challenge, challenges }) => {
                   <div
                     key={i}
                     className={`cell${d.isToday?" today":""}`}
-                    style={{ background: wallColor(d.score) }}
+                    style={{ background: wallColor(d.score), opacity: d.score === null && !d.isToday ? 0.4 : 1 }}
                   >
                     <div className="cell-date">{fmtCellDate(d.date)}</div>
                     {d.score !== null && d.score > 0 && (
@@ -2863,9 +2988,9 @@ const Wall = ({ challenge, challenges }) => {
       {/* Stats */}
       <div className="stats a3 mt24">
         {[
-          { n:strong,           l:"Strong Days (75%+)",  c:"c-ok"   },
-          { n:missed,           l:"Missed Days",         c:"c-err"  },
-          { n:challenge.streak, l:"Current Streak 🔥",  c:"c-warn" },
+          { n:strong,                l:"Strong Days (75%+)",  c:"c-ok"   },
+          { n:missed,                l:"Missed Days",         c:"c-err"  },
+          { n:Object.keys(checkins).length, l:"Days Logged",  c:"c-warn" },
         ].map((s,i) => (
           <div key={i} className="stat">
             <div className={`stat-n ${s.c}`}>{s.n}</div>
@@ -3934,78 +4059,93 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
         </div>
       )}
 
-      <div className="flex col g16 mt24">
+      {/* ── Two-column top section ── */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:24,alignItems:"start"}}>
 
-        {/* Name */}
-        <div className="srow a1">
-          <div className="srow-title">Your Name</div>
-          <div className="srow-desc">Shown in your dashboard greeting.</div>
-          <div className="flex g8" style={{maxWidth:340}}>
-            <input className="field" value={nameVal} onChange={e=>setNameVal(e.target.value)} placeholder="First name" style={{flex:1}} />
-            <button className="btn btn-a" onClick={saveName} disabled={saving}>Save</button>
+        {/* LEFT — Account */}
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+
+          {/* Name */}
+          <div className="srow a1">
+            <div className="srow-title">Your Name</div>
+            <div className="srow-desc">Shown in your dashboard greeting.</div>
+            <div className="flex g8" style={{marginTop:8}}>
+              <input className="field" value={nameVal} onChange={e=>setNameVal(e.target.value)} placeholder="First name" style={{flex:1}} />
+              <button className="btn btn-a" onClick={saveName} disabled={saving}>Save</button>
+            </div>
           </div>
+
+          {/* Email */}
+          <div className="srow a2">
+            <div className="srow-title">Change Email</div>
+            <div className="srow-desc">A confirmation link will be sent to the new address.</div>
+            <div className="flex g8" style={{marginTop:8}}>
+              <input className="field" type="email" value={emailVal} onChange={e=>setEmailVal(e.target.value)} placeholder="new@email.com" style={{flex:1}} />
+              <button className="btn btn-a" onClick={saveEmail} disabled={saving}>Send</button>
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="srow a3">
+            <div className="srow-title">Change Password</div>
+            <div className="srow-desc">Minimum 8 characters.</div>
+            <div className="flex col g8" style={{marginTop:8}}>
+              <input className="field" type="password" value={pwNew} onChange={e=>setPwNew(e.target.value)} placeholder="New password" />
+              <input className="field" type="password" value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="Confirm new password" />
+              <button className="btn btn-a" onClick={savePw} disabled={saving} style={{alignSelf:"flex-start"}}>Update Password</button>
+            </div>
+          </div>
+
         </div>
 
-        {/* Email */}
-        <div className="srow a2">
-          <div className="srow-title">Change Email</div>
-          <div className="srow-desc">A confirmation link will be sent to the new address.</div>
-          <div className="flex g8" style={{maxWidth:340}}>
-            <input className="field" type="email" value={emailVal} onChange={e=>setEmailVal(e.target.value)} placeholder="new@email.com" style={{flex:1}} />
-            <button className="btn btn-a" onClick={saveEmail} disabled={saving}>Send</button>
-          </div>
-        </div>
+        {/* RIGHT — Theme + Tone */}
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
 
-        {/* Password */}
-        <div className="srow a3">
-          <div className="srow-title">Change Password</div>
-          <div className="srow-desc">Minimum 8 characters.</div>
-          <div className="flex col g8" style={{maxWidth:340}}>
-            <input className="field" type="password" value={pwNew} onChange={e=>setPwNew(e.target.value)} placeholder="New password" />
-            <input className="field" type="password" value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} placeholder="Confirm new password" />
-            <button className="btn btn-a" onClick={savePw} disabled={saving} style={{alignSelf:"flex-start"}}>Update Password</button>
-          </div>
-        </div>
-
-        {/* Themes */}
-        <div className="srow a4">
-          <div className="srow-title">Theme</div>
-          <div className="srow-desc">Eight environments. Pick the one that matches your headspace.</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:10,marginTop:8}}>
-            {THEME_ORDER.map(id => {
-              const t = ALL_THEMES[id]; const on = theme===id;
-              return (
-                <div key={id} onClick={()=>handleTheme(id)} style={{
-                  background:on?"var(--accent-lo)":"var(--bg-2)",
-                  border:`1px solid ${on?"var(--accent)":"var(--border-1)"}`,
-                  borderRadius:10,padding:"14px 16px",cursor:"pointer",transition:"all .18s",
-                  display:"flex",alignItems:"center",gap:12,
-                }}>
-                  <div style={{width:28,height:28,borderRadius:"50%",background:t.swatch,border:on?"2px solid var(--text-0)":"2px solid transparent",flexShrink:0,transition:"all .18s",transform:on?"scale(1.12)":"scale(1)"}} />
-                  <div>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:".04em",color:on?"var(--text-0)":"var(--text-1)"}}>{t.label}</div>
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".1em",color:"var(--text-2)",marginTop:2}}>{t.desc}</div>
+          {/* Themes */}
+          <div className="srow a4">
+            <div className="srow-title">Theme</div>
+            <div className="srow-desc">Eight environments. Pick your headspace.</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
+              {THEME_ORDER.map(id => {
+                const t = ALL_THEMES[id]; const on = theme===id;
+                return (
+                  <div key={id} onClick={()=>handleTheme(id)} style={{
+                    background:on?"var(--accent-lo)":"var(--bg-2)",
+                    border:`1px solid ${on?"var(--accent)":"var(--border-1)"}`,
+                    borderRadius:10,padding:"10px 12px",cursor:"pointer",transition:"all .18s",
+                    display:"flex",alignItems:"center",gap:10,
+                  }}>
+                    <div style={{width:22,height:22,borderRadius:"50%",background:t.swatch,border:on?"2px solid var(--text-0)":"2px solid transparent",flexShrink:0,transition:"all .18s",transform:on?"scale(1.12)":"scale(1)"}} />
+                    <div style={{minWidth:0}}>
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:".04em",color:on?"var(--text-0)":"var(--text-1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.label}</div>
+                      {on && <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,letterSpacing:".08em",color:"var(--accent)"}}>✓ ACTIVE</div>}
+                    </div>
                   </div>
-                  {on && <div style={{marginLeft:"auto",color:"var(--accent)",fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>✓</div>}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* AI Tone */}
-        <div className="srow a5">
-          <div className="srow-title">AI Tone</div>
-          <div className="srow-desc">How Forge speaks in your daily debrief.</div>
-          <div className="flex g8 wrap mt8">
-            {tones.map(t=>(
-              <button key={t} className={`btn ${tone===t?"btn-a":"btn-g"}`}
-                onClick={()=>{setTone(t);onSaveProfile({tone:t});}}>
-                {t}
-              </button>
-            ))}
+          {/* AI Tone */}
+          <div className="srow a5">
+            <div className="srow-title">AI Tone</div>
+            <div className="srow-desc">How Forge speaks in your daily debrief.</div>
+            <div className="flex col g8" style={{marginTop:10}}>
+              {tones.map(t=>(
+                <button key={t} className={`btn ${tone===t?"btn-a":"btn-g"}`}
+                  style={{justifyContent:"flex-start",padding:"10px 16px"}}
+                  onClick={()=>{setTone(t);onSaveProfile({tone:t});}}>
+                  {tone===t && <span style={{marginRight:8}}>✓</span>}{t}
+                </button>
+              ))}
+            </div>
           </div>
+
         </div>
+      </div>
+
+      {/* ── Full-width bottom section ── */}
+      <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:16}}>
 
         {/* Feedback */}
         <div className="srow a5">
@@ -4017,7 +4157,6 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
             </div>
           ) : (
             <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10,maxWidth:440}}>
-              {/* Type dropdown */}
               <div>
                 <div className="field-l">Type</div>
                 <select className="field" value={fbType} onChange={e=>setFbType(e.target.value)}
@@ -4028,7 +4167,6 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                   <option value="other">💬 Other</option>
                 </select>
               </div>
-              {/* Message */}
               <div>
                 <div className="field-l">
                   {fbType==="suggestion"?"Describe your idea"
@@ -4039,11 +4177,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                 <textarea className="field" rows={4}
                   style={{width:"100%",resize:"vertical",lineHeight:1.5}}
                   value={fbText} onChange={e=>setFbText(e.target.value)}
-                  placeholder={
-                    fbType==="bug"
-                      ? "e.g. When I click X, Y happens instead of Z..."
-                      : "e.g. It would be great if..."
-                  } />
+                  placeholder={fbType==="bug"?"e.g. When I click X, Y happens instead of Z...":"e.g. It would be great if..."} />
               </div>
               <button className="btn btn-a" style={{alignSelf:"flex-start"}}
                 disabled={!fbText.trim() || fbSending}
@@ -4053,16 +4187,12 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                     if (sb) {
                       await sb.from("feedback").insert({
                         user_id: (await sb.auth.getUser()).data.user?.id,
-                        type: fbType,
-                        body: fbText.trim(),
+                        type: fbType, body: fbText.trim(),
                       });
                     }
-                    setFbDone(true);
-                    setFbText("");
-                  } catch(e) {
-                    // Even if DB fails, show success to user — don't want to block on this
-                    setFbDone(true);
-                  } finally { setFbSending(false); }
+                    setFbDone(true); setFbText("");
+                  } catch(e) { setFbDone(true); }
+                  finally { setFbSending(false); }
                 }}>
                 {fbSending ? "Sending…" : "Send Feedback →"}
               </button>
@@ -4145,6 +4275,8 @@ export default function App() {
   const [page,        setPage]        = useState("home");
   const [dw,          setDW]          = useState(false);
   const [sparkTrigger, setSparkTrigger] = useState(false);
+  const [loggedToday,  setLoggedToday]  = useState(false);
+  const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
   const [theme,       setThemeState]  = useState("forge");
   const [tone,        setTone]        = useState("Coach");
   const [modal,       setModal]       = useState(null);
@@ -4234,6 +4366,77 @@ export default function App() {
   };
 
   const hasChallenge = !!challenges.main;
+  // ── Today helpers ────────────────────────────────────────
+  const todayStr = () => new Date().toISOString().split("T")[0];
+
+  // Load checkins from Supabase on mount
+  useEffect(() => {
+    if (!sb || !user || !challenges.main) return;
+    const load = async () => {
+      try {
+        const { data } = await sb.from("checkins")
+          .select("date,score").eq("challenge_id", challenges.main.id);
+        if (data) {
+          const map = {};
+          data.forEach(c => { map[c.date] = c.score; });
+          setCheckins(map);
+          setLoggedToday(todayStr() in map);
+        }
+      } catch(e) { console.warn("load checkins:", e); }
+    };
+    load();
+  }, [user, challenges.main?.id]);
+
+  // ── Log a day ─────────────────────────────────────────────
+  const handleLogDay = async (done, total) => {
+    if (loggedToday || !challenges.main) return;
+    const score = total > 0 ? Math.round((done / total) * 100) : 0;
+    const today = todayStr();
+    const completedKeys = Object.entries(kpis)
+      .filter(([,v]) => v).map(([k]) => k);
+
+    // Optimistic update
+    setLoggedToday(true);
+    setCheckins(prev => ({ ...prev, [today]: score }));
+
+    // Fire sparks if perfect day
+    if (done === total && total > 0) {
+      setSparkTrigger(t => !t);
+      const el = document.getElementById("forge-streak-n");
+      if (el) { el.classList.remove("streak-ignite"); void el.offsetWidth; el.classList.add("streak-ignite"); }
+    }
+
+    // Save to Supabase
+    if (sb) {
+      try {
+        await sb.from("checkins").upsert({
+          challenge_id: challenges.main.id,
+          date: today,
+          score,
+          completed_keys: completedKeys,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "challenge_id,date" });
+      } catch(e) { console.warn("save checkin:", e); }
+    }
+  };
+
+  // ── Midnight auto-log ─────────────────────────────────────
+  useEffect(() => {
+    const msUntilMidnight = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      return midnight - now;
+    };
+    const t = setTimeout(() => {
+      // Auto-log if at least 1 task done and not already logged
+      const safeKpis = challenges.main?.kpis || [];
+      const done = safeKpis.filter(k => kpis[k.key]).length;
+      if (done > 0 && !loggedToday) handleLogDay(done, safeKpis.length);
+    }, msUntilMidnight());
+    return () => clearTimeout(t);
+  }, [kpis, loggedToday, challenges.main]);
+
   // Fire sparks when all tasks done
   const prevDone = useRef(false);
   useEffect(() => {
@@ -4271,9 +4474,9 @@ export default function App() {
           </button>
         </div>
       );
-      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} />;
+      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} />;
     }
-    if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} />;
+    if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} />;
