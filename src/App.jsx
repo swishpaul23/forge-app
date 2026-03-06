@@ -111,7 +111,7 @@ const buildWall = () => {
   return out;
 };
 
-const MOCK_CHALLENGES = {
+const MOCK_CHALLENGES = { // kept for reference only — not used as initial state
   main: { id:"c1", name:"75 Hard", tag:"ENDURANCE", dayNum:28, totalDays:75, streak:12, consistency:87, color:"#D4922A", kpis: TEMPLATES[0].kpis, wall: null },
   secondary: [
     { id:"c2", name:"10 Apps / 10 Days", tag:"BUILDER",    dayNum:4,  totalDays:10, streak:4,  consistency:100, color:"#5DBF8A", kpis: TEMPLATES[2].kpis },
@@ -119,7 +119,9 @@ const MOCK_CHALLENGES = {
   ],
 };
 
-const CHALLENGE = { ...MOCK_CHALLENGES.main, wall: buildWall() };
+const CHALLENGE = { ...MOCK_CHALLENGES.main, wall: buildWall() }; // legacy reference
+const EMPTY_CHALLENGES = { main: null, secondary: [] };
+const EMPTY_KPIS = {};
 const INIT_KPIS = Object.fromEntries(TEMPLATES[0].kpis.map(k => [k.key, false]));
 
 // ============================================================
@@ -187,7 +189,7 @@ const makeCSS = () => `
   .ascale{animation:scalein .35s cubic-bezier(.16,1,.3,1) both}
 
   /* LAYOUT */
-  .shell { display:flex; min-height:100vh; }
+  .shell { display:flex; min-height:100vh; background:var(--bg-0); width:100%; }
 
   /* ICON RAIL */
   .rail {
@@ -1307,14 +1309,15 @@ const makeCSS = () => `
     position:fixed; inset:0;
     background:var(--bg-0);
     display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
+    align-items:center; justify-content:flex-start;
     padding:48px 24px;
-    overflow:hidden;
+    overflow-y:auto;
     animation:fadein .5s ease both;
   }
   .ob-inner {
     max-width:680px; width:100%;
     text-align:center;
+    padding-bottom:48px;
   }
   .ob-progress {
     display:flex; gap:6px; justify-content:center;
@@ -3037,7 +3040,10 @@ const THEME_ORDER = ["forge","slate","iron","neutrals","digital","dusk","pastel"
 function applyThemeVars(themeId) {
   const t = ALL_THEMES[themeId];
   if (!t) return;
-  Object.entries(t.vars).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+  Object.entries(t.vars).forEach(([k,v]) => {
+    document.documentElement.style.setProperty(k,v);
+    document.body.style.setProperty(k,v);
+  });
 }
 
 // ============================================================
@@ -3358,8 +3364,8 @@ export default function App() {
   const [libModal,    setLibModal]    = useState(false);
   const [mission,     setMission]     = useState("I am becoming someone who shows up every day without negotiating with myself.");
   const [userName,    setUserName]    = useState("You");
-  const [kpis,        setKpis]        = useState(INIT_KPIS);
-  const [challenges,  setChallenges]  = useState(MOCK_CHALLENGES);
+  const [kpis,        setKpis]        = useState(EMPTY_KPIS);
+  const [challenges,  setChallenges]  = useState(EMPTY_CHALLENGES);
 
   // Inject CSS on mount
   useEffect(() => {
@@ -3439,12 +3445,30 @@ export default function App() {
     setStage("app");
   };
 
-  const activeChallenge = { ...challenges.main, kpis: challenges.main?.kpis || CHALLENGE.kpis, wall: challenges.main?.wall || CHALLENGE.wall };
+  const hasChallenge = !!challenges.main;
+  const activeChallenge = hasChallenge
+    ? { ...challenges.main, kpis: challenges.main.kpis || [], wall: challenges.main.wall || buildWall() }
+    : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() };
   const level = getLevel(activeChallenge.dayNum);
   const fmtDate = () => new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
 
   const renderPage = () => {
-    if (page==="home")     return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} />;
+    if (page==="home") {
+      if (!hasChallenge) return (
+        <div className="page">
+          <div className="a0" style={{marginBottom:32}}>
+            <div className="pg-tag">Welcome to Forge</div>
+            <div className="pg-title">Ready to Begin?</div>
+            <div className="pg-sub">You have no active challenge. Start one from the Library.</div>
+          </div>
+          <button className="btn btn-a" style={{padding:"14px 32px",fontSize:16,letterSpacing:".04em"}}
+            onClick={()=>setPage("library")}>
+            Browse Challenges →
+          </button>
+        </div>
+      );
+      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} />;
+    }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} />;
