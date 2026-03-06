@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // ============================================================
@@ -1311,14 +1311,34 @@ const makeCSS = () => `
     background:var(--bg-0);
     display:flex; flex-direction:column;
     align-items:center; justify-content:flex-start;
-    padding:48px 24px;
+    padding:48px 24px 120px;
     overflow-y:auto;
     animation:fadein .5s ease both;
   }
   .ob-inner {
     max-width:680px; width:100%;
     text-align:center;
-    padding-bottom:48px;
+    padding-bottom:24px;
+  }
+  /* Fixed bottom bar — always visible */
+  .ob-footer {
+    position:fixed; bottom:0; left:0; right:0;
+    background:linear-gradient(to top, var(--bg-0) 70%, transparent);
+    padding:24px 24px 32px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    z-index:10;
+  }
+  /* Scroll hint arrow */
+  .ob-scroll-hint {
+    font-family:"IBM Plex Mono",monospace;
+    font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--text-2);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    animation:bounce 1.8s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform:translateY(0); opacity:.6; }
+    50%      { transform:translateY(5px); opacity:1; }
   }
   .ob-progress {
     display:flex; gap:6px; justify-content:center;
@@ -1487,8 +1507,7 @@ const makeCSS = () => `
   .ob-cta-btn:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.4); }
   .ob-nav-row {
     display:flex; align-items:center; justify-content:center;
-    gap:16px; margin-top:20px;
-    animation:up .5s .32s ease both;
+    gap:16px;
   }
   .ob-next-btn {
     padding:14px 40px; border-radius:8px;
@@ -1676,10 +1695,16 @@ const OnboardWhy = ({ onNext, onSkip }) => (
           </div>
         ))}
       </div>
-      <div className="ob-nav-row">
-        <button className="ob-next-btn" onClick={onNext}>That's me. Keep going →</button>
-        <div className="ob-skip" onClick={onSkip}>Skip intro</div>
-      </div>
+    </div>
+  </div>
+  <div className="ob-footer">
+    <div className="ob-scroll-hint">
+      <span>scroll down</span>
+      <span>↓</span>
+    </div>
+    <div className="ob-nav-row">
+      <button className="ob-next-btn" onClick={onNext}>That's me. Keep going →</button>
+      <div className="ob-skip" onClick={onSkip}>Skip intro</div>
     </div>
   </div>
 );
@@ -1724,10 +1749,16 @@ const OnboardWho = ({ onNext, onSkip }) => (
           ))}
         </div>
       </div>
-      <div className="ob-nav-row">
-        <button className="ob-next-btn" onClick={onNext}>I'm in →</button>
-        <div className="ob-skip" onClick={onSkip}>Skip intro</div>
-      </div>
+    </div>
+  </div>
+  <div className="ob-footer">
+    <div className="ob-scroll-hint">
+      <span>scroll down</span>
+      <span>↓</span>
+    </div>
+    <div className="ob-nav-row">
+      <button className="ob-next-btn" onClick={onNext}>I'm in →</button>
+      <div className="ob-skip" onClick={onSkip}>Skip intro</div>
     </div>
   </div>
 );
@@ -1775,20 +1806,225 @@ const OnboardInduct = ({ onDone, userName }) => (
 // ============================================================
 // DEEP WORK MODE
 // ============================================================
+const TIMER_PRESETS = [
+  { label:"Pomodoro",   work:25, brk:5  },
+  { label:"Long Focus", work:50, brk:10 },
+  { label:"Sprint",     work:15, brk:3  },
+  { label:"Custom",     work:25, brk:5  },
+];
+
+const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+
 const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
   const safeKpis = challenge.kpis || [];
-  const done = safeKpis.filter(k => kpis[k.key]).length;
+  const doneTasks = safeKpis.filter(k => kpis[k.key]).length;
+
+  // Timer state
+  const [preset,      setPreset]      = useState(0);
+  const [customWork,  setCustomWork]  = useState(25);
+  const [customBrk,   setCustomBrk]  = useState(5);
+  const [phase,       setPhase]       = useState("idle");   // idle | work | break | summary
+  const [timeLeft,    setTimeLeft]    = useState(0);
+  const [cycle,       setCycle]       = useState(0);
+  const [totalFocused,setTotalFocused]= useState(0);
+  const [sessionTasks,setSessionTasks]= useState(doneTasks);
+  const [showSummary, setShowSummary] = useState(false);
+  const timerRef = useRef(null);
+
+  const workSecs = () => preset === 3 ? customWork * 60 : TIMER_PRESETS[preset].work * 60;
+  const brkSecs  = () => preset === 3 ? customBrk  * 60 : TIMER_PRESETS[preset].brk  * 60;
+
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.8);
+    } catch(e) {}
+  };
+
+  const startWork = () => {
+    setPhase("work");
+    setTimeLeft(workSecs());
+  };
+
+  const startBreak = () => {
+    setPhase("break");
+    setTimeLeft(brkSecs());
+    playBeep();
+  };
+
+  const endSession = () => {
+    clearInterval(timerRef.current);
+    setPhase("idle");
+    setShowSummary(true);
+  };
+
+  useEffect(() => {
+    if (phase !== "work" && phase !== "break") return;
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          if (phase === "work") {
+            setTotalFocused(f => f + workSecs());
+            setCycle(c => c + 1);
+            startBreak();
+          } else {
+            startWork();
+          }
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [phase, preset, customWork, customBrk]);
+
+  // Track task completions during session
+  useEffect(() => {
+    setSessionTasks(safeKpis.filter(k => kpis[k.key]).length);
+  }, [kpis]);
+
+  const progress = phase === "work"
+    ? ((workSecs() - timeLeft) / workSecs()) * 100
+    : phase === "break"
+    ? ((brkSecs() - timeLeft) / brkSecs()) * 100
+    : 0;
+
+  const circumference = 2 * Math.PI * 80;
+
+  if (showSummary) return (
+    <div className="dw">
+      <div style={{maxWidth:480,width:"100%",padding:"40px 24px",textAlign:"center"}}>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",color:"var(--accent)",textTransform:"uppercase",marginBottom:8}}>Session Complete</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:56,letterSpacing:".04em",lineHeight:1,marginBottom:32}}>Good Work.</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:32}}>
+          {[
+            { n: fmt(totalFocused + (phase==="work" ? workSecs()-timeLeft : 0)), l:"Time Focused" },
+            { n: cycle,                  l:"Cycles Done" },
+            { n: `${sessionTasks}/${safeKpis.length}`, l:"Tasks Done" },
+          ].map(s => (
+            <div key={s.l} style={{background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:10,padding:"16px 12px"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:"var(--accent)",lineHeight:1}}>{s.n}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".12em",textTransform:"uppercase",color:"var(--text-2)",marginTop:4}}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",letterSpacing:".1em",marginBottom:24}}>
+          {sessionTasks === safeKpis.length && safeKpis.length > 0
+            ? "✓ All tasks completed. That's a perfect session."
+            : sessionTasks > 0
+            ? `${safeKpis.length - sessionTasks} task${safeKpis.length-sessionTasks===1?"":"s"} remaining for today.`
+            : "No tasks ticked — but you still showed up."}
+        </div>
+        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+          <button className="btn btn-a" onClick={()=>{setShowSummary(false);setPhase("idle");setCycle(0);setTotalFocused(0);}}>
+            New Session
+          </button>
+          <button className="btn btn-g" onClick={onExit}>← Back to Dashboard</button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="dw" style={{ overflowY:"auto", paddingBottom:40 }}>
-      <div style={{ maxWidth:520, width:"100%", padding:"40px 24px 0" }}>
+    <div className="dw" style={{overflowY:"auto",paddingBottom:40}}>
+      <div style={{maxWidth:520,width:"100%",padding:"40px 24px 0"}}>
         <div className="dw-tag">deep work · day {challenge.dayNum} of {challenge.totalDays}</div>
 
-        <div className="dv-label mt24">Today's Tasks — {done}/{safeKpis.length}</div>
+        {/* Timer Ring */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginTop:32,marginBottom:32}}>
+          <div style={{position:"relative",width:196,height:196}}>
+            <svg width={196} height={196} style={{transform:"rotate(-90deg)"}}>
+              <circle cx={98} cy={98} r={80} fill="none" stroke="var(--bg-3)" strokeWidth={8} />
+              <circle cx={98} cy={98} r={80} fill="none"
+                stroke={phase==="break"?"var(--ok)":"var(--accent)"}
+                strokeWidth={8}
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={circumference * (1 - progress/100)}
+                style={{transition:"stroke-dashoffset .9s linear, stroke .3s"}}
+              />
+            </svg>
+            <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,letterSpacing:".02em",lineHeight:1,color:phase==="break"?"var(--ok)":"var(--text-0)"}}>
+                {phase==="idle" ? fmt(workSecs()) : fmt(timeLeft)}
+              </div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-2)",marginTop:4}}>
+                {phase==="idle"?"ready":phase==="work"?"focus":phase==="break"?"break":""}
+              </div>
+            </div>
+          </div>
+
+          {/* Cycle count */}
+          {cycle > 0 && (
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".16em",color:"var(--accent)",marginTop:12,textTransform:"uppercase"}}>
+              {cycle} cycle{cycle!==1?"s":""} complete · {fmt(totalFocused)} focused
+            </div>
+          )}
+        </div>
+
+        {/* Preset selector — only when idle */}
+        {phase === "idle" && (
+          <div style={{marginBottom:24}}>
+            <div className="slabel">Timer Preset</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {TIMER_PRESETS.map((p,i) => (
+                <button key={p.label} className={`btn ${preset===i?"btn-a":"btn-g"}`}
+                  style={{fontSize:12}} onClick={()=>setPreset(i)}>
+                  {p.label}{i<3?` · ${p.work}/${p.brk}`:""}
+                </button>
+              ))}
+            </div>
+            {preset === 3 && (
+              <div style={{display:"flex",gap:12,marginTop:12,alignItems:"center"}}>
+                <div>
+                  <div className="field-l">Work (min)</div>
+                  <input className="field" type="number" min={1} max={120} value={customWork}
+                    onChange={e=>setCustomWork(Number(e.target.value))} style={{width:80}} />
+                </div>
+                <div>
+                  <div className="field-l">Break (min)</div>
+                  <input className="field" type="number" min={1} max={60} value={customBrk}
+                    onChange={e=>setCustomBrk(Number(e.target.value))} style={{width:80}} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Controls */}
+        <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:32}}>
+          {phase === "idle" && (
+            <button className="btn btn-a" style={{padding:"12px 40px",fontSize:16}} onClick={startWork}>
+              Start Focus ▶
+            </button>
+          )}
+          {(phase === "work" || phase === "break") && (
+            <>
+              <button className="btn btn-g" onClick={()=>{clearInterval(timerRef.current);setPhase("idle");setTimeLeft(0);}}>
+                Pause
+              </button>
+              <button className="btn btn-a" style={{background:"var(--ok)",borderColor:"var(--ok)"}} onClick={endSession}>
+                End Session
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Tasks */}
+        <div className="dv-label mt8">Today's Tasks — {doneTasks}/{safeKpis.length}</div>
         <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} />
 
-        <div style={{ display:"flex", justifyContent:"center", marginTop:32 }}>
-          <button className="btn btn-g" onClick={onExit}>← Exit Deep Work</button>
+        <div style={{display:"flex",justifyContent:"center",marginTop:32}}>
+          <button className="btn btn-g" onClick={phase!=="idle"?endSession:onExit}>
+            {phase!=="idle"?"End Session & Exit":"← Exit Deep Work"}
+          </button>
         </div>
       </div>
     </div>
@@ -2984,11 +3220,333 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
 // ============================================================
 // NAV
 // ============================================================
+
+// ============================================================
+// PARTNERS PAGE
+// ============================================================
+const REACTIONS = ["🔥","💪","✓","⚡","👊"];
+
+const Partners = ({ user, profile, challenges, sb }) => {
+  const [partners,    setPartners]    = useState([]);
+  const [messages,    setMessages]    = useState([]);
+  const [reactions,   setReactions]   = useState([]);
+  const [inviteCode,  setInviteCode]  = useState(profile?.invite_code || "");
+  const [joinCode,    setJoinCode]    = useState("");
+  const [joinError,   setJoinError]   = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [activePartner, setActivePartner] = useState(null);
+  const [msgText,     setMsgText]     = useState("");
+  const [sending,     setSending]     = useState(false);
+  const [copied,      setCopied]      = useState(false);
+  const [tab,         setTab]         = useState("partners"); // partners | messages
+
+  const myCode = profile?.invite_code || inviteCode;
+
+  // Load partnerships
+  const loadPartners = async () => {
+    if (!sb || !user) return;
+    try {
+      const { data } = await sb.from("partnerships")
+        .select("*, profiles!partnerships_partner_id_fkey(id,full_name,invite_code)")
+        .eq("user_id", user.id).eq("status","active");
+      const { data: asPartner } = await sb.from("partnerships")
+        .select("*, profiles!partnerships_user_id_fkey(id,full_name,invite_code)")
+        .eq("partner_id", user.id).eq("status","active");
+      const all = [
+        ...(data||[]).map(p => ({ ...p, partnerProfile: p.profiles })),
+        ...(asPartner||[]).map(p => ({ ...p, partnerProfile: p.profiles })),
+      ];
+      setPartners(all);
+    } catch(e) { console.warn("load partners:", e); }
+  };
+
+  // Load messages
+  const loadMessages = async (partnerId) => {
+    if (!sb || !user) return;
+    try {
+      const { data } = await sb.from("partner_messages")
+        .select("*, from:from_user_id(full_name)")
+        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
+        .order("created_at", { ascending: true })
+        .limit(50);
+      setMessages(data || []);
+      // Mark as read
+      await sb.from("partner_messages")
+        .update({ read: true })
+        .eq("to_user_id", user.id)
+        .eq("from_user_id", partnerId);
+    } catch(e) { console.warn("load messages:", e); }
+  };
+
+  // Load reactions
+  const loadReactions = async (partnerId) => {
+    if (!sb || !user) return;
+    try {
+      const { data } = await sb.from("partner_reactions")
+        .select("*")
+        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setReactions(data || []);
+    } catch(e) { console.warn("load reactions:", e); }
+  };
+
+  useEffect(() => { loadPartners(); }, [user, profile]);
+
+  useEffect(() => {
+    if (!activePartner) return;
+    loadMessages(activePartner.partnerProfile.id);
+    loadReactions(activePartner.partnerProfile.id);
+  }, [activePartner]);
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(myCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const joinPartner = async () => {
+    setJoinError(""); setJoinLoading(true);
+    try {
+      if (!sb) throw new Error("Not connected");
+      if (!joinCode.trim()) throw new Error("Enter an invite code.");
+      if (joinCode.trim().toUpperCase() === myCode) throw new Error("That's your own code.");
+      // Find profile with this code
+      const { data: targetProfile, error } = await sb
+        .from("profiles").select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).single();
+      if (error || !targetProfile) throw new Error("No user found with that code.");
+      // Check not already partners
+      const { data: existing } = await sb.from("partnerships")
+        .select("id,status")
+        .or(`and(user_id.eq.${user.id},partner_id.eq.${targetProfile.id}),and(user_id.eq.${targetProfile.id},partner_id.eq.${user.id})`)
+        .single();
+      if (existing) throw new Error(existing.status === "active" ? "Already partners." : "Request already sent.");
+      // Create partnership
+      await sb.from("partnerships").insert({
+        user_id: user.id,
+        partner_id: targetProfile.id,
+        invite_code: `${myCode}-${joinCode.trim().toUpperCase()}`,
+        status: "active", // auto-accept for simplicity
+      });
+      setJoinCode("");
+      await loadPartners();
+    } catch(e) { setJoinError(e.message); }
+    finally { setJoinLoading(false); }
+  };
+
+  const sendMessage = async () => {
+    if (!msgText.trim() || !activePartner || !sb) return;
+    setSending(true);
+    try {
+      await sb.from("partner_messages").insert({
+        from_user_id: user.id,
+        to_user_id: activePartner.partnerProfile.id,
+        body: msgText.trim(),
+      });
+      setMsgText("");
+      await loadMessages(activePartner.partnerProfile.id);
+    } catch(e) { console.warn("send message:", e); }
+    finally { setSending(false); }
+  };
+
+  const sendReaction = async (emoji) => {
+    if (!activePartner || !sb) return;
+    try {
+      await sb.from("partner_reactions").insert({
+        from_user_id: user.id,
+        to_user_id: activePartner.partnerProfile.id,
+        emoji,
+      });
+      await loadReactions(activePartner.partnerProfile.id);
+    } catch(e) { console.warn("send reaction:", e); }
+  };
+
+  const removePartner = async (partnershipId) => {
+    if (!window.confirm("Remove this accountability partner?")) return;
+    await sb.from("partnerships").delete().eq("id", partnershipId);
+    setActivePartner(null);
+    await loadPartners();
+  };
+
+  // ── Render partner detail view ──
+  if (activePartner) {
+    const p = activePartner.partnerProfile;
+    return (
+      <div className="page">
+        <div className="a0" style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
+          <button className="btn btn-g" style={{padding:"6px 12px"}} onClick={()=>setActivePartner(null)}>← Back</button>
+          <div>
+            <div className="pg-tag">Accountability Partner</div>
+            <div className="pg-title">{p.full_name || "Partner"}</div>
+          </div>
+        </div>
+
+        {/* Reactions */}
+        <div className="a1" style={{marginBottom:20}}>
+          <div className="slabel">Send a Reaction</div>
+          <div style={{display:"flex",gap:10}}>
+            {REACTIONS.map(e => (
+              <button key={e} className="btn btn-g"
+                style={{fontSize:20,padding:"8px 14px",borderRadius:10}}
+                onClick={()=>sendReaction(e)}>
+                {e}
+              </button>
+            ))}
+          </div>
+          {reactions.length > 0 && (
+            <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
+              {reactions.slice(0,8).map(r => (
+                <div key={r.id} style={{
+                  background:"var(--bg-2)",border:"1px solid var(--border-1)",
+                  borderRadius:8,padding:"4px 10px",
+                  fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",
+                  display:"flex",gap:6,alignItems:"center",
+                }}>
+                  <span style={{fontSize:14}}>{r.emoji}</span>
+                  <span>{r.from_user_id === user.id ? "You" : p.full_name?.split(" ")[0]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Messages */}
+        <div className="a2">
+          <div className="slabel">Messages</div>
+          <div style={{
+            background:"var(--bg-1)",border:"1px solid var(--border-0)",
+            borderRadius:10,padding:16,maxHeight:320,overflowY:"auto",
+            display:"flex",flexDirection:"column",gap:8,marginBottom:12,
+          }}>
+            {messages.length === 0 && (
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",textAlign:"center",padding:"24px 0"}}>
+                No messages yet. Say something.
+              </div>
+            )}
+            {messages.map(m => {
+              const isMe = m.from_user_id === user.id;
+              return (
+                <div key={m.id} style={{
+                  alignSelf:isMe?"flex-end":"flex-start",
+                  maxWidth:"75%",
+                  background:isMe?"var(--accent-lo)":"var(--bg-2)",
+                  border:`1px solid ${isMe?"var(--border-accent)":"var(--border-1)"}`,
+                  borderRadius:isMe?"12px 12px 3px 12px":"12px 12px 12px 3px",
+                  padding:"8px 14px",
+                }}>
+                  <div style={{fontSize:14,color:"var(--text-0)",lineHeight:1.4}}>{m.body}</div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",marginTop:4}}>
+                    {isMe?"You":p.full_name?.split(" ")[0]} · {new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <input className="field" style={{flex:1}}
+              value={msgText} onChange={e=>setMsgText(e.target.value)}
+              placeholder="Send a message…"
+              onKeyDown={e=>e.key==="Enter"&&sendMessage()} />
+            <button className="btn btn-a" onClick={sendMessage} disabled={sending||!msgText.trim()}>
+              Send
+            </button>
+          </div>
+        </div>
+
+        <div style={{marginTop:24}}>
+          <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)"}}
+            onClick={()=>removePartner(activePartner.id)}>
+            Remove Partner
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main partners list ──
+  return (
+    <div className="page">
+      <div className="a0">
+        <div className="pg-tag">Accountability</div>
+        <div className="pg-title">Partners</div>
+        <div className="pg-sub">Share your grind. Stay accountable.</div>
+      </div>
+
+      {/* Your invite code */}
+      <div className="srow a1 mt24">
+        <div className="srow-title">Your Invite Code</div>
+        <div className="srow-desc">Share this with someone to become accountability partners.</div>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginTop:8}}>
+          <div style={{
+            fontFamily:"'Bebas Neue',sans-serif",fontSize:32,letterSpacing:".2em",
+            color:"var(--accent)",background:"var(--bg-2)",
+            border:"1px solid var(--border-accent)",
+            borderRadius:8,padding:"10px 20px",
+          }}>
+            {myCode || "Loading…"}
+          </div>
+          <button className="btn btn-g" onClick={copyCode}>
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        </div>
+      </div>
+
+      {/* Join a partner */}
+      <div className="srow a2 mt16">
+        <div className="srow-title">Add a Partner</div>
+        <div className="srow-desc">Enter their invite code to connect.</div>
+        {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:11,margin:"8px 0"}}>{joinError}</div>}
+        <div style={{display:"flex",gap:8,marginTop:8,maxWidth:340}}>
+          <input className="field" style={{flex:1,textTransform:"uppercase",letterSpacing:".1em"}}
+            value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
+            placeholder="XXXXXXXX" maxLength={8} />
+          <button className="btn btn-a" onClick={joinPartner} disabled={joinLoading}>
+            {joinLoading ? "…" : "Connect"}
+          </button>
+        </div>
+      </div>
+
+      {/* Partner list */}
+      <div className="a3 mt24">
+        <div className="slabel">Your Partners — {partners.length}</div>
+        {partners.length === 0 ? (
+          <div style={{
+            background:"var(--bg-1)",border:"1px dashed var(--border-1)",
+            borderRadius:10,padding:"32px",textAlign:"center",
+          }}>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:"var(--text-3)",letterSpacing:".04em"}}>No Partners Yet</div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:6,letterSpacing:".1em"}}>Share your code or enter a friend's to get started</div>
+          </div>
+        ) : (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {partners.map(p => (
+              <div key={p.id} className="card"
+                style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",padding:"16px 20px"}}
+                onClick={()=>setActivePartner(p)}>
+                <div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em"}}>
+                    {p.partnerProfile?.full_name || "Partner"}
+                  </div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",letterSpacing:".1em",marginTop:2}}>
+                    ACTIVE PARTNER · TAP TO VIEW
+                  </div>
+                </div>
+                <div style={{color:"var(--accent)",fontSize:18}}>→</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const NAV = [
-  { id:"home",     icon:"⬡", tip:"Dashboard" },
-  { id:"wall",     icon:"▦", tip:"The Wall"   },
-  { id:"library",  icon:"◈", tip:"Library"    },
-  { id:"settings", icon:"◎", tip:"Settings"   },
+  { id:"home",     icon:"⬡", tip:"Dashboard"  },
+  { id:"wall",     icon:"▦", tip:"The Wall"    },
+  { id:"library",  icon:"◈", tip:"Library"     },
+  { id:"partners", icon:"⊕", tip:"Partners"    },
+  { id:"settings", icon:"◎", tip:"Settings"    },
 ];
 
 // ============================================================
@@ -3174,12 +3732,17 @@ const AuthScreen = ({ onAuthed }) => {
 // ============================================================
 const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile }) => {
   const tones = ["Stoic","Coach","Drill Sergeant"];
-  const [nameVal,   setNameVal]   = useState(userName);
-  const [emailVal,  setEmailVal]  = useState("");
-  const [pwNew,     setPwNew]     = useState("");
-  const [pwConfirm, setPwConfirm] = useState("");
-  const [saving,    setSaving]    = useState(false);
-  const [msg,       setMsg]       = useState(null);
+  const [nameVal,     setNameVal]     = useState(userName);
+  const [emailVal,    setEmailVal]    = useState("");
+  const [pwNew,       setPwNew]       = useState("");
+  const [pwConfirm,   setPwConfirm]   = useState("");
+  const [saving,      setSaving]      = useState(false);
+  const [msg,         setMsg]         = useState(null);
+  // Feedback
+  const [fbType,      setFbType]      = useState("suggestion");
+  const [fbText,      setFbText]      = useState("");
+  const [fbSending,   setFbSending]   = useState(false);
+  const [fbDone,      setFbDone]      = useState(false);
 
   const flash = (type,text) => { setMsg({type,text}); setTimeout(()=>setMsg(null),4000); };
 
@@ -3306,6 +3869,69 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Feedback */}
+        <div className="srow a5">
+          <div className="srow-title">Feedback</div>
+          <div className="srow-desc">Suggest an improvement or report a bug. We read everything.</div>
+          {fbDone ? (
+            <div style={{marginTop:12,padding:"12px 16px",background:"var(--ok)15",border:"1px solid var(--ok)44",borderRadius:8}}>
+              <div style={{color:"var(--ok)",fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>✓ Sent. Thank you.</div>
+            </div>
+          ) : (
+            <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10,maxWidth:440}}>
+              {/* Type dropdown */}
+              <div>
+                <div className="field-l">Type</div>
+                <select className="field" value={fbType} onChange={e=>setFbType(e.target.value)}
+                  style={{width:"100%",cursor:"pointer"}}>
+                  <option value="suggestion">💡 Suggestion — I have an idea</option>
+                  <option value="bug">🐛 Bug Report — something is broken</option>
+                  <option value="ux">✏️ UX Feedback — something feels off</option>
+                  <option value="other">💬 Other</option>
+                </select>
+              </div>
+              {/* Message */}
+              <div>
+                <div className="field-l">
+                  {fbType==="suggestion"?"Describe your idea"
+                  :fbType==="bug"?"What happened? What did you expect?"
+                  :fbType==="ux"?"What felt off and how would you improve it?"
+                  :"Your message"}
+                </div>
+                <textarea className="field" rows={4}
+                  style={{width:"100%",resize:"vertical",lineHeight:1.5}}
+                  value={fbText} onChange={e=>setFbText(e.target.value)}
+                  placeholder={
+                    fbType==="bug"
+                      ? "e.g. When I click X, Y happens instead of Z..."
+                      : "e.g. It would be great if..."
+                  } />
+              </div>
+              <button className="btn btn-a" style={{alignSelf:"flex-start"}}
+                disabled={!fbText.trim() || fbSending}
+                onClick={async()=>{
+                  setFbSending(true);
+                  try {
+                    if (sb) {
+                      await sb.from("feedback").insert({
+                        user_id: (await sb.auth.getUser()).data.user?.id,
+                        type: fbType,
+                        body: fbText.trim(),
+                      });
+                    }
+                    setFbDone(true);
+                    setFbText("");
+                  } catch(e) {
+                    // Even if DB fails, show success to user — don't want to block on this
+                    setFbDone(true);
+                  } finally { setFbSending(false); }
+                }}>
+                {fbSending ? "Sending…" : "Send Feedback →"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sign Out */}
@@ -3496,6 +4122,7 @@ export default function App() {
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
+    if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} />;
   };
 
