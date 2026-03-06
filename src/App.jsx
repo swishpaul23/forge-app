@@ -1525,7 +1525,139 @@ const makeCSS = () => `
     color:var(--text-2); cursor:pointer; transition:color .15s;
   }
   .ob-skip:hover { color:var(--text-1); }
+
+  /* STREAK IGNITION */
+  @keyframes streakIgnite {
+    0%   { color:var(--warn); text-shadow:none; transform:scale(1); }
+    20%  { color:#FFDD88; text-shadow:0 0 12px #D4922A, 0 0 28px #D4922Aaa; transform:scale(1.7); }
+    50%  { color:#FFB830; text-shadow:0 0 20px #D4922A, 0 0 44px #D4922A88; transform:scale(1.45); }
+    100% { color:var(--warn); text-shadow:none; transform:scale(1); }
+  }
+  .streak-ignite { animation:streakIgnite 1.6s ease forwards; }
+
+  /* SPARK CANVAS */
+  #forge-sparks { position:fixed; inset:0; pointer-events:none; z-index:9999; }
 `;
+
+
+// ============================================================
+// SPARK CELEBRATION (completion animation)
+// ============================================================
+const SparkCanvas = ({ trigger }) => {
+  const canvasRef = useRef(null);
+  const particlesRef = useRef([]);
+  const frameRef = useRef(null);
+  const prevTrigger = useRef(false);
+
+  const burst = (canvas) => {
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext("2d");
+
+    class Spark {
+      constructor(x, y, fromSide) {
+        this.x = x; this.y = y;
+        // From sides: angle toward center-up; from bottom: spread upward
+        let angle, speed;
+        if (fromSide === "left") {
+          angle = -Math.PI * (0.15 + Math.random() * 0.55); // up-right
+          speed = 6 + Math.random() * 13;
+        } else if (fromSide === "right") {
+          angle = -Math.PI * (0.45 + Math.random() * 0.55); // up-left
+          speed = 6 + Math.random() * 13;
+        } else {
+          angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.1;
+          speed = 5 + Math.random() * 14;
+        }
+        this.vx = Math.cos(angle) * speed * (0.5 + Math.random() * 0.9);
+        this.vy = Math.sin(angle) * speed;
+        this.gravity = 0.22 + Math.random() * 0.14;
+        this.isStreak = Math.random() > 0.35;
+        this.size = this.isStreak ? (0.8 + Math.random() * 1.8) : (1.5 + Math.random() * 3);
+        this.life = 0;
+        this.maxLife = 40 + Math.random() * 65;
+        this.px = x; this.py = y;
+        const palette = ["#D4922A","#FFB830","#FFDD88","#FF6A00","#FF9500","#FFCC44","#FF4500","#FFA040","#FFFFFF","#FF7020"];
+        this.color = palette[Math.floor(Math.random() * palette.length)];
+      }
+      update() {
+        this.px = this.x; this.py = this.y;
+        this.vx *= 0.982; this.vy += this.gravity;
+        this.x += this.vx; this.y += this.vy;
+        this.life++;
+      }
+      draw(ctx) {
+        const t = this.life / this.maxLife;
+        const alpha = t < 0.15 ? t / 0.15 : 1 - ((t - 0.15) / 0.85);
+        ctx.globalAlpha = Math.max(0, alpha * 0.95);
+        ctx.strokeStyle = this.color; ctx.fillStyle = this.color;
+        if (this.isStreak) {
+          const dx = this.x - this.px, dy = this.y - this.py;
+          if (Math.sqrt(dx*dx+dy*dy) > 0.5) {
+            ctx.beginPath(); ctx.lineWidth = this.size; ctx.lineCap = "round";
+            ctx.moveTo(this.px, this.py); ctx.lineTo(this.x, this.y); ctx.stroke();
+          }
+        } else {
+          ctx.beginPath(); ctx.arc(this.x, this.y, this.size*(1-t*0.4), 0, Math.PI*2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+      get dead() { return this.life >= this.maxLife || this.y > H + 30; }
+    }
+
+    const add = (x, y, side, count) => {
+      for (let i = 0; i < count; i++) particlesRef.current.push(new Spark(x, y, side));
+    };
+
+    // Bottom wave — full width
+    for (let i = 0; i < 160; i++) add(W*0.05 + Math.random()*W*0.9, H+5, "bottom", 1);
+    // Left side bursts — 3 spawn points up the left edge
+    setTimeout(() => {
+      add(0, H*0.85, "left", 40);
+      add(0, H*0.65, "left", 30);
+      add(0, H*0.45, "left", 20);
+    }, 60);
+    // Right side bursts
+    setTimeout(() => {
+      add(W, H*0.85, "right", 40);
+      add(W, H*0.65, "right", 30);
+      add(W, H*0.45, "right", 20);
+    }, 120);
+    // Second bottom wave — more concentrated center
+    setTimeout(() => {
+      for (let i = 0; i < 80; i++) add(W*0.2+Math.random()*W*0.6, H+5, "bottom", 1);
+    }, 90);
+    // Ember trickle
+    setTimeout(() => {
+      for (let i = 0; i < 50; i++) add(W*0.1+Math.random()*W*0.8, H+5, "bottom", 1);
+      add(0, H*0.5, "left", 15);
+      add(W, H*0.5, "right", 15);
+    }, 220);
+
+    const loop = () => {
+      ctx.clearRect(0, 0, W, H);
+      particlesRef.current = particlesRef.current.filter(p => !p.dead);
+      particlesRef.current.forEach(p => { p.update(); p.draw(ctx); });
+      if (particlesRef.current.length > 0) frameRef.current = requestAnimationFrame(loop);
+      else { frameRef.current = null; ctx.clearRect(0, 0, W, H); }
+    };
+    if (!frameRef.current) loop();
+  };
+
+  useEffect(() => {
+    if (trigger && !prevTrigger.current) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      particlesRef.current = [];
+      burst(canvas);
+    }
+    prevTrigger.current = trigger;
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [trigger]);
+
+  return <canvas ref={canvasRef} id="forge-sparks" />;
+};
 
 // ============================================================
 // ENTRY SCREEN (Forge loader)
@@ -1670,6 +1802,7 @@ const Auth = ({ onLogin, onSignup }) => {
 // ONBOARDING — Screen 1: Why You're Here
 // ============================================================
 const OnboardWhy = ({ onNext, onSkip }) => (
+  <>
   <div className="ob-screen">
     <div className="ob-inner">
       <div className="ob-progress">
@@ -1707,12 +1840,14 @@ const OnboardWhy = ({ onNext, onSkip }) => (
       <div className="ob-skip" onClick={onSkip}>Skip intro</div>
     </div>
   </div>
+  </>
 );
 
 // ============================================================
 // ONBOARDING — Screen 2: Who Forge Is For
 // ============================================================
 const OnboardWho = ({ onNext, onSkip }) => (
+  <>
   <div className="ob-screen">
     <div className="ob-inner">
       <div className="ob-progress">
@@ -1761,6 +1896,7 @@ const OnboardWho = ({ onNext, onSkip }) => (
       <div className="ob-skip" onClick={onSkip}>Skip intro</div>
     </div>
   </div>
+  </>
 );
 
 // ============================================================
@@ -4008,6 +4144,7 @@ export default function App() {
   const [stage,       setStage]       = useState("loader");
   const [page,        setPage]        = useState("home");
   const [dw,          setDW]          = useState(false);
+  const [sparkTrigger, setSparkTrigger] = useState(false);
   const [theme,       setThemeState]  = useState("forge");
   const [tone,        setTone]        = useState("Coach");
   const [modal,       setModal]       = useState(null);
@@ -4097,6 +4234,22 @@ export default function App() {
   };
 
   const hasChallenge = !!challenges.main;
+  // Fire sparks when all tasks done
+  const prevDone = useRef(false);
+  useEffect(() => {
+    if (!challenges.main) return;
+    const safeKpis = challenges.main.kpis || [];
+    if (safeKpis.length === 0) return;
+    const allDone = safeKpis.every(k => kpis[k.key]);
+    if (allDone && !prevDone.current) {
+      setSparkTrigger(t => !t); // toggle to re-trigger
+      // Ignite streak number in rail
+      const el = document.getElementById("forge-streak-n");
+      if (el) { el.classList.remove("streak-ignite"); void el.offsetWidth; el.classList.add("streak-ignite"); }
+    }
+    prevDone.current = allDone;
+  }, [kpis, challenges.main]);
+
   const activeChallenge = hasChallenge
     ? { ...challenges.main, kpis: challenges.main.kpis || [], wall: challenges.main.wall || buildWall() }
     : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() };
@@ -4153,7 +4306,7 @@ export default function App() {
           ))}
         </div>
         <div className="rail-foot">
-          <div className="rail-streak-n">{activeChallenge.streak}</div>
+          <div className="rail-streak-n" id="forge-streak-n">{activeChallenge.streak}</div>
           <div className="rail-streak-l">streak</div>
         </div>
       </nav>
@@ -4180,6 +4333,7 @@ export default function App() {
         </div>
       )}
       {detailModal && <ChallengeDetailModal challenge={detailModal.challenge} mission={detailModal.type==="main"?mission:null} onClose={()=>setDetailModal(null)} onEdit={handleEditChallenge} />}
+      <SparkCanvas trigger={sparkTrigger} />
     </div>
   );
 }
