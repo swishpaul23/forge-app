@@ -4010,35 +4010,43 @@ const Library = ({ onPick, isSecondaryMode, onClose }) => {
       )}
 
       {/* Two-column layout: cards left fixed width, detail fills right */}
-      <div style={{ display:"grid", gridTemplateColumns:"380px 1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"stretch" }}>
+      <div style={{ display:"grid", gridTemplateColumns: isSecondaryMode ? "1fr" : "380px 1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"stretch" }}>
 
         {/* Cards grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10 }}>
           {TEMPLATES.map((t,i) => (
             <div key={t.id}
               className={`tpl a${Math.min(i+1,5)} ${active===t.id?"active":""}`}
-              onClick={() => setActive(prev => prev === t.id ? null : t.id)}>
+              onClick={() => isSecondaryMode ? onPick(t) : setActive(prev => prev === t.id ? null : t.id)}>
 
-              {/* Hover tooltip */}
-              <div className="tpl-tooltip">
-                <div className="tpl-tooltip-diff" style={{ color: DIFF_COLOUR[t.difficulty] || "var(--accent)" }}>
-                  {t.difficulty} · {t.duration} days
+              {/* Hover tooltip — only in full library */}
+              {!isSecondaryMode && (
+                <div className="tpl-tooltip">
+                  <div className="tpl-tooltip-diff" style={{ color: DIFF_COLOUR[t.difficulty] || "var(--accent)" }}>
+                    {t.difficulty} · {t.duration} days
+                  </div>
+                  <div className="tpl-tooltip-text">{t.blurb}</div>
                 </div>
-                <div className="tpl-tooltip-text">{t.blurb}</div>
-              </div>
+              )}
 
               <div className="tpl-tag">{t.tag} · {t.duration}D</div>
               <div className="tpl-name">{t.name}</div>
               <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
-              <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
-                {active === t.id ? "↑ Close" : "→ Learn more"}
-              </div>
+              {isSecondaryMode ? (
+                <div style={{ marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:9.5, color:"var(--text-2)", lineHeight:1.55 }}>
+                  {t.blurb}
+                </div>
+              ) : (
+                <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
+                  {active === t.id ? "↑ Close" : "→ Learn more"}
+                </div>
+              )}
             </div>
           ))}
         </div>
 
-        {/* Right column — always rendered so tiles never reflow */}
-        <div style={{ display:"flex", flexDirection:"column" }}>
+        {/* Right column — hidden in secondary mode */}
+        <div style={{ display: isSecondaryMode ? "none" : "flex", flexDirection:"column" }}>
           {!selected ? (
             <div style={{
               height:"100%", minHeight:520, flex:1,
@@ -5982,7 +5990,7 @@ export default function App() {
       {modal && <ChallengeWizard tpl={modal} isSecondary={modal._mode==="secondary"} maxDays={modal.maxDays} onClose={()=>setModal(null)} onStart={handleStartChallenge} />}
       {libModal && (
         <div className="overlay" onClick={()=>setLibModal(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()} style={{width:580,maxHeight:"80vh",overflowY:"auto"}}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{width:720,maxHeight:"85vh",overflowY:"auto"}}>
             <Library isSecondaryMode={true} onPick={(t)=>handleLibPick(t,true)} onClose={()=>setLibModal(false)} />
             <button className="btn btn-g mt16" style={{width:"100%",justifyContent:"center"}} onClick={()=>setLibModal(false)}>Cancel</button>
           </div>
