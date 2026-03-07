@@ -4674,7 +4674,13 @@ const Partners = ({ user, profile, challenges, sb }) => {
         .select("*")
         .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
         .order("created_at", { ascending: true }).limit(100);
-      setMessages(data || []);
+      const confirmed = data || [];
+      // Merge: keep any optimistic messages not yet confirmed in DB
+      setMessages(prev => {
+        const confirmedIds = new Set(confirmed.map(m => m.id));
+        const stillPending = prev.filter(m => String(m.id).startsWith("opt-") && !confirmedIds.has(m.id));
+        return [...confirmed, ...stillPending];
+      });
       await sb.from("partner_messages").update({ read: true })
         .eq("to_user_id", user.id).eq("from_user_id", partnerId);
       setUnreadMap(m => ({ ...m, [partnerId]: 0 }));
