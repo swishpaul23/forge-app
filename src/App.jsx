@@ -3453,8 +3453,8 @@ const Library = ({ onPick, isSecondaryMode, onClose }) => {
         </div>
       )}
 
-      {/* Two-column layout: cards left, detail right */}
-      <div style={{ display:"grid", gridTemplateColumns: selected ? "1fr 1fr" : "1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"start" }}>
+      {/* Two-column layout: cards left fixed width, detail fills right */}
+      <div style={{ display:"grid", gridTemplateColumns:"380px 1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"start" }}>
 
         {/* Cards grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10 }}>
@@ -3481,61 +3481,76 @@ const Library = ({ onPick, isSecondaryMode, onClose }) => {
           ))}
         </div>
 
-        {/* Detail panel — only when a card is selected */}
-        {selected && (
-          <div className="lib-detail">
-            {/* CTA at top */}
-            <button className="btn btn-a w100"
-              style={{ justifyContent:"center", marginBottom:22, fontSize:15, padding:"12px 0" }}
-              onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
-              {isSecMode ? `+ Start "${selected.name}" as Secondary` : `→ Start "${selected.name}"`}
-            </button>
-
-            <div className="lib-detail-tag">{selected.tag} · {selected.duration} days</div>
-            <div className="lib-detail-name">{selected.name}</div>
-
-            {/* Difficulty badge */}
-            <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:16,
-              fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em",
-              textTransform:"uppercase", background:"var(--bg-2)", border:"1px solid var(--border-1)",
-              borderRadius:6, padding:"4px 10px" }}>
-              <div style={{ width:6, height:6, borderRadius:"50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink:0 }} />
-              <span style={{ color: DIFF_COLOUR[selected.difficulty] || "var(--accent)" }}>{selected.difficulty}</span>
-            </div>
-
-            <div className="lib-detail-about">{selected.about}</div>
-
-            <div className="lib-detail-section">Benefits</div>
-            {selected.benefits.map((b,i) => (
-              <div key={i} className="lib-detail-benefit">
-                <span style={{ color:"var(--accent)", marginTop:2, flexShrink:0 }}>◆</span>
-                <span>{b}</span>
+        {/* Right column — always rendered so tiles never reflow */}
+        <div style={{ minHeight:400 }}>
+          {!selected ? (
+            <div style={{
+              height:"100%", minHeight:420,
+              border:"1px dashed var(--border-1)", borderRadius:12,
+              display:"flex", flexDirection:"column",
+              alignItems:"center", justifyContent:"center", gap:10,
+            }}>
+              <div style={{ fontSize:28, color:"var(--text-3)", opacity:.4 }}>◆</div>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".22em",
+                textTransform:"uppercase", color:"var(--text-3)", opacity:.5 }}>
+                Select a challenge to preview
               </div>
-            ))}
+            </div>
+          ) : (
+            <div className="lib-detail">
+              {/* CTA at top */}
+              <button className="btn btn-a w100"
+                style={{ justifyContent:"center", marginBottom:22, fontSize:15, padding:"12px 0" }}
+                onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
+                {isSecMode ? `+ Start "${selected.name}" as Secondary` : `→ Start "${selected.name}"`}
+              </button>
 
-            <div className="lib-detail-section">Best For</div>
-            <div className="lib-detail-best">{selected.bestFor}</div>
+              <div className="lib-detail-tag">{selected.tag} · {selected.duration} days</div>
+              <div className="lib-detail-name">{selected.name}</div>
 
-            {selected.kpis.length > 0 && (
-              <>
-                <div className="lib-detail-section">Daily Tasks</div>
-                {selected.kpis.map(k => (
-                  <div key={k.key} style={{ fontSize:13, color:"var(--text-1)", padding:"5px 0",
-                    borderBottom:"1px solid var(--border-0)", display:"flex", gap:8 }}>
-                    <span style={{ color:"var(--text-3)" }}>—</span>{k.label}
-                  </div>
-                ))}
-              </>
-            )}
+              {/* Difficulty badge */}
+              <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:16,
+                fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em",
+                textTransform:"uppercase", background:"var(--bg-2)", border:"1px solid var(--border-1)",
+                borderRadius:6, padding:"4px 10px" }}>
+                <div style={{ width:6, height:6, borderRadius:"50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink:0 }} />
+                <span style={{ color: DIFF_COLOUR[selected.difficulty] || "var(--accent)" }}>{selected.difficulty}</span>
+              </div>
 
-            {/* Second CTA at bottom for long panels */}
-            <button className="btn btn-a w100"
-              style={{ justifyContent:"center", marginTop:22, fontSize:15, padding:"12px 0" }}
-              onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
-              {isSecMode ? `+ Start as Secondary` : `→ Start Challenge`}
-            </button>
-          </div>
-        )}
+              <div className="lib-detail-about">{selected.about}</div>
+
+              <div className="lib-detail-section">Benefits</div>
+              {selected.benefits.map((b,i) => (
+                <div key={i} className="lib-detail-benefit">
+                  <span style={{ color:"var(--accent)", marginTop:2, flexShrink:0 }}>◆</span>
+                  <span>{b}</span>
+                </div>
+              ))}
+
+              <div className="lib-detail-section">Best For</div>
+              <div className="lib-detail-best">{selected.bestFor}</div>
+
+              {selected.kpis.length > 0 && (
+                <>
+                  <div className="lib-detail-section">Daily Tasks</div>
+                  {selected.kpis.map(k => (
+                    <div key={k.key} style={{ fontSize:13, color:"var(--text-1)", padding:"5px 0",
+                      borderBottom:"1px solid var(--border-0)", display:"flex", gap:8 }}>
+                      <span style={{ color:"var(--text-3)" }}>—</span>{k.label}
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Second CTA at bottom */}
+              <button className="btn btn-a w100"
+                style={{ justifyContent:"center", marginTop:22, fontSize:15, padding:"12px 0" }}
+                onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
+                {isSecMode ? `+ Start as Secondary` : `→ Start Challenge`}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
