@@ -2478,8 +2478,8 @@ const TIMER_PRESETS = [
 const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
 const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
-  const safeKpis = challenge.kpis || [];
-  const doneTasks = safeKpis.filter(k => kpis[k.key]).length;
+  const safeKpis = (challenge && challenge.kpis) ? challenge.kpis : [];
+  const doneTasks = safeKpis.filter(k => kpis && kpis[k.key]).length;
 
   // Timer state
   const [preset,      setPreset]      = useState(0);
@@ -2569,7 +2569,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
           {[
             { n: fmt(totalFocused + (phase==="work" ? workSecs()-timeLeft : 0)), l:"Time Focused" },
             { n: cycle,                  l:"Cycles Done" },
-            { n: `${sessionTasks}/${safeKpis.length}`, l:"Tasks Done" },
+            { n: safeKpis.length > 0 ? `${sessionTasks}/${safeKpis.length}` : "—", l:"Tasks Done" },
           ].map(s => (
             <div key={s.l} style={{background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:10,padding:"16px 12px"}}>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:"var(--accent)",lineHeight:1}}>{s.n}</div>
@@ -2597,7 +2597,15 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
   return (
     <div className="dw" style={{overflowY:"auto",paddingBottom:40}}>
       <div style={{maxWidth:520,width:"100%",padding:"40px 24px 0"}}>
-        <div className="dw-tag">deep work · day {challenge.dayNum} of {challenge.totalDays}</div>
+        {/* Always-visible exit button at top */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <button className="btn btn-g" style={{fontSize:11}} onClick={phase!=="idle"?endSession:onExit}>
+            {phase!=="idle"?"✕ End Session":"← Exit"}
+          </button>
+          {challenge && (
+            <div className="dw-tag" style={{margin:0}}>deep work · day {challenge.dayNum} of {challenge.totalDays}</div>
+          )}
+        </div>
 
         {/* Timer Ring */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginTop:32,marginBottom:32}}>
@@ -2679,9 +2687,13 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
           )}
         </div>
 
-        {/* Tasks */}
-        <div className="dv-label mt8">Today's Tasks — {doneTasks}/{safeKpis.length}</div>
-        <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} stravaVerified={stravaVerified} />
+        {/* Tasks — only show if there are tasks */}
+        {safeKpis.length > 0 && (
+          <>
+            <div className="dv-label mt8">Today's Tasks — {doneTasks}/{safeKpis.length}</div>
+            <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} stravaVerified={stravaVerified} />
+          </>
+        )}
 
         <div style={{display:"flex",justifyContent:"center",marginTop:32}}>
           <button className="btn btn-g" onClick={phase!=="idle"?endSession:onExit}>
@@ -5086,12 +5098,22 @@ export default function App() {
   const [user,    setUser]    = useState(undefined); // undefined = still loading
   const [profile, setProfile] = useState(null);
 
-  // Load profile from DB
+  // Generate a random 8-char uppercase invite code
+  const genInviteCode = () => Math.random().toString(36).substring(2,10).toUpperCase();
+
+  // Load profile from DB — auto-generate invite_code if missing
   const loadProfile = useCallback(async (uid) => {
     if (!uid || !sb) return;
     try {
       const { data } = await sb.from("profiles").select("*").eq("id", uid).single();
-      if (data) setProfile(data);
+      if (data) {
+        if (!data.invite_code) {
+          const code = genInviteCode();
+          await sb.from("profiles").update({ invite_code: code }).eq("id", uid);
+          data.invite_code = code;
+        }
+        setProfile(data);
+      }
     } catch(e) { console.warn("profile load:", e); }
   }, []);
 
