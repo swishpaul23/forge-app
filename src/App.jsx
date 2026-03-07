@@ -137,116 +137,6 @@ const TEMPLATES = [
 // ============================================================
 
 // ============================================================
-// STRAVA VERIFICATION
-// ============================================================
-
-// Refresh Strava token if expired
-const refreshStravaToken = async (profile, sb) => {
-  if (!profile?.strava_refresh_token) return null;
-  const expiry = new Date(profile.strava_token_expiry);
-  if (expiry > new Date()) return profile.strava_access_token; // still valid
-
-  try {
-    const res = await fetch('https://www.strava.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id:     import.meta.env.VITE_STRAVA_CLIENT_ID,
-        client_secret: import.meta.env.VITE_STRAVA_CLIENT_SECRET,
-        refresh_token: profile.strava_refresh_token,
-        grant_type:    'refresh_token',
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) return null;
-    // Save new token
-    await sb.from('profiles').update({
-      strava_access_token: data.access_token,
-      strava_token_expiry: new Date(data.expires_at * 1000).toISOString(),
-    }).eq('id', profile.id);
-    return data.access_token;
-  } catch(e) { return null; }
-};
-
-// Extract rules from natural language using Claude
-const extractStravaRules = async (naturalLanguage) => {
-  if (!naturalLanguage.trim()) return { activity_types: ["Run"], min_duration: 600, min_distance: 1000 };
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 300,
-        messages: [{
-          role: "user",
-          content: `Extract workout verification rules from this goal: "${naturalLanguage}"
-Return ONLY valid JSON, no markdown, no explanation:
-{
-  "activity_types": ["Run"], 
-  "min_duration": 600,
-  "min_distance": 1000,
-  "max_speed_ms": null
-}
-Rules:
-- activity_types: array from ["Run","Ride","Swim","Walk","Workout","WeightTraining","Yoga","Hike"] 
-- min_duration: seconds (default 600 = 10min)
-- min_distance: metres (default 1000 = 1km, null if not distance-based like weightlifting)
-- max_speed_ms: metres/sec to detect cheating (null = no check, 6.0 = ~22km/h max for running)
-Examples: "run 5km" → min_distance:5000, "workout 20 min" → min_duration:1200 activity_types:["WeightTraining","Workout"], "any run" → defaults`
-        }]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || '{}';
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch(e) {
-    return { activity_types: ["Run"], min_duration: 600, min_distance: 1000 };
-  }
-};
-
-// Check Strava for activities today matching rules
-const checkStravaActivity = async (accessToken, rules) => {
-  const today = new Date();
-  const start = new Date(today); start.setHours(0,0,0,0);
-  const end   = new Date(today); end.setHours(23,59,59,999);
-
-  try {
-    const res = await fetch(
-      `https://www.strava.com/api/v3/athlete/activities?after=${Math.floor(start/1000)}&before=${Math.floor(end/1000)}&per_page=20`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    if (!res.ok) return { passed: false, reason: "Could not reach Strava." };
-    const activities = await res.json();
-
-    const types = rules.activity_types || ["Run"];
-    const matching = activities.filter(a => types.includes(a.type));
-
-    if (matching.length === 0)
-      return { passed: false, reason: `No ${types.join(" or ")} logged on Strava today.` };
-
-    for (const act of matching) {
-      const dur  = act.elapsed_time; // seconds
-      const dist = act.distance;     // metres
-      const spd  = act.average_speed; // m/s
-
-      if (rules.min_duration && dur < rules.min_duration)
-        return { passed: false, reason: `Activity too short (${Math.round(dur/60)}min, need ${Math.round(rules.min_duration/60)}min).` };
-
-      if (rules.min_distance && dist < rules.min_distance)
-        return { passed: false, reason: `Distance too short (${(dist/1000).toFixed(1)}km, need ${(rules.min_distance/1000).toFixed(1)}km).` };
-
-      if (rules.max_speed_ms && spd > rules.max_speed_ms)
-        return { passed: false, reason: `Suspicious speed detected (${(spd*3.6).toFixed(1)}km/h). Looks like a cheat.` };
-
-      return { passed: true, activity: act };
-    }
-    return { passed: false, reason: "No qualifying activity found." };
-  } catch(e) {
-    return { passed: false, reason: "Strava check failed. Try again." };
-  }
-};
-
 const buildWall = (withMockData = false) => {
   const out = [];
   const now = new Date();
@@ -1813,17 +1703,6 @@ const makeCSS = () => `
   }
   .ob-skip:hover { color:var(--text-1); }
 
-  /* STRAVA VERIFIED BADGE */
-  .strava-badge {
-    display:inline-flex; align-items:center; gap:4px;
-    font-family:'IBM Plex Mono',monospace; font-size:7.5px;
-    letter-spacing:.1em; text-transform:uppercase;
-    color:#FC4C02; background:#FC4C0218;
-    border:1px solid #FC4C0244; border-radius:4px;
-    padding:2px 6px; margin-top:4px;
-    animation:fadein .3s ease both;
-  }
-
   /* STREAK IGNITION */
   @keyframes streakIgnite {
     0%   { color:var(--warn); text-shadow:none; transform:scale(1); }
@@ -2783,7 +2662,7 @@ const TIMER_PRESETS = [
 
 const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
-const DeepWork = ({ challenge, kpis, toggle, onExit, stravaVerified = {} }) => {
+const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
   const safeKpis = (challenge && challenge.kpis) ? challenge.kpis : [];
   const doneTasks = safeKpis.filter(k => kpis && kpis[k.key]).length;
 
@@ -3005,7 +2884,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, stravaVerified = {} }) => {
         {safeKpis.length > 0 && (
           <>
             <div className="dv-label mt8">Today's Tasks — {doneTasks}/{safeKpis.length}</div>
-            <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} stravaVerified={stravaVerified} />
+            <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} />
           </>
         )}
 
@@ -3068,7 +2947,7 @@ const SCALED_LABELS = {
   dw:      "30 min focused work (scaled)",
 };
 
-const TaskGrid = ({ tasks, taskState, toggle, isScaled, stravaVerified = {} }) => {
+const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
   const done  = tasks.filter(t => taskState[t.key]).length;
   const total = tasks.length;
 
@@ -3120,7 +2999,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled, stravaVerified = {} }) =
       {/* Task cards grid */}
       <div className="tasks-grid">
         {tasks.map(t => {
-          const isDone    = taskState[t.key] || stravaVerified[t.key]?.passed;
+          const isDone    = taskState[t.key];
           const cat       = TASK_CATEGORIES[t.cat || "other"] || TASK_CATEGORIES.other;
           const cardColor = isScaled ? "#D4B22A" : cat.color;
           const label     = isScaled ? (SCALED_LABELS[t.key] || t.label + " (scaled)") : t.label;
@@ -3151,9 +3030,6 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled, stravaVerified = {} }) =
                   <div className="task-card-label" style={ isScaled && !isDone ? { color:"var(--text-1)", fontSize:12 } : {}}>
                     {label}
                   </div>
-                  {isDone && t.verification === "strava" && (
-                    <div className="strava-badge">⚡ verified by strava</div>
-                  )}
                 </div>
                 <div className="task-cat-tag" style={{
                   color: cardColor,
@@ -3499,7 +3375,7 @@ Write ONE insight. 2-3 sentences max. No preamble. No "Here is your insight:". S
 // ============================================================
 // HOME
 // ============================================================
-const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, stravaVerified = {}, checkins = {} }) => {
+const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, checkins = {} }) => {
   const safekpis = challenge.kpis || [];
   const done  = safekpis.filter(k => kpis[k.key]).length;
   const total = safekpis.length;
@@ -4273,7 +4149,6 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
       : [{ id: 0, label: "" }]
   );
   const [nonNeg,      setNonNeg]      = useState([]);
-  const [stravaTasks,   setStravaTasks]   = useState({}); // { taskId: { goal, rules, loading } }
 
   const addTask      = () => setTasks(t => [...t, { id: Date.now(), label: "" }]);
   const removeTask   = (id) => setTasks(t => t.filter(x => x.id !== id));
@@ -4282,7 +4157,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
 
   const STEPS = isSecondary
     ? ["Setup", "Tasks", "Confirm"]
-    : ["Setup", "Mission", "Tasks", "Non-Negotiables", "Verification", "Confirm"];
+    : ["Setup", "Mission", "Tasks", "Non-Negotiables", "Confirm"];
   const totalSteps = STEPS.length;
 
   const canNext = () => {
@@ -4296,12 +4171,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
   const validTasks = tasks.filter(t => t.label.trim());
 
   const handleStart = () => {
-    const tasksWithVerification = validTasks.map(t => ({
-      ...t,
-      verification: stravaTasks[t.id]?.rules ? "strava" : null,
-      strava_rules: stravaTasks[t.id]?.rules || null,
-    }));
-    onStart({ name, days, mission, nonNeg, tasks: tasksWithVerification, isSecondary });
+    onStart({ name, days, mission, nonNeg, tasks: validTasks, isSecondary });
   };
 
   // Map logical step to STEPS label
@@ -4446,91 +4316,6 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
           </div>
         )}
 
-        {/* STEP 5 — Strava Verification */}
-        {!isSecondary && step === 5 && (
-          <div className="flex col g16">
-            <div>
-              <div className="modal-title" style={{fontSize:26}}>Verify with Strava</div>
-              <div className="modal-desc">
-                Tell Forge in plain English what counts as completing each task. Claude will extract the rules — Strava will confirm it happened.
-              </div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".1em",
-                color:"#FC4C02",marginTop:6}}>
-                ⚡ Requires Strava connected in Settings → Integrations
-              </div>
-            </div>
-            <div className="flex col g10">
-              {validTasks.map(t => {
-                const sv = stravaTasks[t.id];
-                return (
-                  <div key={t.id} style={{
-                    background:"var(--bg-2)",
-                    border:`1px solid ${sv?.rules?"#FC4C0244":"var(--border-1)"}`,
-                    borderRadius:10,padding:"14px 16px",transition:"border .2s",
-                  }}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:sv?10:0}}>
-                      <span style={{fontSize:14,flex:1,fontWeight:500}}>{t.label}</span>
-                      <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",flexShrink:0}}
-                        onClick={()=>setStravaTasks(g=>({...g,[t.id]:g[t.id]?null:{goal:"",rules:null,loading:false}}))}>
-                        <div style={{
-                          width:36,height:20,borderRadius:10,
-                          background:sv?"#FC4C02":"var(--bg-3)",
-                          border:`1px solid ${sv?"#FC4C02":"var(--border-1)"}`,
-                          position:"relative",transition:"all .2s",
-                        }}>
-                          <div style={{
-                            position:"absolute",top:2,left:sv?16:2,
-                            width:14,height:14,borderRadius:"50%",
-                            background:sv?"#fff":"var(--text-2)",transition:"left .2s",
-                          }} />
-                        </div>
-                        <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
-                          letterSpacing:".1em",color:sv?"#FC4C02":"var(--text-2)"}}>
-                          {sv?"STRAVA":"OFF"}
-                        </span>
-                      </div>
-                    </div>
-                    {sv && (
-                      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                        <div>
-                          <div className="field-l">Describe what counts as done</div>
-                          <div style={{display:"flex",gap:8}}>
-                            <input className="field" style={{flex:1}}
-                              value={sv.goal||""}
-                              onChange={e=>setStravaTasks(g=>({...g,[t.id]:{...g[t.id],goal:e.target.value,rules:null}}))}
-                              placeholder='e.g. "run at least 5km" or "any workout over 20 minutes"' />
-                            <button className="btn btn-a"
-                              style={{flexShrink:0,background:"#FC4C02",borderColor:"#FC4C02"}}
-                              disabled={!sv.goal?.trim()||sv.loading}
-                              onClick={async()=>{
-                                setStravaTasks(g=>({...g,[t.id]:{...g[t.id],loading:true}}));
-                                const rules = await extractStravaRules(sv.goal);
-                                setStravaTasks(g=>({...g,[t.id]:{...g[t.id],rules,loading:false}}));
-                              }}>
-                              {sv.loading?"…":"Set"}
-                            </button>
-                          </div>
-                        </div>
-                        {sv.rules && (
-                          <div style={{padding:"8px 12px",background:"#FC4C0210",border:"1px solid #FC4C0230",borderRadius:6}}>
-                            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#FC4C02",letterSpacing:".1em",marginBottom:4}}>⚡ RULES EXTRACTED</div>
-                            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-1)",lineHeight:1.8}}>
-                              Activities: {sv.rules.activity_types?.join(", ")}<br/>
-                              {sv.rules.min_duration && <>Min duration: {Math.round(sv.rules.min_duration/60)} min<br/></>}
-                              {sv.rules.min_distance && <>Min distance: {(sv.rules.min_distance/1000).toFixed(1)} km<br/></>}
-                              {sv.rules.max_speed_ms && <>Max speed: {(sv.rules.max_speed_ms*3.6).toFixed(1)} km/h (cheat guard)</>}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* CONFIRM — last step */}
         {step === totalSteps && (
           <div className="flex col g16">
@@ -4561,13 +4346,6 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
                     {t.label}
                     {nonNeg.includes(t.id) && (
                       <span className="f-mono" style={{ fontSize:8, color:"var(--warn)", letterSpacing:".1em" }}>NON-NEG</span>
-                    )}
-                    {stravaTasks[t.id]?.rules && (
-                      <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,letterSpacing:".1em",
-                        color:"#FC4C02",background:"#FC4C0218",border:"1px solid #FC4C0244",
-                        borderRadius:4,padding:"1px 5px"}}>
-                        ⚡ STRAVA
-                      </span>
                     )}
                   </div>
                 ))}
@@ -4833,7 +4611,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
   };
 
   const fmtTime = ts => new Date(ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
-  const fmtDate = ts => {
+  const fmtMsgDate = ts => {
     const d = new Date(ts), now = new Date();
     if (d.toDateString() === now.toDateString()) return "Today";
     const y = new Date(now); y.setDate(now.getDate()-1);
@@ -4850,7 +4628,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const buildGroups = (msgs) => {
     const groups = [];
     msgs.forEach(m => {
-      const date = fmtDate(m.created_at);
+      const date = fmtMsgDate(m.created_at);
       const isMe = m.from_user_id === user.id;
       const last = groups[groups.length-1];
       if (last && last.date === date && last.isMe === isMe) {
@@ -5471,8 +5249,6 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [msg,         setMsg]         = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null); // { type:"challenge"|"account", id, name }
   // Feedback
-  // Strava
-  const [stravaLoading, setStravaLoading] = useState(false);
   const [fbType,      setFbType]      = useState("suggestion");
   const [fbText,      setFbText]      = useState("");
   const [fbSending,   setFbSending]   = useState(false);
@@ -5620,56 +5396,6 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
 
       {/* ── Full-width bottom section ── */}
       <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:16}}>
-        {/* Integrations */}
-        <div className="srow a5">
-          <div className="srow-title">Integrations</div>
-          <div className="srow-desc">Connect fitness apps to auto-verify your tasks.</div>
-          <div style={{marginTop:16,padding:"16px 18px",background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:10}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:".06em",color:"#FC4C02"}}>Strava</div>
-                {profile?.strava_athlete_name && (
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".12em",
-                    color:"#FC4C02",background:"#FC4C0218",border:"1px solid #FC4C0244",
-                    borderRadius:4,padding:"2px 7px"}}>
-                    ⚡ {profile.strava_athlete_name}
-                  </div>
-                )}
-              </div>
-              {profile?.strava_athlete_name && (
-                <button className="btn btn-g" style={{fontSize:11,padding:"4px 10px",color:"var(--err)",borderColor:"var(--err)30"}}
-                  onClick={()=>onSaveProfile({strava_access_token:null,strava_refresh_token:null,strava_token_expiry:null,strava_athlete_id:null,strava_athlete_name:null})}>
-                  Disconnect
-                </button>
-              )}
-            </div>
-            {profile?.strava_athlete_name ? (
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-1)",lineHeight:1.6}}>
-                Connected. Strava will auto-verify tasks tagged with Strava verification.
-              </div>
-            ) : (
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",lineHeight:1.6}}>
-                  Connect your Strava account to auto-verify workouts. No manual token needed.
-                </div>
-                <button className="btn btn-a" style={{alignSelf:"flex-start",background:"#FC4C02",borderColor:"#FC4C02"}}
-                  disabled={stravaLoading}
-                  onClick={()=>{
-                    if (!user) return;
-                    setStravaLoading(true);
-                    const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
-                    const redirectUri = encodeURIComponent(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-auth`);
-                    const scope = "read,activity:read";
-                    const state = user.id;
-                    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
-                  }}>
-                  {stravaLoading ? "Redirecting…" : "⚡ Connect Strava"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Feedback */}
         <div className="srow a5">
           <div className="srow-title">Feedback</div>
@@ -5945,7 +5671,6 @@ export default function App() {
   const [sparkTrigger, setSparkTrigger] = useState(false);
   const [loggedToday,  setLoggedToday]  = useState(false);
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
-  const [stravaVerified, setStravaVerified] = useState({}); // { taskKey: { passed, reason, activity } }
   const [theme,       setThemeState]  = useState("forge");
   const [tone,        setTone]        = useState("Coach");
   const [modal,       setModal]       = useState(null);
@@ -6180,42 +5905,6 @@ export default function App() {
     }
   };
 
-  // ── Strava auto-verification ─────────────────────────────
-  useEffect(() => {
-    if (!profile?.strava_access_token || !challenges.main) return;
-    const stravaTasks = (challenges.main.kpis || []).filter(k => k.verification === "strava" && k.strava_rules);
-    if (stravaTasks.length === 0) return;
-
-    const verify = async () => {
-      const token = await refreshStravaToken(profile, sb);
-      if (!token) return;
-      const results = {};
-      for (const task of stravaTasks) {
-        const result = await checkStravaActivity(token, task.strava_rules);
-        results[task.key] = result;
-        if (result.passed) {
-          setKpis(prev => prev[task.key] ? prev : { ...prev, [task.key]: true });
-        }
-      }
-      setStravaVerified(results);
-    };
-    verify();
-  }, [profile?.strava_access_token, challenges.main?.id]);
-
-  // Handle Strava OAuth callback redirect
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('strava_connected')) {
-      window.history.replaceState({}, '', window.location.pathname);
-      // Reload profile to get new tokens
-      if (user) loadProfile(user.id);
-    }
-    if (params.get('strava_error')) {
-      console.warn('Strava error:', params.get('strava_error'));
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []);
-
   // ── Midnight: advance day + reset today's kpis ──────────────
   useEffect(() => {
     if (!challenges.main) return;
@@ -6274,7 +5963,6 @@ export default function App() {
     ? { ...challenges.main, kpis: challenges.main.kpis || [], wall: challenges.main.wall || buildWall() }
     : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() };
   const level = getLevel(activeChallenge.dayNum);
-  const fmtDate = () => new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
 
   const renderPage = () => {
     if (page==="home") {
@@ -6291,7 +5979,7 @@ export default function App() {
           </button>
         </div>
       );
-      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} stravaVerified={stravaVerified} checkins={checkins} />;
+      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} checkins={checkins} />;
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
@@ -6307,7 +5995,7 @@ export default function App() {
   if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")}   onSkip={handleOnboardDone} />;
   if (stage==="ob_induct") return <OnboardInduct onDone={()=>setStage("ob_challenge")} userName={userName} />;
   if (stage==="ob_challenge") return <OnboardChallenge onStart={(t, customTasks)=>{ handleStartChallenge({ name:t.name, days:t.duration, mission:"", nonNeg:[], tasks:customTasks||t.kpis, isSecondary:false, tag:t.tag }); handleOnboardDone(); }} onSkip={handleOnboardDone} />;
-  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} stravaVerified={stravaVerified} /></DeepWorkBoundary>;
+  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} /></DeepWorkBoundary>;
 
   return (
     <div className="shell">
