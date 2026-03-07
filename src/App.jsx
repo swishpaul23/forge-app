@@ -1528,6 +1528,7 @@ const makeCSS = () => `
     padding:48px 24px 120px;
     overflow-y:auto;
     animation:fadein .5s ease both;
+    z-index:5;
   }
   .ob-inner {
     max-width:680px; width:100%;
@@ -1540,7 +1541,8 @@ const makeCSS = () => `
     background:linear-gradient(to top, var(--bg-0) 70%, transparent);
     padding:24px 24px 32px;
     display:flex; flex-direction:column; align-items:center; gap:12px;
-    z-index:10;
+    z-index:20;
+    pointer-events:all;
   }
   /* Scroll hint arrow */
   .ob-scroll-hint {
@@ -2463,6 +2465,221 @@ const OnboardInduct = ({ onDone, userName }) => (
     </div>
   </div>
 );
+
+
+// ============================================================
+// ONBOARDING — Screen 4: Pick Your Challenge
+// ============================================================
+const DIFF_COLOR = { Hard:"#BF5D5D", Intense:"#D4B22A", Moderate:"#5DBF8A", "You decide":"#4A8FD4" };
+
+const OnboardChallenge = ({ onStart, onSkip }) => {
+  const [selected,   setSelected]   = useState(null);
+  const [editTasks,  setEditTasks]  = useState(false);
+  const [tasks,      setTasks]      = useState([]);
+  const templates = TEMPLATES.filter(t => t.id !== "custom");
+  const t = selected || templates[0];
+
+  // Sync tasks when selection changes
+  const selectTemplate = (tmpl) => {
+    setSelected(tmpl);
+    setTasks(tmpl.kpis.map((k,i) => ({ id:i, label:k.label, cat:k.cat })));
+    setEditTasks(false);
+  };
+
+  // Init tasks on mount
+  useEffect(() => {
+    if (tasks.length === 0) setTasks(templates[0].kpis.map((k,i) => ({ id:i, label:k.label, cat:k.cat })));
+  }, []);
+
+  const addTask    = () => setTasks(ts => [...ts, { id:Date.now(), label:"", cat:"other" }]);
+  const removeTask = (id) => setTasks(ts => ts.filter(x => x.id !== id));
+  const updateTask = (id, val) => setTasks(ts => ts.map(x => x.id===id ? {...x, label:val} : x));
+  const validTasks = tasks.filter(t => t.label.trim());
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, background:"var(--bg-0)", zIndex:999,
+      display:"flex", flexDirection:"column", overflow:"hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        padding:"28px 32px 20px", borderBottom:"1px solid var(--border-0)",
+        display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexShrink:0,
+      }}>
+        <div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".35em",textTransform:"uppercase",color:"var(--accent)",marginBottom:8}}>
+            Final step — choose your challenge
+          </div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",lineHeight:1}}>
+            What are you committing to?
+          </div>
+        </div>
+        <button onClick={onSkip} style={{background:"none",border:"none",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-2)",cursor:"pointer",paddingBottom:4}}>
+          Skip for now →
+        </button>
+      </div>
+
+      {/* Body — two columns */}
+      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+
+        {/* Left — card list */}
+        <div style={{
+          width:300, flexShrink:0, overflowY:"auto",
+          borderRight:"1px solid var(--border-0)", padding:"16px 12px",
+          display:"flex", flexDirection:"column", gap:8,
+        }}>
+          {templates.map(tmpl => (
+            <div key={tmpl.id}
+              onClick={()=>selectTemplate(tmpl)}
+              style={{
+                background: selected?.id===tmpl.id ? "var(--accent-lo)" : "var(--bg-2)",
+                border: `1px solid ${selected?.id===tmpl.id ? "var(--accent)" : "var(--border-1)"}`,
+                borderRadius:8, padding:"14px 16px", cursor:"pointer",
+                transition:"border-color .15s, background .15s",
+              }}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--accent)",marginBottom:5}}>
+                {tmpl.tag} · {tmpl.duration}d
+              </div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em",color:"var(--text-0)",marginBottom:5}}>
+                {tmpl.name}
+              </div>
+              <div style={{
+                display:"inline-block",
+                fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",
+                textTransform:"uppercase",padding:"2px 8px",borderRadius:3,
+                color: DIFF_COLOR[tmpl.difficulty]||"var(--text-2)",
+                background: (DIFF_COLOR[tmpl.difficulty]||"#888")+"18",
+                border:`1px solid ${(DIFF_COLOR[tmpl.difficulty]||"#888")}30`,
+              }}>{tmpl.difficulty}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right — detail panel */}
+        <div style={{flex:1, overflowY:"auto", padding:"28px 36px"}}>
+          {/* Title + badge */}
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)"}}>
+              {t.tag}
+            </div>
+            <div style={{
+              fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",
+              textTransform:"uppercase",padding:"2px 8px",borderRadius:3,
+              color: DIFF_COLOR[t.difficulty]||"var(--text-2)",
+              background:(DIFF_COLOR[t.difficulty]||"#888")+"18",
+              border:`1px solid ${(DIFF_COLOR[t.difficulty]||"#888")}30`,
+            }}>{t.difficulty}</div>
+          </div>
+
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:44,letterSpacing:".04em",lineHeight:1,marginBottom:16,color:"var(--text-0)"}}>
+            {t.name}
+          </div>
+
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-1)",lineHeight:1.7,marginBottom:24}}>
+            {t.about}
+          </div>
+
+          {/* Daily tasks */}
+          <div style={{marginBottom:24}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)"}}>
+                Daily tasks
+              </div>
+              <button onClick={()=>setEditTasks(e=>!e)} style={{background:"none",border:"1px solid var(--border-1)",borderRadius:4,padding:"3px 10px",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",textTransform:"uppercase",color:"var(--text-2)",cursor:"pointer"}}>
+                {editTasks ? "Done editing" : "Edit tasks"}
+              </button>
+            </div>
+            {!editTasks ? (
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {tasks.map((k,i)=>(
+                  <div key={k.id||i} style={{
+                    display:"flex",alignItems:"center",gap:10,
+                    background:"var(--bg-2)",border:"1px solid var(--border-1)",
+                    borderRadius:6,padding:"10px 14px",
+                  }}>
+                    <div style={{
+                      width:6,height:6,borderRadius:"50%",flexShrink:0,
+                      background: k.cat==="body"?"#D4922A":k.cat==="diet"?"#5DBF8A":k.cat==="mind"?"#4A8FD4":k.cat==="build"?"#BF5DBF":"var(--text-2)",
+                    }} />
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-0)",letterSpacing:".06em"}}>
+                      {k.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {tasks.map((tk,i)=>(
+                  <div key={tk.id||i} style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <input
+                      value={tk.label}
+                      onChange={e=>updateTask(tk.id||i, e.target.value)}
+                      placeholder={`Task ${i+1}`}
+                      style={{
+                        flex:1,background:"var(--bg-3)",border:"1px solid var(--border-1)",
+                        borderRadius:6,padding:"9px 12px",color:"var(--text-0)",
+                        fontFamily:"'IBM Plex Mono',monospace",fontSize:11,outline:"none",
+                      }}
+                    />
+                    {tasks.length > 1 && (
+                      <div onClick={()=>removeTask(tk.id||i)} style={{color:"var(--text-2)",cursor:"pointer",fontSize:12,padding:"4px 6px"}}>✕</div>
+                    )}
+                  </div>
+                ))}
+                <button onClick={addTask} style={{background:"none",border:"1px dashed var(--border-1)",borderRadius:6,padding:"9px",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",color:"var(--text-2)",cursor:"pointer",textAlign:"center"}}>
+                  + Add task
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Benefits */}
+          <div style={{marginBottom:24}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
+              What you'll build
+            </div>
+            {t.benefits.map(b=>(
+              <div key={b} style={{display:"flex",gap:10,marginBottom:8,alignItems:"flex-start"}}>
+                <span style={{color:"var(--accent)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:1}}>◆</span>
+                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>{b}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Best for */}
+          <div style={{
+            background:"var(--bg-2)",border:"1px solid var(--border-1)",
+            borderRadius:8,padding:"16px 20px",marginBottom:32,
+          }}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>
+              Best for
+            </div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>
+              {t.bestFor}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={()=>onStart(t, validTasks)}
+            style={{
+              width:"100%", padding:"16px", borderRadius:8,
+              background:"var(--accent)", color:"#080807",
+              fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".1em",
+              border:"none", cursor:"pointer",
+              boxShadow:"0 4px 0 rgba(0,0,0,.4)",
+              transition:"transform .1s, box-shadow .1s",
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 0 rgba(0,0,0,.4)";}}
+            onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 4px 0 rgba(0,0,0,.4)";}}
+          >
+            Start {t.name} — Day 1 Begins Now →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 
 // ============================================================
@@ -4625,12 +4842,64 @@ const Partners = ({ user, profile, challenges, sb }) => {
   );
 };
 
+const NavIcon = ({ d, d2, size=20, strokeW=1.5 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />{d2 && <path d={d2} />}
+  </svg>
+);
+
+// Dashboard — large panel left, two stacked right (classic dashboard layout)
+const IconDashboard = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="10" height="18" rx="1.5" />
+    <rect x="15" y="3" width="6" height="8" rx="1.5" />
+    <rect x="15" y="13" width="6" height="8" rx="1.5" />
+  </svg>
+);
+
+// Wall / Tracking — bar chart going up
+const IconTracking = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="21" x2="21" y2="21" />
+    <rect x="4" y="13" width="4" height="8" rx="0.5" />
+    <rect x="10" y="8" width="4" height="13" rx="0.5" />
+    <rect x="16" y="4" width="4" height="17" rx="0.5" />
+  </svg>
+);
+
+// Library — open book
+const IconLibrary = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 6c0-1.1.9-2 2-2h5c1.1 0 2 .5 3 1.5C13 4.5 14 4 15 4h5c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2h-5c-1 0-2 .4-3 1-1-.6-2-1-3-1H4c-1.1 0-2-.9-2-2V6z" />
+    <line x1="12" y1="5.5" x2="12" y2="20.5" />
+  </svg>
+);
+
+// Partners — two people
+const IconPartners = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="8" cy="7" r="3" />
+    <path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+    <circle cx="17" cy="7" r="3" />
+    <path d="M16 14c1-.4 2-.6 3-.4 2.5.5 4 2.7 4 5.4" />
+  </svg>
+);
+
+// Settings — gear with 8 teeth (classic cog)
+const IconSettings = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
 const NAV = [
-  { id:"home",     icon:"⬡", tip:"Dashboard"  },
-  { id:"wall",     icon:"▦", tip:"The Wall"    },
-  { id:"library",  icon:"◈", tip:"Library"     },
-  { id:"partners", icon:"⊕", tip:"Partners"    },
-  { id:"settings", icon:"◎", tip:"Settings"    },
+  { id:"home",     icon:<IconDashboard />, tip:"Dashboard"  },
+  { id:"wall",     icon:<IconTracking />,  tip:"The Wall"    },
+  { id:"library",  icon:<IconLibrary />,   tip:"Library"     },
+  { id:"partners", icon:<IconPartners />,  tip:"Partners"    },
+  { id:"settings", icon:<IconSettings />,  tip:"Settings"    },
 ];
 
 // ============================================================
@@ -4814,7 +5083,7 @@ const AuthScreen = ({ onAuthed }) => {
 // ============================================================
 // SETTINGS SCREEN (Supabase-wired: email, password, themes)
 // ============================================================
-const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile }) => {
+const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile, challenges, onDeleteChallenge, onDeleteAccount, sb }) => {
   const tones = ["Stoic","Coach","Drill Sergeant"];
   const [nameVal,     setNameVal]     = useState(userName);
   const [emailVal,    setEmailVal]    = useState("");
@@ -4822,6 +5091,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [pwConfirm,   setPwConfirm]   = useState("");
   const [saving,      setSaving]      = useState(false);
   const [msg,         setMsg]         = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { type:"challenge"|"account", id, name }
   // Feedback
   // Strava
   const [stravaLoading, setStravaLoading] = useState(false);
@@ -4875,6 +5145,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   };
 
   return (
+    <>
     <div className="page">
       <div className="a0"><div className="pg-tag">Preferences</div><div className="pg-title">Settings</div></div>
 
@@ -5084,21 +5355,80 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           </button>
         </div>
 
+        {/* Delete a Challenge */}
+        {(challenges?.main || (challenges?.secondary||[]).length > 0) && (
+          <div className="srow a5" style={{borderColor:"var(--err)30"}}>
+            <div className="srow-title" style={{color:"var(--err)"}}>Quit a Challenge</div>
+            <div className="srow-desc">Permanently delete a challenge and all its check-in data.</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
+              {[...(challenges?.main ? [challenges.main] : []), ...(challenges?.secondary||[])].map(ch=>(
+                <div key={ch.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:7,padding:"10px 14px"}}>
+                  <div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:".04em",color:"var(--text-0)"}}>{ch.name}</div>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",letterSpacing:".1em"}}>Day {ch.dayNum} of {ch.totalDays}</div>
+                  </div>
+                  <button className="btn btn-g" style={{borderColor:"var(--err)44",color:"var(--err)",fontSize:11}}
+                    onClick={()=>setConfirmDelete({type:"challenge",id:ch.id,name:ch.name})}>
+                    Quit
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Delete Account */}
         <div className="srow a5" style={{borderColor:"var(--err)50",background:"var(--err)08"}}>
           <div className="srow-title" style={{color:"var(--err)"}}>Delete Account</div>
           <div className="srow-desc">Permanently delete your account and all data. This cannot be undone.</div>
           <button className="btn btn-g" style={{borderColor:"var(--err)60",color:"var(--err)",background:"var(--err)12"}}
-            onClick={async()=>{
-              if (!window.confirm("To delete your account, email us at support@forge.app and we'll remove it within 24 hours.\n\nPress OK to be signed out now, or Cancel to stay.")) return;
-              if (sb) await sb.auth.signOut();
-            }}>
-            Request Account Deletion
+            onClick={()=>setConfirmDelete({type:"account",name:"your account"})}>
+            Delete Account
           </button>
         </div>
 
       </div>
     </div>
+
+    {/* Confirm modal */}
+    {confirmDelete && (
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}
+        onClick={()=>setConfirmDelete(null)}>
+        <div style={{background:"var(--bg-1)",border:"1px solid var(--err)44",borderRadius:12,padding:"32px 28px",maxWidth:400,width:"100%",textAlign:"center"}}
+          onClick={e=>e.stopPropagation()}>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--err)",marginBottom:12}}>
+            {confirmDelete.type === "challenge" ? "Quit Challenge" : "Delete Account"}
+          </div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:".04em",marginBottom:12,lineHeight:1.2}}>
+            {confirmDelete.type === "challenge"
+              ? `Are you sure you want to quit "${confirmDelete.name}"?`
+              : "Are you sure you want to delete your account?"}
+          </div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",lineHeight:1.6,marginBottom:28}}>
+            {confirmDelete.type === "challenge"
+              ? "All check-in data and progress for this challenge will be permanently deleted. This cannot be undone."
+              : "Your account, all challenges, and all data will be permanently deleted. This cannot be undone."}
+          </div>
+          <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+            <button className="btn btn-g" onClick={()=>setConfirmDelete(null)} style={{flex:1}}>
+              Cancel
+            </button>
+            <button className="btn btn-g" style={{flex:1,borderColor:"var(--err)60",color:"var(--err)",background:"var(--err)12"}}
+              onClick={async()=>{
+                if (confirmDelete.type === "challenge") {
+                  await onDeleteChallenge(confirmDelete.id);
+                } else {
+                  await onDeleteAccount();
+                }
+                setConfirmDelete(null);
+              }}>
+              {confirmDelete.type === "challenge" ? "Yes, Quit" : "Yes, Delete Everything"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
@@ -5269,18 +5599,23 @@ export default function App() {
   }, [profile]);
 
   // Route based on auth state
+  // stage is intentionally excluded from deps — prevents overwriting manual
+  // stage transitions like onboarding steps advancing
   useEffect(() => {
-    if (user === undefined) return; // still loading
+    if (user === undefined) return;
     if (!user) {
-      // Not logged in — go to auth (unless loader is still showing, let it finish)
-      if (stage !== "loader") setStage("auth");
+      setStage(s => s === "loader" ? s : "auth");
       return;
     }
-    // Logged in — only advance if we're NOT in the loader (loader calls onDone itself)
-    if (stage === "loader") return;
-    if (profile && !profile.onboarded) setStage("ob_why");
-    else setStage("app");
-  }, [user, profile, stage]);
+    // Only auto-route from loader or auth — never interrupt onboarding screens
+    setStage(s => {
+      if (s === "loader" || s === "auth") {
+        if (profile && !profile.onboarded) return "ob_why";
+        if (profile && profile.onboarded)  return "app";
+      }
+      return s;
+    });
+  }, [user, profile]);
 
   const toggle = (key) => {
     setKpis(p => {
@@ -5309,7 +5644,7 @@ export default function App() {
     setStage("loader");
   };
 
-  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary }) => {
+  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary, tag }) => {
     if (!user?.id || !sb) return;
     try {
       // Archive existing main if replacing
@@ -5321,7 +5656,7 @@ export default function App() {
       const { data: chRow, error: chErr } = await sb.from("challenges").insert({
         user_id:    user.id,
         name,
-        tag:        "CUSTOM",
+        tag:        tag || "CUSTOM",
         total_days: parseInt(days),
         streak:     0,
         consistency:100,
@@ -5333,13 +5668,14 @@ export default function App() {
 
       if (chErr || !chRow) throw chErr;
 
-      // Insert tasks
+      // Insert tasks — nonNeg may be array or false
+      const nonNegArr = Array.isArray(nonNeg) ? nonNeg : [];
       const kpis = tasks.map((t, i) => ({
         challenge_id: chRow.id,
         key:          `task_${chRow.id}_${i}`,
         label:        t.label,
         cat:          t.cat || "other",
-        non_neg:      nonNeg.includes(t.id),
+        non_neg:      nonNegArr.includes(t.id),
         sort_order:   i,
       }));
       if (kpis.length > 0) await sb.from("challenge_tasks").insert(kpis);
@@ -5350,6 +5686,32 @@ export default function App() {
 
     } catch(e) { console.warn("handleStartChallenge:", e); }
     setModal(null); setLibModal(false);
+  };
+
+  const handleDeleteChallenge = async (challengeId) => {
+    if (!sb || !user) return;
+    try {
+      await sb.from("challenge_tasks").delete().eq("challenge_id", challengeId);
+      await sb.from("checkins").delete().eq("challenge_id", challengeId);
+      await sb.from("challenges").delete().eq("id", challengeId);
+      await loadChallenges(user.id);
+    } catch(e) { console.warn("delete challenge:", e); }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!sb || !user) return;
+    try {
+      // Delete all user data
+      const cids = [...(challenges.main ? [challenges.main.id] : []), ...(challenges.secondary||[]).map(c=>c.id)];
+      for (const cid of cids) {
+        await sb.from("challenge_tasks").delete().eq("challenge_id", cid);
+        await sb.from("checkins").delete().eq("challenge_id", cid);
+        await sb.from("challenges").delete().eq("id", cid);
+      }
+      await sb.from("partnerships").delete().or(`user_id.eq.${user.id},partner_id.eq.${user.id}`);
+      await sb.from("profiles").delete().eq("id", user.id);
+      await sb.auth.signOut();
+    } catch(e) { console.warn("delete account:", e); }
   };
 
   const handleLibPick = (tpl, isSecondary) => {
@@ -5549,16 +5911,17 @@ export default function App() {
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
-    if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} />;
+    if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
   };
 
   // ── Stage routing ─────────────────────────────────────────
   // authReady = Supabase has resolved the session (user is no longer undefined)
   if (stage==="loader")    return <Entry authReady={user !== undefined} mode={loaderMode} onDone={()=>{ if(!user) setStage("auth"); else if(profile&&!profile.onboarded) setStage("ob_why"); else setStage("app"); }} />;
   if (stage==="auth")      return <AuthScreen onAuthed={handleAuthed} />;
-  if (stage==="ob_why")    return <OnboardWhy   onNext={()=>setStage("ob_who")}    onSkip={handleOnboardDone} />;
-  if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")} onSkip={handleOnboardDone} />;
-  if (stage==="ob_induct") return <OnboardInduct onDone={handleOnboardDone} userName={userName} />;
+  if (stage==="ob_why")    return <OnboardWhy   onNext={()=>setStage("ob_who")}      onSkip={handleOnboardDone} />;
+  if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")}   onSkip={handleOnboardDone} />;
+  if (stage==="ob_induct") return <OnboardInduct onDone={()=>setStage("ob_challenge")} userName={userName} />;
+  if (stage==="ob_challenge") return <OnboardChallenge onStart={(t, customTasks)=>{ handleStartChallenge({ name:t.name, days:t.duration, mission:"", nonNeg:[], tasks:customTasks||t.kpis, isSecondary:false, tag:t.tag }); handleOnboardDone(); }} onSkip={handleOnboardDone} />;
   if (dw)                  return <DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} />;
 
   return (
