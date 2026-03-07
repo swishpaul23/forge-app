@@ -85,11 +85,51 @@ const TASK_CATEGORIES = {
 };
 
 const TEMPLATES = [
-  { id: "75hard",  name: "75 HARD",          duration: 75, tag: "ENDURANCE",   kpis: [{ key: "w1", label: "Workout 1 — 45min", cat:"body" },{ key: "w2", label: "Workout 2 — 45min", cat:"body" },{ key: "diet", label: "Stick to diet", cat:"diet" },{ key: "water", label: "1 gallon water", cat:"diet" },{ key: "read", label: "Read 10 pages", cat:"mind" },{ key: "photo", label: "Progress photo", cat:"other" }] },
-  { id: "30day",   name: "30 DAY HARD",       duration: 30, tag: "FOUNDATION",  kpis: [{ key: "workout", label: "Workout", cat:"body" },{ key: "diet", label: "Clean eating", cat:"diet" },{ key: "mindset", label: "Mindset work", cat:"mind" }] },
-  { id: "10apps",  name: "10 APPS / 10 DAYS", duration: 10, tag: "BUILDER",    kpis: [{ key: "shipped", label: "App shipped", cat:"build" },{ key: "deployed", label: "Deployed live", cat:"build" },{ key: "docs", label: "Documented", cat:"build" }] },
-  { id: "noai",    name: "30 DAYS NO AI",      duration: 30, tag: "DISCIPLINE", kpis: [{ key: "no_ai", label: "Zero AI used", cat:"mind" },{ key: "dw", label: "2hr deep work", cat:"build" }] },
-  { id: "custom",  name: "CUSTOM",             duration: 30, tag: "YOUR RULES", kpis: [] },
+  {
+    id: "75hard", name: "75 HARD", duration: 75, tag: "ENDURANCE",
+    kpis: [{ key:"w1",label:"Workout 1 — 45min",cat:"body"},{key:"w2",label:"Workout 2 — 45min",cat:"body"},{key:"diet",label:"Stick to diet",cat:"diet"},{key:"water",label:"1 gallon water",cat:"diet"},{key:"read",label:"Read 10 pages",cat:"mind"},{key:"photo",label:"Progress photo",cat:"other"}],
+    blurb: "Two-a-day workouts, strict diet, 1 gallon of water, 10 pages of reading. Every day. No days off.",
+    about: "75 Hard is a mental toughness program built by Andy Frisella. The premise is simple: complete five daily tasks for 75 consecutive days with zero compromise. Miss a single day and you restart from day one. There are no substitutions, no scaled versions, no excuses.",
+    benefits: ["Builds ironclad daily discipline", "Significant physical transformation", "Proven mental resilience framework", "Develops non-negotiation with yourself"],
+    bestFor: "People who need an external framework to force the habit of showing up. Especially effective if you've tried and quit challenges before.",
+    difficulty: "Hard",
+  },
+  {
+    id: "30day", name: "30 DAY HARD", duration: 30, tag: "FOUNDATION",
+    kpis: [{key:"workout",label:"Workout",cat:"body"},{key:"diet",label:"Clean eating",cat:"diet"},{key:"mindset",label:"Mindset work",cat:"mind"}],
+    blurb: "The accessible entry point. 30 days of workouts, clean eating, and mindset work. Build the foundation.",
+    about: "A stripped-back version of the 75 Hard structure, designed for people who are building habits from scratch or coming back after a long break. Three tasks daily for 30 days — enough to feel the compound effect without the extreme commitment.",
+    benefits: ["Entry-level structure for beginners", "Builds the three pillars: body, diet, mind", "Short enough to commit to fully", "Establishes baseline discipline"],
+    bestFor: "First-time challengers, people returning from injury or burnout, or anyone who wants a clear 30-day reset.",
+    difficulty: "Moderate",
+  },
+  {
+    id: "10apps", name: "10 APPS / 10 DAYS", duration: 10, tag: "BUILDER",
+    kpis: [{key:"shipped",label:"App shipped",cat:"build"},{key:"deployed",label:"Deployed live",cat:"build"},{key:"docs",label:"Documented",cat:"build"}],
+    blurb: "Ship one working, deployed app every single day for 10 days. Speed over perfection.",
+    about: "A builder's sprint designed to break perfectionism and force rapid shipping. Each day you must design, build, deploy, and document a working app. The constraints are the point — you learn more shipping 10 imperfect things than agonising over one perfect one.",
+    benefits: ["Destroys perfectionism fast", "Forces scope discipline", "Builds a portfolio in 10 days", "Rapid skill compression under pressure"],
+    bestFor: "Developers who overthink, people learning to build, or anyone who wants to prove to themselves they can actually ship.",
+    difficulty: "Intense",
+  },
+  {
+    id: "noai", name: "30 DAYS NO AI", duration: 30, tag: "DISCIPLINE",
+    kpis: [{key:"no_ai",label:"Zero AI used",cat:"mind"},{key:"dw",label:"2hr deep work",cat:"build"}],
+    blurb: "No AI tools for 30 days. Two hours of uninterrupted deep work daily. Rebuild your raw thinking.",
+    about: "A cognitive recalibration challenge. In a world where AI handles first drafts, debugging, and decision support, this forces you to operate without the crutch. Pair it with mandatory deep work sessions and you'll remember what your brain is actually capable of.",
+    benefits: ["Rediscovers raw problem-solving ability", "Rebuilds deep focus capacity", "Exposes AI dependency blind spots", "Strengthens independent thinking"],
+    bestFor: "Developers, writers, and knowledge workers who've noticed their thinking has gotten shallower or their tolerance for hard problems has dropped.",
+    difficulty: "Moderate",
+  },
+  {
+    id: "custom", name: "CUSTOM", duration: 30, tag: "YOUR RULES",
+    kpis: [],
+    blurb: "Define your own daily tasks, your own duration, your own rules. Built entirely around your goals.",
+    about: "No template fits every person. Custom lets you define exactly what you're committing to — whether that's language learning, sobriety, creative output, athletic training, or anything else. You set the tasks, you set the duration, you set the standard.",
+    benefits: ["Fully tailored to your specific goal", "No irrelevant tasks diluting your focus", "Can be as hard or as focused as you need", "Grows with you over multiple challenges"],
+    bestFor: "Anyone with a clear goal that doesn't fit the pre-built templates. Also good for veterans who've finished other challenges and want to design their next level.",
+    difficulty: "You decide",
+  },
 ];
 
 // ============================================================
@@ -347,7 +387,7 @@ const makeCSS = () => `
     position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
     background:var(--bg-3); border:1px solid var(--border-1);
     border-radius:5px; padding:4px 10px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em;
     color:var(--text-0); white-space:nowrap;
     opacity:0; pointer-events:none; transition:opacity .15s;
   }
@@ -355,7 +395,7 @@ const makeCSS = () => `
 
   .rail-foot { margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:2px; }
   .rail-streak-n { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--warn); line-height:1; }
-  .rail-streak-l { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-2); letter-spacing:.1em; text-transform:uppercase; }
+  .rail-streak-l { font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--text-2); letter-spacing:.1em; text-transform:uppercase; }
 
   /* MAIN AREA */
   .main { margin-left:58px; flex:1; display:flex; flex-direction:column; min-width:0; overflow-x:hidden; }
@@ -367,14 +407,14 @@ const makeCSS = () => `
     padding:0 28px; background:var(--bg-0);
     position:sticky; top:0; z-index:50;
   }
-  .topbar-date { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-2); letter-spacing:.06em; }
+  .topbar-date { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-2); letter-spacing:.06em; }
   .topbar-r { display:flex; align-items:center; gap:10px; }
 
   .lvl-chip {
     display:flex; align-items:center; gap:6px;
     padding:4px 11px; border-radius:4px;
     border:1px solid var(--border-1);
-    font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em;
     cursor:pointer; transition:border-color .18s;
   }
   .lvl-chip:hover { border-color:var(--border-accent); }
@@ -384,13 +424,13 @@ const makeCSS = () => `
   .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; }
 
   /* PAGE HEADER */
-  .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
+  .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
   .pg-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,6vw,60px); letter-spacing:.02em; line-height:0.95; }
   .pg-sub   { font-size:15px; color:var(--text-1); margin-top:8px; }
 
   /* SECTION LABEL */
   .slabel {
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
     letter-spacing:.18em; text-transform:uppercase; color:var(--text-2);
     margin-bottom:12px;
   }
@@ -398,7 +438,7 @@ const makeCSS = () => `
   /* DIVIDER WITH LABEL */
   .dv-label {
     display:flex; align-items:center; gap:12px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.18em;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.18em;
     text-transform:uppercase; color:var(--text-2);
     margin:26px 0 14px;
   }
@@ -442,7 +482,7 @@ const makeCSS = () => `
   }
   .stat-l {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
+    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
     margin-top:3px;
   }
 
@@ -494,7 +534,7 @@ const makeCSS = () => `
   }
   .task-cat-tag {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
     padding:3px 8px; border-radius:3px;
     font-weight:500; flex-shrink:0;
     border:1px solid;
@@ -526,7 +566,7 @@ const makeCSS = () => `
   }
   .task-done-stamp {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
     opacity:0; transform:translateX(6px);
     transition:all .2s;
   }
@@ -547,7 +587,7 @@ const makeCSS = () => `
   }
   .ring-sub  {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
     color:var(--text-2); margin-top:2px;
   }
   .ring-cats { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
@@ -614,7 +654,7 @@ const makeCSS = () => `
   .oc-card:hover { border-color:var(--border-accent); }
   .oc-bar-wrap { flex:1; }
   .oc-name { font-size:15px; font-weight:500; margin-bottom:5px; }
-  .oc-meta { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-2); letter-spacing:.08em; margin-bottom:8px; }
+  .oc-meta { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--text-2); letter-spacing:.08em; margin-bottom:8px; }
   .oc-track { height:2px; background:var(--bg-3); border-radius:1px; overflow:hidden; }
   .oc-fill  { height:100%; border-radius:1px; transition:width .8s cubic-bezier(.4,0,.2,1); }
   .oc-pct   { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.02em; line-height:1; flex-shrink:0; }
@@ -640,7 +680,7 @@ const makeCSS = () => `
   }
   .ai-block-label {
     display:flex; align-items:center; gap:8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
     letter-spacing:.2em; text-transform:uppercase; color:var(--accent);
   }
   .ai-dot {
@@ -662,7 +702,7 @@ const makeCSS = () => `
     margin-top:14px; padding-top:12px;
     border-top:1px solid var(--border-0);
   }
-  .ai-timestamp { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-2); letter-spacing:.06em; }
+  .ai-timestamp { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--text-2); letter-spacing:.06em; }
 
   /* MISSION ANCHOR (shown on checklist) */
   .mission-anchor {
@@ -688,7 +728,7 @@ const makeCSS = () => `
   }
   .wstep {
     display:flex; align-items:center; gap:8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
     letter-spacing:.12em; text-transform:uppercase;
     color:var(--text-2); padding:6px 0;
   }
@@ -751,7 +791,7 @@ const makeCSS = () => `
   }
   .jarvis-tag {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.28em; text-transform:uppercase;
     color:var(--text-2); margin-bottom:6px;
   }
   .jarvis-greeting {
@@ -777,7 +817,7 @@ const makeCSS = () => `
   }
   .jarvis-status-text {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--text-2);
   }
 
@@ -829,7 +869,7 @@ const makeCSS = () => `
 
   .arena-main-crown {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
     color:var(--accent); margin-bottom:12px;
     display:flex; align-items:center; gap:7px;
   }
@@ -842,7 +882,7 @@ const makeCSS = () => `
   }
   .arena-main-meta {
     font-family:'IBM Plex Mono',monospace;
-    font-size:10px; color:var(--text-1); letter-spacing:.08em;
+    font-size:10.5px; color:var(--text-1); letter-spacing:.08em;
     margin-bottom:20px;
   }
   .arena-main-stats {
@@ -855,7 +895,7 @@ const makeCSS = () => `
   }
   .arena-ms-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
+    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
   }
   .arena-ms-divider {
     width:1px; height:48px; background:var(--border-1); flex-shrink:0;
@@ -875,7 +915,7 @@ const makeCSS = () => `
   .arena-sec:hover { border-color:var(--border-1); transform:translateY(-1px); }
   .arena-sec-tag {
     font-family:'IBM Plex Mono',monospace;
-    font-size:7px; letter-spacing:.18em; text-transform:uppercase;
+    font-size:7.5px; letter-spacing:.18em; text-transform:uppercase;
     margin-bottom:6px;
   }
   .arena-sec-name {
@@ -885,7 +925,7 @@ const makeCSS = () => `
   }
   .arena-sec-meta {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; color:var(--text-2); letter-spacing:.06em;
+    font-size:8.5px; color:var(--text-2); letter-spacing:.06em;
     margin-bottom:8px;
   }
   .arena-sec-bar { height:2px; background:var(--bg-3); border-radius:1px; overflow:hidden; }
@@ -911,7 +951,7 @@ const makeCSS = () => `
   .arena-slot:hover .arena-slot-icon { color:var(--accent); }
   .arena-slot-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.16em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase;
     color:var(--text-2); transition:color .18s;
   }
   .arena-slot:hover .arena-slot-label { color:var(--accent); }
@@ -928,13 +968,13 @@ const makeCSS = () => `
   }
   .cin-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
     color:var(--text-2); margin-right:4px; flex-shrink:0;
   }
   .cin-btn {
     display:flex; align-items:center; gap:5px;
     padding:5px 12px; border-radius:5px;
-    font-family:'IBM Plex Mono',monospace; font-size:9px;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
     letter-spacing:.1em; text-transform:uppercase;
     cursor:pointer; transition:all .15s; border:1px solid transparent;
     background:transparent; color:var(--text-2);
@@ -955,7 +995,7 @@ const makeCSS = () => `
   .scaled-icon { font-size:15px; flex-shrink:0; margin-top:2px; }
   .scaled-title {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
     color:#D4B22A; margin-bottom:3px;
   }
   .scaled-desc { font-size:14px; color:var(--text-1); line-height:1.5; }
@@ -968,7 +1008,7 @@ const makeCSS = () => `
   }
   .recovery-title {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
     color:#4A8FD4; margin-bottom:3px;
   }
 
@@ -981,7 +1021,7 @@ const makeCSS = () => `
   }
   .recovery-modal-tag {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
     color:#4A8FD4; margin-bottom:8px;
   }
   .recovery-modal-title {
@@ -1001,13 +1041,13 @@ const makeCSS = () => `
   .recovery-path-icon { font-size:20px; flex-shrink:0; }
   .recovery-path-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
     margin-bottom:4px;
   }
   .recovery-path-desc { font-size:14px; color:var(--text-1); line-height:1.5; }
   .recovery-used-note {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; color:var(--text-2); letter-spacing:.08em;
+    font-size:9.5px; color:var(--text-2); letter-spacing:.08em;
     text-align:center; margin-top:14px;
   }
 
@@ -1035,12 +1075,74 @@ const makeCSS = () => `
   .tpl {
     background:var(--bg-1); border:1px solid var(--border-0);
     border-radius:10px; padding:18px;
-    cursor:pointer; transition:all .18s; overflow:hidden;
+    cursor:pointer; transition:border-color .18s; overflow:hidden;
+    position:relative;
   }
-  .tpl:hover { border-color:var(--accent-mid); transform:translateY(-2px); }
-  .tpl-tag  { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.2em; color:var(--accent); margin-bottom:8px; text-transform:uppercase; }
+  .tpl:hover { border-color:var(--accent-mid); }
+  .tpl.active { border-color:var(--accent); }
+  .tpl-tag  { font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.2em; color:var(--accent); margin-bottom:8px; text-transform:uppercase; }
   .tpl-name { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:.04em; line-height:1; margin-bottom:6px; }
   .tpl-desc { font-size:14px; color:var(--text-1); line-height:1.55; }
+
+  /* HOVER TOOLTIP */
+  .tpl-tooltip {
+    position:absolute; bottom:calc(100% + 8px); left:0;
+    width:260px; z-index:40;
+    background:var(--bg-3); border:1px solid var(--border-accent);
+    border-radius:9px; padding:14px 16px;
+    pointer-events:none;
+    opacity:0; transform:translateY(4px);
+    transition:opacity .15s, transform .15s;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+  }
+  .tpl:hover .tpl-tooltip {
+    opacity:1; transform:translateY(0);
+  }
+  .tpl-tooltip-text {
+    font-size:13px; color:var(--text-1); line-height:1.6;
+  }
+  .tpl-tooltip-diff {
+    font-family:'IBM Plex Mono',monospace; font-size:8px;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:8px;
+  }
+
+  /* DETAIL PANEL */
+  .lib-detail {
+    position:sticky; top:24px;
+    background:var(--bg-1); border:1px solid var(--border-accent);
+    border-radius:12px; padding:28px;
+    animation:fadein .2s ease;
+  }
+  .lib-detail-tag {
+    font-family:'IBM Plex Mono',monospace; font-size:8.5px;
+    letter-spacing:.22em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:10px;
+  }
+  .lib-detail-name {
+    font-family:'Bebas Neue',sans-serif; font-size:44px;
+    letter-spacing:.04em; line-height:1; margin-bottom:12px;
+  }
+  .lib-detail-about {
+    font-size:14px; color:var(--text-1); line-height:1.7;
+    margin-bottom:20px;
+  }
+  .lib-detail-section {
+    font-family:'IBM Plex Mono',monospace; font-size:8.5px;
+    letter-spacing:.2em; text-transform:uppercase;
+    color:var(--text-2); margin-bottom:8px; margin-top:18px;
+  }
+  .lib-detail-benefit {
+    display:flex; align-items:flex-start; gap:10px;
+    font-size:13.5px; color:var(--text-0); line-height:1.5;
+    padding:6px 0; border-bottom:1px solid var(--border-0);
+  }
+  .lib-detail-benefit:last-child { border-bottom:none; }
+  .lib-detail-best {
+    font-size:13.5px; color:var(--text-1); line-height:1.65;
+    background:var(--bg-2); border-radius:8px; padding:12px 14px;
+    margin-top:4px;
+  }
 
   /* SETTINGS */
   .srow { background:var(--bg-1); border:1px solid var(--border-0); border-radius:10px; padding:22px; }
@@ -1059,7 +1161,7 @@ const makeCSS = () => `
     width:100%; outline:none; transition:border-color .15s;
   }
   .field:focus { border-color:var(--accent-mid); }
-  .field-l { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
+  .field-l { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
 
   /* MODAL */
   .overlay {
@@ -1074,7 +1176,7 @@ const makeCSS = () => `
     max-height:82vh; overflow-y:auto;
     animation:scalein .3s ease;
   }
-  .modal-tag   { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  .modal-tag   { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
   .modal-title { font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:.04em; margin-bottom:4px; }
   .modal-desc  { font-size:14px; color:var(--text-1); margin-bottom:22px; line-height:1.55; }
 
@@ -1085,7 +1187,7 @@ const makeCSS = () => `
     align-items:center; justify-content:center;
     animation:fadein .4s ease;
   }
-  .dw-tag { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--text-2); margin-bottom:36px; }
+  .dw-tag { font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--text-2); margin-bottom:36px; }
   .dw-timer { font-family:'Bebas Neue',sans-serif; font-size:clamp(88px,14vw,148px); color:var(--accent); letter-spacing:.04em; line-height:1; }
 
   /* ENTRY */
@@ -1096,7 +1198,7 @@ const makeCSS = () => `
     animation:fadein .3s ease;
   }
   .entry-mark { font-family:'Bebas Neue',sans-serif; font-size:80px; color:var(--accent); letter-spacing:.1em; animation:up .6s ease both; }
-  .entry-tag  { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.35em; text-transform:uppercase; color:var(--text-2); animation:up .6s .1s ease both; margin-top:2px; }
+  .entry-tag  { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.35em; text-transform:uppercase; color:var(--text-2); animation:up .6s .1s ease both; margin-top:2px; }
   .entry-line { width:150px; height:1px; background:var(--bg-3); margin-top:48px; animation:up .6s .2s ease both; overflow:hidden; }
   .entry-fill { height:1px; background:var(--accent); animation:grow 2s ease forwards; }
 
@@ -1143,7 +1245,7 @@ const makeCSS = () => `
   }
   .sb-card-l {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
+    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
   }
   .sb-trophy-row {
     display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;
@@ -1158,7 +1260,7 @@ const makeCSS = () => `
   .sb-trophy:hover { border-color:var(--border-accent); }
   .sb-trophy-icon { font-size:16px; }
   .sb-trophy-name { font-size:13px; color:var(--text-0); font-weight:500; }
-  .sb-trophy-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); letter-spacing:.06em; }
+  .sb-trophy-meta { font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--text-2); letter-spacing:.06em; }
 
   /* CHALLENGE DETAIL MODAL */
   .cdm {
@@ -1186,7 +1288,7 @@ const makeCSS = () => `
   }
   .cdm-tag {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.22em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.22em; text-transform:uppercase;
     color:var(--accent); margin-bottom:8px;
     position:relative; z-index:1;
   }
@@ -1197,7 +1299,7 @@ const makeCSS = () => `
   }
   .cdm-meta {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; color:var(--text-1); letter-spacing:.08em;
+    font-size:9.5px; color:var(--text-1); letter-spacing:.08em;
     margin-bottom:16px; position:relative; z-index:1;
   }
   .cdm-stats { display:flex; gap:20px; position:relative; z-index:1; }
@@ -1207,19 +1309,19 @@ const makeCSS = () => `
   }
   .cdm-stat-l {
     font-family:'IBM Plex Mono',monospace;
-    font-size:7px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2);
+    font-size:7.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2);
   }
   .cdm-body { padding:24px 28px; }
   .cdm-section { margin-bottom:24px; }
   .cdm-section-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.2em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.2em; text-transform:uppercase;
     color:var(--text-2); margin-bottom:12px;
     display:flex; align-items:center; justify-content:space-between;
   }
   .cdm-edit-btn {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--accent); cursor:pointer; transition:opacity .15s;
     background:none; border:none; padding:0;
   }
@@ -1247,12 +1349,12 @@ const makeCSS = () => `
   .cdm-task-label { flex:1; font-size:15px; }
   .cdm-task-cat {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.12em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.12em; text-transform:uppercase;
     padding:2px 7px; border-radius:3px; border:1px solid; flex-shrink:0;
   }
   .cdm-nn-badge {
     font-family:'IBM Plex Mono',monospace;
-    font-size:7px; letter-spacing:.12em; text-transform:uppercase;
+    font-size:7.5px; letter-spacing:.12em; text-transform:uppercase;
     color:var(--warn); border:1px solid var(--warn); border-radius:3px; padding:2px 5px;
   }
 
@@ -1265,7 +1367,7 @@ const makeCSS = () => `
   .lib-mode-btn {
     padding:9px 20px;
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
     cursor:pointer; transition:all .18s;
     color:var(--text-2); background:transparent; border:none;
   }
@@ -1324,7 +1426,7 @@ const makeCSS = () => `
   }
   .auth-quote-attr {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
     color:var(--text-2);
   }
   .auth-left-logo {
@@ -1344,7 +1446,7 @@ const makeCSS = () => `
   }
   .auth-stat-l {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--text-2); margin-top:2px;
   }
 
@@ -1359,7 +1461,7 @@ const makeCSS = () => `
   }
   .auth-form-tag {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.28em; text-transform:uppercase;
     color:var(--accent); margin-bottom:8px;
   }
   .auth-form-title {
@@ -1379,7 +1481,7 @@ const makeCSS = () => `
   .auth-tab {
     flex:1; padding:11px 0; text-align:center;
     font-family:'IBM Plex Mono',monospace;
-    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
     cursor:pointer; transition:all .18s;
     color:var(--text-2); background:transparent; border:none;
   }
@@ -1390,7 +1492,7 @@ const makeCSS = () => `
   .auth-divider {
     text-align:center; margin:20px 0;
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.18em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.18em; text-transform:uppercase;
     color:var(--text-2); position:relative;
   }
   .auth-divider::before, .auth-divider::after {
@@ -1443,7 +1545,7 @@ const makeCSS = () => `
   /* Scroll hint arrow */
   .ob-scroll-hint {
     font-family:"IBM Plex Mono",monospace;
-    font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
     color:var(--text-2);
     display:flex; flex-direction:column; align-items:center; gap:4px;
     animation:bounce 1.8s ease-in-out infinite;
@@ -1465,7 +1567,7 @@ const makeCSS = () => `
   /* SCREEN 1 — Why You're Here */
   .ob-eyebrow {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.32em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.32em; text-transform:uppercase;
     color:var(--accent); margin-bottom:16px;
     animation:up .5s ease both;
   }
@@ -1547,7 +1649,7 @@ const makeCSS = () => `
   }
   .ob-not-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.2em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.2em; text-transform:uppercase;
     color:var(--err); margin-bottom:10px;
   }
   .ob-not-list {
@@ -1582,7 +1684,7 @@ const makeCSS = () => `
   }
   .ob-oath-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8px; letter-spacing:.24em; text-transform:uppercase;
+    font-size:8.5px; letter-spacing:.24em; text-transform:uppercase;
     color:var(--accent); margin-bottom:16px;
     display:flex; align-items:center; gap:8px;
   }
@@ -1633,7 +1735,7 @@ const makeCSS = () => `
   .ob-next-btn:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.4); }
   .ob-skip {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
     color:var(--text-2); cursor:pointer; transition:color .15s;
   }
   .ob-skip:hover { color:var(--text-1); }
@@ -1641,7 +1743,7 @@ const makeCSS = () => `
   /* STRAVA VERIFIED BADGE */
   .strava-badge {
     display:inline-flex; align-items:center; gap:4px;
-    font-family:'IBM Plex Mono',monospace; font-size:7px;
+    font-family:'IBM Plex Mono',monospace; font-size:7.5px;
     letter-spacing:.1em; text-transform:uppercase;
     color:#FC4C02; background:#FC4C0218;
     border:1px solid #FC4C0244; border-radius:4px;
@@ -3319,7 +3421,13 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }) => {
 // LIBRARY
 // ============================================================
 const Library = ({ onPick, isSecondaryMode, onClose }) => {
-  const [mode, setMode] = useState(isSecondaryMode ? "secondary" : "main");
+  const [mode,   setMode]   = useState(isSecondaryMode ? "secondary" : "main");
+  const [active, setActive] = useState(null); // selected template for detail panel
+
+  const selected = TEMPLATES.find(t => t.id === active);
+  const isSecMode = mode === "secondary" || isSecondaryMode;
+
+  const DIFF_COLOUR = { "Hard":"var(--err)", "Intense":"var(--warn)", "Moderate":"var(--ok)", "You decide":"var(--text-2)" };
 
   return (
     <div className={isSecondaryMode ? "" : "page"} style={isSecondaryMode ? { padding:"28px" } : {}}>
@@ -3345,18 +3453,89 @@ const Library = ({ onPick, isSecondaryMode, onClose }) => {
         </div>
       )}
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10, marginTop: isSecondaryMode ? 0 : 4 }}>
-        {TEMPLATES.map((t,i) => (
-          <div key={t.id} className={`tpl a${Math.min(i+1,5)}`}
-            onClick={() => onPick(t, mode === "secondary" || isSecondaryMode)}>
-            <div className="tpl-tag">{t.tag} · {t.duration}D</div>
-            <div className="tpl-name">{t.name}</div>
-            <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
-            <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".14em", textTransform:"uppercase", color:"var(--accent)", opacity:.8 }}>
-              {mode === "secondary" || isSecondaryMode ? "→ Add as Secondary" : "→ Set as Main"}
+      {/* Two-column layout: cards left, detail right */}
+      <div style={{ display:"grid", gridTemplateColumns: selected ? "1fr 1fr" : "1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"start" }}>
+
+        {/* Cards grid */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10 }}>
+          {TEMPLATES.map((t,i) => (
+            <div key={t.id}
+              className={`tpl a${Math.min(i+1,5)} ${active===t.id?"active":""}`}
+              onClick={() => setActive(prev => prev === t.id ? null : t.id)}>
+
+              {/* Hover tooltip */}
+              <div className="tpl-tooltip">
+                <div className="tpl-tooltip-diff" style={{ color: DIFF_COLOUR[t.difficulty] || "var(--accent)" }}>
+                  {t.difficulty} · {t.duration} days
+                </div>
+                <div className="tpl-tooltip-text">{t.blurb}</div>
+              </div>
+
+              <div className="tpl-tag">{t.tag} · {t.duration}D</div>
+              <div className="tpl-name">{t.name}</div>
+              <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
+              <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
+                {active === t.id ? "↑ Close" : "→ Learn more"}
+              </div>
             </div>
+          ))}
+        </div>
+
+        {/* Detail panel — only when a card is selected */}
+        {selected && (
+          <div className="lib-detail">
+            {/* CTA at top */}
+            <button className="btn btn-a w100"
+              style={{ justifyContent:"center", marginBottom:22, fontSize:15, padding:"12px 0" }}
+              onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
+              {isSecMode ? `+ Start "${selected.name}" as Secondary` : `→ Start "${selected.name}"`}
+            </button>
+
+            <div className="lib-detail-tag">{selected.tag} · {selected.duration} days</div>
+            <div className="lib-detail-name">{selected.name}</div>
+
+            {/* Difficulty badge */}
+            <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:16,
+              fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em",
+              textTransform:"uppercase", background:"var(--bg-2)", border:"1px solid var(--border-1)",
+              borderRadius:6, padding:"4px 10px" }}>
+              <div style={{ width:6, height:6, borderRadius:"50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink:0 }} />
+              <span style={{ color: DIFF_COLOUR[selected.difficulty] || "var(--accent)" }}>{selected.difficulty}</span>
+            </div>
+
+            <div className="lib-detail-about">{selected.about}</div>
+
+            <div className="lib-detail-section">Benefits</div>
+            {selected.benefits.map((b,i) => (
+              <div key={i} className="lib-detail-benefit">
+                <span style={{ color:"var(--accent)", marginTop:2, flexShrink:0 }}>◆</span>
+                <span>{b}</span>
+              </div>
+            ))}
+
+            <div className="lib-detail-section">Best For</div>
+            <div className="lib-detail-best">{selected.bestFor}</div>
+
+            {selected.kpis.length > 0 && (
+              <>
+                <div className="lib-detail-section">Daily Tasks</div>
+                {selected.kpis.map(k => (
+                  <div key={k.key} style={{ fontSize:13, color:"var(--text-1)", padding:"5px 0",
+                    borderBottom:"1px solid var(--border-0)", display:"flex", gap:8 }}>
+                    <span style={{ color:"var(--text-3)" }}>—</span>{k.label}
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Second CTA at bottom for long panels */}
+            <button className="btn btn-a w100"
+              style={{ justifyContent:"center", marginTop:22, fontSize:15, padding:"12px 0" }}
+              onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
+              {isSecMode ? `+ Start as Secondary` : `→ Start Challenge`}
+            </button>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
