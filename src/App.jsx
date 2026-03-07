@@ -4686,10 +4686,14 @@ const Partners = ({ user, profile, challenges, sb }) => {
         .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
         .order("created_at", { ascending: true }).limit(100);
       const confirmed = data || [];
-      // Merge: keep any optimistic messages not yet confirmed in DB
+      // Merge: keep optimistic messages for THIS partner not yet confirmed in DB
       setMessages(prev => {
         const confirmedIds = new Set(confirmed.map(m => m.id));
-        const stillPending = prev.filter(m => String(m.id).startsWith("opt-") && !confirmedIds.has(m.id));
+        const stillPending = prev.filter(m =>
+          String(m.id).startsWith("opt-") &&
+          !confirmedIds.has(m.id) &&
+          m.to_user_id === partnerId
+        );
         return [...confirmed, ...stillPending];
       });
       await sb.from("partner_messages").update({ read: true })
@@ -4700,16 +4704,18 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   useEffect(() => { loadPartners(); }, [user, profile]);
   useEffect(() => {
-    if (!activePartner) return;
+    if (!activePartner) { setMessages([]); return; }
     const pid = activePartner.partnerProfile.id;
+    // Always clear immediately to prevent bleed from previous partner
+    setMessages([]);
     // Load saved pref
     const savedPref = localStorage.getItem(`forge_clearpref_${pid}`) || "never";
     setClearPref(savedPref);
-    // Apply clearing if needed
     const lastClear = localStorage.getItem(`forge_lastclear_${pid}`);
     if (savedPref === "session") {
-      // Clear on every load
       localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
+      clearMessagesForPartner(pid);
+      return;
     } else if (savedPref === "7d" && lastClear && Date.now() - parseInt(lastClear) > 7*24*3600*1000) {
       clearMessagesForPartner(pid);
       localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
