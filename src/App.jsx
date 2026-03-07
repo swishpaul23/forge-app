@@ -4393,6 +4393,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
       const { error: insertError } = await sb.from("partnerships").insert({
         user_id: user.id,
         partner_id: targetProfile.id,
+        invite_code: `${user.id.slice(0,8)}${targetProfile.id.slice(0,8)}`.toUpperCase(),
         status: "active",
       });
       if (insertError) throw new Error("Insert failed: " + insertError.message + (insertError.details ? " | " + insertError.details : "") + (insertError.hint ? " | hint: " + insertError.hint : ""));
