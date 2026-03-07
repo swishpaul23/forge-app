@@ -4624,7 +4624,16 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const [showAdd,      setShowAdd]      = useState(false);
   const [unreadMap,    setUnreadMap]    = useState({});
   const [sentReaction, setSentReaction] = useState(null);
+  const [clearPref,    setClearPref]    = useState("never"); // never | 7d | 30d | session
+  const [showClearMenu,setShowClearMenu]= useState(false);
   const feedRef = useRef(null);
+
+  const CLEAR_OPTIONS = [
+    { value:"never",   label:"Never clear" },
+    { value:"session", label:"Clear on close" },
+    { value:"7d",      label:"After 7 days" },
+    { value:"30d",     label:"After 30 days" },
+  ];
 
   const myCode = profile?.invite_code || "";
 
@@ -4688,7 +4697,28 @@ const Partners = ({ user, profile, challenges, sb }) => {
   };
 
   useEffect(() => { loadPartners(); }, [user, profile]);
-  useEffect(() => { if (activePartner) loadMessages(activePartner.partnerProfile.id); }, [activePartner]);
+  useEffect(() => {
+    if (!activePartner) return;
+    const pid = activePartner.partnerProfile.id;
+    // Load saved pref
+    const savedPref = localStorage.getItem(`forge_clearpref_${pid}`) || "never";
+    setClearPref(savedPref);
+    // Apply clearing if needed
+    const lastClear = localStorage.getItem(`forge_lastclear_${pid}`);
+    if (savedPref === "session") {
+      // Clear on every load
+      localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
+    } else if (savedPref === "7d" && lastClear && Date.now() - parseInt(lastClear) > 7*24*3600*1000) {
+      clearMessagesForPartner(pid);
+      localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
+      return;
+    } else if (savedPref === "30d" && lastClear && Date.now() - parseInt(lastClear) > 30*24*3600*1000) {
+      clearMessagesForPartner(pid);
+      localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
+      return;
+    }
+    loadMessages(pid);
+  }, [activePartner]);
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
   const copyCode = () => { navigator.clipboard.writeText(myCode); setCopied(true); setTimeout(()=>setCopied(false),2000); };
@@ -4765,6 +4795,24 @@ const Partners = ({ user, profile, challenges, sb }) => {
     if (!window.confirm("Remove this accountability partner?")) return;
     await sb.from("partnerships").delete().eq("id", id);
     setActivePartner(null); await loadPartners();
+  };
+
+  const clearMessagesForPartner = async (partnerId) => {
+    if (!sb || !user) return;
+    try {
+      await sb.from("partner_messages").delete()
+        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`);
+      setMessages([]);
+    } catch(e) { console.warn("clearMessages:", e); }
+  };
+
+  const saveClearPref = (pref) => {
+    const pid = activePartner?.partnerProfile?.id;
+    if (!pid) return;
+    setClearPref(pref);
+    localStorage.setItem(`forge_clearpref_${pid}`, pref);
+    if (pref === "session") localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
+    setShowClearMenu(false);
   };
 
   const fmtTime = ts => new Date(ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
@@ -4915,14 +4963,55 @@ const Partners = ({ user, profile, challenges, sb }) => {
               </div>
               <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
                 {chal && <div className="p-streak-pill"><span className="n">{chal.streak}</span> day streak</div>}
+                {/* Clear chat menu */}
+                <div style={{position:"relative"}}>
+                  <button className="btn btn-g" style={{fontSize:9,padding:"4px 10px",letterSpacing:".12em"}}
+                    onClick={()=>setShowClearMenu(v=>!v)}>
+                    ⚙ Chat
+                  </button>
+                  {showClearMenu && (
+                    <div style={{
+                      position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:100,
+                      background:"var(--bg-2)",border:"1px solid var(--border-1)",
+                      borderRadius:8,padding:6,minWidth:160,
+                      boxShadow:"0 8px 24px rgba(0,0,0,.4)",
+                    }} onClick={e=>e.stopPropagation()}>
+                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-2)",padding:"4px 8px 6px"}}>
+                        Auto-clear history
+                      </div>
+                      {CLEAR_OPTIONS.map(o=>(
+                        <div key={o.value}
+                          onClick={()=>saveClearPref(o.value)}
+                          style={{
+                            display:"flex",alignItems:"center",gap:8,
+                            padding:"6px 8px",borderRadius:5,cursor:"pointer",
+                            background:clearPref===o.value?"var(--accent-lo)":"none",
+                            fontFamily:"'IBM Plex Mono',monospace",fontSize:10,
+                            color:clearPref===o.value?"var(--accent)":"var(--text-1)",
+                            letterSpacing:".06em",transition:"background .12s",
+                          }}>
+                          <span style={{width:6,height:6,borderRadius:"50%",background:clearPref===o.value?"var(--accent)":"var(--border-1)",flexShrink:0,display:"inline-block"}} />
+                          {o.label}
+                        </div>
+                      ))}
+                      <div style={{borderTop:"1px solid var(--border-0)",marginTop:4,paddingTop:4}}>
+                        <div onClick={()=>{ if(window.confirm("Clear all messages with "+pName+"?")){ clearMessagesForPartner(ap.partnerProfile.id); setShowClearMenu(false); }}}
+                          style={{padding:"6px 8px",borderRadius:5,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--err)",letterSpacing:".06em"}}>
+                          Clear now
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)",fontSize:10,padding:"4px 10px"}}
                   onClick={()=>removePartner(ap.id)}>Remove</button>
               </div>
             </div>
             {chal && <div className="p-thread-bar"><div className="p-thread-bar-fill" style={{width:`${pct}%`}} /></div>}
 
+            {/* Close clear menu on feed click */}
             {/* Feed */}
-            <div className="p-feed" ref={feedRef}>
+            <div className="p-feed" ref={feedRef} onClick={()=>setShowClearMenu(false)}>
               {messages.length === 0 && (
                 <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6}}>
                   <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",letterSpacing:".1em"}}>No messages yet.</div>
@@ -5032,6 +5121,138 @@ const IconSettings = () => (
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 );
+
+
+// ============================================================
+// TUTORIAL OVERLAY
+// ============================================================
+const TUTORIAL_STEPS = [
+  {
+    id: "welcome",
+    target: null, // centre modal, no spotlight
+    title: "Welcome to Forge.",
+    body: "Quick tour — 5 steps. Takes 20 seconds.",
+    position: "center",
+  },
+  {
+    id: "dashboard",
+    target: "tut-home",
+    title: "Your Dashboard",
+    body: "Check in your daily tasks here. Do this every day to build your streak.",
+    position: "right",
+  },
+  {
+    id: "wall",
+    target: "tut-wall",
+    title: "The Wall",
+    body: "Every day you check in, a block gets forged. Watch your consistency stack up.",
+    position: "right",
+  },
+  {
+    id: "partners",
+    target: "tut-partners",
+    title: "Partners",
+    body: "Add someone grinding alongside you. Message them, nudge them, stay accountable.",
+    position: "right",
+  },
+  {
+    id: "deepwork",
+    target: "tut-deepwork",
+    title: "Deep Work",
+    body: "Focus mode with a timer and your tasks. Use it when you need to lock in.",
+    position: "bottom",
+  },
+];
+
+const Tutorial = ({ onDone }) => {
+  const [step, setStep] = useState(0);
+  const [targetRect, setTargetRect] = useState(null);
+  const current = TUTORIAL_STEPS[step];
+  const isLast = step === TUTORIAL_STEPS.length - 1;
+
+  useEffect(() => {
+    if (!current.target) { setTargetRect(null); return; }
+    const el = document.getElementById(current.target);
+    if (!el) { setTargetRect(null); return; }
+    const r = el.getBoundingClientRect();
+    setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+  }, [step]);
+
+  const next = () => { if (isLast) onDone(); else setStep(s => s + 1); };
+
+  const PAD = 12;
+  const spotStyle = targetRect ? {
+    position: "fixed",
+    top: targetRect.top - PAD,
+    left: targetRect.left - PAD,
+    width: targetRect.width + PAD * 2,
+    height: targetRect.height + PAD * 2,
+    borderRadius: 10,
+    boxShadow: "0 0 0 9999px rgba(0,0,0,.78)",
+    zIndex: 9998,
+    pointerEvents: "none",
+    border: "2px solid var(--accent)",
+    transition: "all .25s cubic-bezier(.4,0,.2,1)",
+  } : null;
+
+  // Tooltip position relative to spotlight
+  const tooltipStyle = () => {
+    const base = {
+      position: "fixed", zIndex: 9999,
+      background: "var(--bg-2)",
+      border: "1px solid var(--border-accent)",
+      borderRadius: 12,
+      padding: "18px 20px",
+      width: 240,
+      boxShadow: "0 12px 40px rgba(0,0,0,.6)",
+    };
+    if (!targetRect || current.position === "center") {
+      return { ...base, top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 280 };
+    }
+    if (current.position === "right") {
+      return { ...base, top: targetRect.top - PAD, left: targetRect.left + targetRect.width + PAD + 16 };
+    }
+    if (current.position === "bottom") {
+      return { ...base, top: targetRect.top + targetRect.height + PAD + 16, left: targetRect.left - PAD, width: 280 };
+    }
+    return base;
+  };
+
+  return (
+    <>
+      {/* Dim overlay for welcome step (no spotlight) */}
+      {!targetRect && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.78)", zIndex:9998 }} onClick={next} />
+      )}
+      {/* Spotlight cutout */}
+      {spotStyle && <div style={spotStyle} />}
+      {/* Tooltip */}
+      <div style={tooltipStyle()}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
+          {step + 1} / {TUTORIAL_STEPS.length}
+        </div>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:".04em", lineHeight:1, marginBottom:8 }}>
+          {current.title}
+        </div>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-1)", lineHeight:1.6, marginBottom:16 }}>
+          {current.body}
+        </div>
+        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          <button
+            onClick={next}
+            style={{ background:"var(--accent)", border:"none", borderRadius:7, padding:"8px 18px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, letterSpacing:".14em", textTransform:"uppercase", color:"#080807", cursor:"pointer" }}>
+            {isLast ? "Got it →" : "Next →"}
+          </button>
+          <button
+            onClick={onDone}
+            style={{ background:"none", border:"none", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-2)", cursor:"pointer" }}>
+            Skip
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
 
 const NAV = [
   { id:"home",     icon:<IconDashboard />, tip:"Dashboard"  },
@@ -5702,6 +5923,7 @@ export default function App() {
   const [loaderMode,  setLoaderMode]  = useState("landing");
   const [page,        setPage]        = useState("home");
   const [dw,          setDW]          = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [sparkTrigger, setSparkTrigger] = useState(false);
   const [loggedToday,  setLoggedToday]  = useState(false);
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
@@ -5735,7 +5957,13 @@ export default function App() {
     if (profile.full_name) setUserName(profile.full_name);
     if (profile.theme)     setTheme(profile.theme);
     if (profile.tone)      setTone(profile.tone);
+    if (profile.onboarded && !profile.tutorial_done) setShowTutorial(true);
   }, [profile]);
+
+  const handleTutorialDone = async () => {
+    setShowTutorial(false);
+    await saveProfile({ tutorial_done: true });
+  };
 
   // Route based on auth state
   // stage is intentionally excluded from deps — prevents overwriting manual
@@ -6069,7 +6297,7 @@ export default function App() {
         <div className="rail-logo" onClick={()=>setPage("home")}>FORGE</div>
         <div className="rail-nav">
           {NAV.map(n=>(
-            <div key={n.id} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
+            <div key={n.id} id={`tut-${n.id}`} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
               {n.icon}<div className="rtip">{n.tip}</div>
             </div>
           ))}
@@ -6086,13 +6314,14 @@ export default function App() {
             <div className="lvl-chip" style={{color:level.color,borderColor:`${level.color}30`}}>
               <div className="lvl-dot" style={{background:level.color}} />{level.label}
             </div>
-            <button className="btn btn-g" style={{padding:"5px 13px",fontSize:12}} onClick={()=>setDW(true)}>⚡ Deep Work</button>
+            <button id="tut-deepwork" className="btn btn-g" style={{padding:"5px 13px",fontSize:12}} onClick={()=>setDW(true)}>⚡ Deep Work</button>
             {user && <button className="btn btn-g" style={{padding:"5px 13px",fontSize:12,borderColor:"var(--err)30",color:"var(--text-2)"}} onClick={()=>sb&&sb.auth.signOut()}>↩</button>}
           </div>
         </div>
         {renderPage()}
       </div>
       {modal && <ChallengeWizard tpl={modal} isSecondary={modal._mode==="secondary"} maxDays={modal.maxDays} onClose={()=>setModal(null)} onStart={handleStartChallenge} />}
+      {showTutorial && <Tutorial onDone={handleTutorialDone} />}
       {libModal && (
         <div className="overlay" onClick={()=>setLibModal(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()} style={{width:720,maxHeight:"85vh",overflowY:"auto"}}>
