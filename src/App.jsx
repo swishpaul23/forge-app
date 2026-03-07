@@ -4727,6 +4727,14 @@ const Partners = ({ user, profile, challenges, sb }) => {
   }, [activePartner]);
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
+  // Poll for incoming messages every 10s
+  useEffect(() => {
+    if (!activePartner) return;
+    const pid = activePartner.partnerProfile.id;
+    const interval = setInterval(() => loadMessages(pid), 10000);
+    return () => clearInterval(interval);
+  }, [activePartner]);
+
   const copyCode = () => { navigator.clipboard.writeText(myCode); setCopied(true); setTimeout(()=>setCopied(false),2000); };
 
   const joinPartner = async () => {
@@ -4762,8 +4770,11 @@ const Partners = ({ user, profile, challenges, sb }) => {
     setSending(true);
     try {
       await sb.from("partner_messages").insert({ from_user_id:user.id, to_user_id:pid, body, type:"text", read:false });
-      await loadMessages(pid);
-    } catch(e) { console.warn("sendMessage:", e); }
+    } catch(e) {
+      // Roll back optimistic message on failure
+      setMessages(pid, m => m.filter(x => x.id !== optimistic.id));
+      console.warn("sendMessage:", e);
+    }
     finally { setSending(false); }
   };
 
@@ -4775,7 +4786,6 @@ const Partners = ({ user, profile, challenges, sb }) => {
     setMessages(pid, m => [...m, optimistic]);
     try {
       await sb.from("partner_messages").insert({ from_user_id:user.id, to_user_id:pid, body:emoji, type:"text", read:false });
-      await loadMessages(pid);
     } catch(e) { console.warn("sendReaction:", e); }
   };
 
