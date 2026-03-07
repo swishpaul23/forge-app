@@ -5202,18 +5202,18 @@ const Tutorial = ({ onDone }) => {
       background: "var(--bg-2)",
       border: "1px solid var(--border-accent)",
       borderRadius: 12,
-      padding: "18px 20px",
-      width: 240,
+      padding: "20.7px 23px",
+      width: 276,
       boxShadow: "0 12px 40px rgba(0,0,0,.6)",
     };
     if (!targetRect || current.position === "center") {
-      return { ...base, top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 280 };
+      return { ...base, top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 322 };
     }
     if (current.position === "right") {
       return { ...base, top: targetRect.top - PAD, left: targetRect.left + targetRect.width + PAD + 16 };
     }
     if (current.position === "bottom") {
-      return { ...base, top: targetRect.top + targetRect.height + PAD + 16, left: targetRect.left - PAD, width: 280 };
+      return { ...base, top: targetRect.top + targetRect.height + PAD + 16, left: targetRect.left - PAD, width: 322 };
     }
     return base;
   };
@@ -5228,13 +5228,13 @@ const Tutorial = ({ onDone }) => {
       {spotStyle && <div style={spotStyle} />}
       {/* Tooltip */}
       <div style={tooltipStyle()}>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9.2, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
           {step + 1} / {TUTORIAL_STEPS.length}
         </div>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:22, letterSpacing:".04em", lineHeight:1, marginBottom:8 }}>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:25.3, letterSpacing:".04em", lineHeight:1, marginBottom:8 }}>
           {current.title}
         </div>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-1)", lineHeight:1.6, marginBottom:16 }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12.65, color:"var(--text-1)", lineHeight:1.6, marginBottom:16 }}>
           {current.body}
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
