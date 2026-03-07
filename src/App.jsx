@@ -95,6 +95,39 @@ const TEMPLATES = [
 // ============================================================
 // MOCK DATA
 // ============================================================
+// ============================================================
+// GITHUB VERIFICATION
+// ============================================================
+const checkGitHubCommits = async (username, token, specificRepo = null) => {
+  if (!username) return false;
+  const today = new Date().toISOString().split("T")[0];
+  const headers = { "Accept": "application/vnd.github.v3+json" };
+  if (token) headers["Authorization"] = `token ${token}`;
+
+  try {
+    if (specificRepo) {
+      // Check specific repo for commits today
+      const url = `https://api.github.com/repos/${username}/${specificRepo}/commits?author=${username}&since=${today}T00:00:00Z&until=${today}T23:59:59Z&per_page=1`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) return false;
+      const data = await res.json();
+      return Array.isArray(data) && data.length > 0;
+    } else {
+      // Check any repo — use events API
+      const url = `https://api.github.com/users/${username}/events?per_page=30`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) return false;
+      const events = await res.json();
+      return Array.isArray(events) && events.some(e =>
+        e.type === "PushEvent" && e.created_at?.startsWith(today)
+      );
+    }
+  } catch(e) {
+    console.warn("GitHub check failed:", e);
+    return false;
+  }
+};
+
 const buildWall = (withMockData = false) => {
   const out = [];
   const now = new Date();
@@ -1526,6 +1559,17 @@ const makeCSS = () => `
   }
   .ob-skip:hover { color:var(--text-1); }
 
+  /* GITHUB VERIFIED BADGE */
+  .gh-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    font-family:'IBM Plex Mono',monospace; font-size:7px;
+    letter-spacing:.1em; text-transform:uppercase;
+    color:#4A9D5A; background:#4A9D5A18;
+    border:1px solid #4A9D5A44; border-radius:4px;
+    padding:2px 6px; margin-top:4px;
+    animation:fadein .3s ease both;
+  }
+
   /* STREAK IGNITION */
   @keyframes streakIgnite {
     0%   { color:var(--warn); text-shadow:none; transform:scale(1); }
@@ -2155,7 +2199,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
 
         {/* Tasks */}
         <div className="dv-label mt8">Today's Tasks — {doneTasks}/{safeKpis.length}</div>
-        <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} />
+        <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} ghVerified={ghVerified} />
 
         <div style={{display:"flex",justifyContent:"center",marginTop:32}}>
           <button className="btn btn-g" onClick={phase!=="idle"?endSession:onExit}>
@@ -2216,7 +2260,7 @@ const SCALED_LABELS = {
   dw:      "30 min focused work (scaled)",
 };
 
-const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
+const TaskGrid = ({ tasks, taskState, toggle, isScaled, ghVerified = {} }) => {
   const done  = tasks.filter(t => taskState[t.key]).length;
   const total = tasks.length;
 
@@ -2295,13 +2339,19 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
                 }} />
               )}
               <div className="task-card-top">
-                <div className="task-card-label" style={ isScaled && !isDone ? { color:"var(--text-1)", fontSize:12 } : {}}>
-                  {label}
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="task-card-label" style={ isScaled && !isDone ? { color:"var(--text-1)", fontSize:12 } : {}}>
+                    {label}
+                  </div>
+                  {isDone && t.verifiedBy === "github" && (
+                    <div className="gh-badge">⬡ verified by github</div>
+                  )}
                 </div>
                 <div className="task-cat-tag" style={{
                   color: cardColor,
                   borderColor:`${cardColor}44`,
                   background:`${cardColor}12`,
+                  flexShrink:0,
                 }}>
                   {isScaled ? "MVT" : cat.label}
                 </div>
@@ -2566,7 +2616,7 @@ const AIInsight = ({ tone, mission }) => {
 // ============================================================
 // HOME
 // ============================================================
-const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday }) => {
+const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, ghVerified = {} }) => {
   const safekpis = challenge.kpis || [];
   const done  = safekpis.filter(k => kpis[k.key]).length;
   const total = safekpis.length;
@@ -3246,16 +3296,19 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
       ? tpl.kpis.map((k,i) => ({ id: i, label: k.label }))
       : [{ id: 0, label: "" }]
   );
-  const [nonNeg,  setNonNeg]  = useState([]);
+  const [nonNeg,    setNonNeg]    = useState([]);
+  const [ghTasks,   setGhTasks]   = useState({}); // { taskId: { enabled, repo } }
 
   const addTask      = () => setTasks(t => [...t, { id: Date.now(), label: "" }]);
   const removeTask   = (id) => setTasks(t => t.filter(x => x.id !== id));
   const updateTask   = (id, val) => setTasks(t => t.map(x => x.id === id ? { ...x, label: val } : x));
   const toggleNonNeg = (id) => setNonNeg(n => n.includes(id) ? n.filter(x => x !== id) : [...n, id]);
+  const toggleGh     = (id) => setGhTasks(g => ({ ...g, [id]: g[id] ? null : { enabled:true, repo:"" } }));
+  const setGhRepo    = (id, repo) => setGhTasks(g => ({ ...g, [id]: { ...g[id], repo } }));
 
   const STEPS = isSecondary
     ? ["Setup", "Tasks", "Confirm"]
-    : ["Setup", "Mission", "Tasks", "Non-Negotiables", "Confirm"];
+    : ["Setup", "Mission", "Tasks", "Non-Negotiables", "Verification", "Confirm"];
   const totalSteps = STEPS.length;
 
   const canNext = () => {
@@ -3269,7 +3322,12 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
   const validTasks = tasks.filter(t => t.label.trim());
 
   const handleStart = () => {
-    onStart({ name, days, mission, nonNeg, tasks: validTasks, isSecondary });
+    const tasksWithVerification = validTasks.map(t => ({
+      ...t,
+      verification: ghTasks[t.id]?.enabled ? "github" : null,
+      github_repo:  ghTasks[t.id]?.repo || null,
+    }));
+    onStart({ name, days, mission, nonNeg, tasks: tasksWithVerification, isSecondary });
   };
 
   // Map logical step to STEPS label
@@ -3414,6 +3472,76 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
           </div>
         )}
 
+        {/* STEP 5 (main only) — GitHub Verification */}
+        {!isSecondary && step === 5 && (
+          <div className="flex col g16">
+            <div>
+              <div className="modal-title" style={{fontSize:26}}>Verify with GitHub</div>
+              <div className="modal-desc">
+                Optionally link tasks to GitHub. When you push a commit, Forge auto-ticks the task — no self-reporting.
+              </div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".12em",
+                color:"var(--text-2)",marginTop:6}}>
+                Requires your GitHub username in Settings → Integrations. Skip if not applicable.
+              </div>
+            </div>
+            <div className="flex col g8">
+              {validTasks.length === 0 && (
+                <div className="f-mono c-2" style={{fontSize:12}}>No tasks defined yet.</div>
+              )}
+              {validTasks.map(t => {
+                const gh = ghTasks[t.id];
+                return (
+                  <div key={t.id} style={{
+                    background:"var(--bg-2)",border:`1px solid ${gh?"#4A9D5A44":"var(--border-1)"}`,
+                    borderRadius:10,padding:"12px 16px",transition:"all .18s",
+                  }}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                      <span style={{fontSize:14,flex:1}}>{t.label}</span>
+                      <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}
+                        onClick={()=>toggleGh(t.id)}>
+                        <div style={{
+                          width:36,height:20,borderRadius:10,
+                          background:gh?"#4A9D5A":"var(--bg-3)",
+                          border:`1px solid ${gh?"#4A9D5A":"var(--border-1)"}`,
+                          position:"relative",transition:"all .2s",
+                        }}>
+                          <div style={{
+                            position:"absolute",top:2,
+                            left:gh?16:2,
+                            width:14,height:14,borderRadius:"50%",
+                            background:gh?"#fff":"var(--text-2)",
+                            transition:"left .2s",
+                          }} />
+                        </div>
+                        <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
+                          letterSpacing:".1em",color:gh?"#4A9D5A":"var(--text-2)"}}>
+                          {gh?"GITHUB":"OFF"}
+                        </span>
+                      </div>
+                    </div>
+                    {gh && (
+                      <div style={{marginTop:10}}>
+                        <div className="field-l">Specific repo? <span style={{color:"var(--text-2)",fontWeight:400}}>(leave blank for any commit)</span></div>
+                        <input className="field" value={gh.repo||""}
+                          onChange={e=>setGhRepo(t.id, e.target.value)}
+                          placeholder="e.g. my-project (just the repo name)" style={{width:"100%"}} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {Object.values(ghTasks).filter(Boolean).length > 0 && (
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".1em",
+                color:"#4A9D5A",padding:"8px 12px",background:"#4A9D5A12",
+                border:"1px solid #4A9D5A30",borderRadius:6}}>
+                ⬡ {Object.values(ghTasks).filter(Boolean).length} task{Object.values(ghTasks).filter(Boolean).length!==1?"s":""} will be auto-verified via GitHub
+              </div>
+            )}
+          </div>
+        )}
+
         {/* CONFIRM — last step */}
         {step === totalSteps && (
           <div className="flex col g16">
@@ -3437,13 +3565,20 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
               <div style={{ padding:"12px 14px", background:"var(--bg-2)", borderRadius:7 }}>
                 <div className="f-mono c-2 mb8" style={{ fontSize:9, letterSpacing:".12em", textTransform:"uppercase" }}>Daily Tasks ({validTasks.length})</div>
                 {validTasks.map(t => (
-                  <div key={t.id} style={{ fontSize:14, color:"var(--text-1)", padding:"3px 0", display:"flex", gap:8, alignItems:"center" }}>
+                  <div key={t.id} style={{ fontSize:14, color:"var(--text-1)", padding:"4px 0", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
                     <span style={{ color: nonNeg.includes(t.id) ? "var(--warn)" : "var(--text-2)" }}>
                       {nonNeg.includes(t.id) ? "◆" : "—"}
                     </span>
                     {t.label}
                     {nonNeg.includes(t.id) && (
                       <span className="f-mono" style={{ fontSize:8, color:"var(--warn)", letterSpacing:".1em" }}>NON-NEG</span>
+                    )}
+                    {ghTasks[t.id] && (
+                      <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,letterSpacing:".1em",
+                        color:"#4A9D5A",background:"#4A9D5A18",border:"1px solid #4A9D5A44",
+                        borderRadius:4,padding:"1px 5px"}}>
+                        ⬡ GITHUB{ghTasks[t.id]?.repo ? ` · ${ghTasks[t.id].repo}` : ""}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -3572,23 +3707,32 @@ const Partners = ({ user, profile, challenges, sb }) => {
       if (!sb) throw new Error("Not connected");
       if (!joinCode.trim()) throw new Error("Enter an invite code.");
       if (joinCode.trim().toUpperCase() === myCode) throw new Error("That's your own code.");
-      // Find profile with this code
-      const { data: targetProfile, error } = await sb
-        .from("profiles").select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).single();
-      if (error || !targetProfile) throw new Error("No user found with that code.");
-      // Check not already partners
+
+      // Find profile with this invite code
+      const { data: targetProfile, error: profileError } = await sb
+        .from("profiles").select("id,full_name")
+        .eq("invite_code", joinCode.trim().toUpperCase())
+        .maybeSingle();
+      if (profileError) throw new Error("Something went wrong. Try again.");
+      if (!targetProfile) throw new Error("No user found with that code. Double-check it.");
+
+      // Check not already partners — use maybeSingle to avoid error on no results
       const { data: existing } = await sb.from("partnerships")
         .select("id,status")
         .or(`and(user_id.eq.${user.id},partner_id.eq.${targetProfile.id}),and(user_id.eq.${targetProfile.id},partner_id.eq.${user.id})`)
-        .single();
-      if (existing) throw new Error(existing.status === "active" ? "Already partners." : "Request already sent.");
-      // Create partnership
-      await sb.from("partnerships").insert({
+        .maybeSingle();
+      if (existing) throw new Error(existing.status === "active" ? "You're already partners." : "Request already sent.");
+
+      // Create partnership — use a unique random code to avoid conflicts
+      const uniqueCode = `${user.id.slice(0,8)}-${targetProfile.id.slice(0,8)}`;
+      const { error: insertError } = await sb.from("partnerships").insert({
         user_id: user.id,
         partner_id: targetProfile.id,
-        invite_code: `${myCode}-${joinCode.trim().toUpperCase()}`,
-        status: "active", // auto-accept for simplicity
+        invite_code: uniqueCode,
+        status: "active",
       });
+      if (insertError) throw new Error("Failed to connect. " + insertError.message);
+
       setJoinCode("");
       await loadPartners();
     } catch(e) { setJoinError(e.message); }
@@ -3991,7 +4135,7 @@ const AuthScreen = ({ onAuthed }) => {
 // ============================================================
 // SETTINGS SCREEN (Supabase-wired: email, password, themes)
 // ============================================================
-const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile }) => {
+const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile }) => {
   const tones = ["Stoic","Coach","Drill Sergeant"];
   const [nameVal,     setNameVal]     = useState(userName);
   const [emailVal,    setEmailVal]    = useState("");
@@ -4004,6 +4148,12 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [fbText,      setFbText]      = useState("");
   const [fbSending,   setFbSending]   = useState(false);
   const [fbDone,      setFbDone]      = useState(false);
+  // Integrations
+  const [ghUser,      setGhUser]      = useState(profile?.github_username || "");
+  const [ghToken,     setGhToken]     = useState(profile?.github_token || "");
+  const [ghSaving,    setGhSaving]    = useState(false);
+  const [ghMsg,       setGhMsg]       = useState(null);
+  const [ghTesting,   setGhTesting]   = useState(false);
 
   const flash = (type,text) => { setMsg({type,text}); setTimeout(()=>setMsg(null),4000); };
 
@@ -4147,6 +4297,75 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       {/* ── Full-width bottom section ── */}
       <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:16}}>
 
+        {/* Integrations */}
+        <div className="srow a5">
+          <div className="srow-title">Integrations</div>
+          <div className="srow-desc">Connect external services to auto-verify your tasks.</div>
+
+          {/* GitHub */}
+          <div style={{marginTop:16,padding:"16px 18px",background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:".06em"}}>GitHub</div>
+              {profile?.github_username && (
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".12em",
+                  color:"#4A9D5A",background:"#4A9D5A18",border:"1px solid #4A9D5A44",
+                  borderRadius:4,padding:"2px 7px"}}>
+                  ⬡ CONNECTED
+                </div>
+              )}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,maxWidth:400}}>
+              <div>
+                <div className="field-l">GitHub Username</div>
+                <input className="field" value={ghUser} onChange={e=>setGhUser(e.target.value)}
+                  placeholder="e.g. swishpaul23" style={{width:"100%"}} />
+              </div>
+              <div>
+                <div className="field-l">Personal Access Token <span style={{color:"var(--text-2)",fontWeight:400}}>(optional — needed for private repos)</span></div>
+                <input className="field" type="password" value={ghToken} onChange={e=>setGhToken(e.target.value)}
+                  placeholder="ghp_xxxxxxxxxxxx" style={{width:"100%"}} />
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",marginTop:4,letterSpacing:".06em"}}>
+                  Generate at github.com/settings/tokens → read-only · repo scope
+                </div>
+              </div>
+              {ghMsg && (
+                <div style={{padding:"8px 12px",borderRadius:6,
+                  background:ghMsg.type==="ok"?"#4A9D5A18":"var(--err)18",
+                  border:`1px solid ${ghMsg.type==="ok"?"#4A9D5A44":"var(--err)44"}`,
+                  color:ghMsg.type==="ok"?"#4A9D5A":"var(--err)",
+                  fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>
+                  {ghMsg.text}
+                </div>
+              )}
+              <div style={{display:"flex",gap:8}}>
+                <button className="btn btn-a" disabled={!ghUser.trim()||ghSaving}
+                  onClick={async()=>{
+                    setGhSaving(true); setGhMsg(null);
+                    try {
+                      await onSaveProfile({ github_username: ghUser.trim(), github_token: ghToken.trim()||null });
+                      setGhMsg({type:"ok", text:"✓ GitHub connected."});
+                    } catch(e) { setGhMsg({type:"err", text:e.message}); }
+                    finally { setGhSaving(false); }
+                  }}>
+                  {ghSaving?"Saving…":"Save"}
+                </button>
+                <button className="btn btn-g" disabled={!ghUser.trim()||ghTesting}
+                  onClick={async()=>{
+                    setGhTesting(true); setGhMsg(null);
+                    const found = await checkGitHubCommits(ghUser.trim(), ghToken.trim()||null, null);
+                    setGhMsg(found
+                      ? {type:"ok",  text:`✓ Found commits today from @${ghUser.trim()}.`}
+                      : {type:"err", text:`No commits found today for @${ghUser.trim()}. Check your username or try later.`}
+                    );
+                    setGhTesting(false);
+                  }}>
+                  {ghTesting?"Checking…":"Test Connection"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Feedback */}
         <div className="srow a5">
           <div className="srow-title">Feedback</div>
@@ -4277,6 +4496,7 @@ export default function App() {
   const [sparkTrigger, setSparkTrigger] = useState(false);
   const [loggedToday,  setLoggedToday]  = useState(false);
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
+  const [ghVerified,   setGhVerified]   = useState({}); // { taskKey: true } — tasks verified today
   const [theme,       setThemeState]  = useState("forge");
   const [tone,        setTone]        = useState("Coach");
   const [modal,       setModal]       = useState(null);
@@ -4387,6 +4607,31 @@ export default function App() {
     load();
   }, [user, challenges.main?.id]);
 
+  // ── GitHub auto-verification ──────────────────────────────
+  useEffect(() => {
+    if (!profile?.github_username || !challenges.main) return;
+    const ghTasks = (challenges.main.kpis || []).filter(k => k.verification === "github");
+    if (ghTasks.length === 0) return;
+
+    const verify = async () => {
+      const verified = {};
+      for (const task of ghTasks) {
+        const hasCommit = await checkGitHubCommits(
+          profile.github_username,
+          profile.github_token || null,
+          task.github_repo || null
+        );
+        if (hasCommit) {
+          verified[task.key] = true;
+          // Auto-tick the task if not already done
+          setKpis(prev => prev[task.key] ? prev : { ...prev, [task.key]: true });
+        }
+      }
+      if (Object.keys(verified).length > 0) setGhVerified(verified);
+    };
+    verify();
+  }, [profile?.github_username, challenges.main?.id]);
+
   // ── Log a day ─────────────────────────────────────────────
   const handleLogDay = async (done, total) => {
     if (loggedToday || !challenges.main) return;
@@ -4474,12 +4719,12 @@ export default function App() {
           </button>
         </div>
       );
-      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} />;
+      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} ghVerified={ghVerified} />;
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
-    if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} />;
+    if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} />;
   };
 
   // ── Stage routing ─────────────────────────────────────────
