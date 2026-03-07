@@ -34,10 +34,10 @@ const THEMES = {
     "--accent": "#2A4A38",
     "--accent-lo": "#2A4A3812",
     "--accent-mid": "#2A4A3850",
-    "--text-0": "#181714",
-    "--text-1": "#5A5650",
-    "--text-2": "#9A9690",
-    "--text-3": "#C8C4BE",
+    "--text-0": "#0E0D0C",
+    "--text-1": "#2A2826",
+    "--text-2": "#6A6660",
+    "--text-3": "#A8A49E",
     "--border-0": "#DDD9D2",
     "--border-1": "#CECAC2",
     "--border-accent": "#2A4A3830",
@@ -81,7 +81,7 @@ const TASK_CATEGORIES = {
   mind:  { label: "Mind",    color: "#4A8FD4" },
   diet:  { label: "Diet",    color: "#5DBF8A" },
   build: { label: "Build",   color: "#BF5DBF" },
-  other: { label: "Other",   color: "#9A9690" },
+  other: { label: "Other",   color: "var(--text-2)" },
 };
 
 const TEMPLATES = [
@@ -95,36 +95,115 @@ const TEMPLATES = [
 // ============================================================
 // MOCK DATA
 // ============================================================
+
 // ============================================================
-// GITHUB VERIFICATION
+// STRAVA VERIFICATION
 // ============================================================
-const checkGitHubCommits = async (username, token, specificRepo = null) => {
-  if (!username) return false;
-  const today = new Date().toISOString().split("T")[0];
-  const headers = { "Accept": "application/vnd.github.v3+json" };
-  if (token) headers["Authorization"] = `token ${token}`;
+
+// Refresh Strava token if expired
+const refreshStravaToken = async (profile, sb) => {
+  if (!profile?.strava_refresh_token) return null;
+  const expiry = new Date(profile.strava_token_expiry);
+  if (expiry > new Date()) return profile.strava_access_token; // still valid
 
   try {
-    if (specificRepo) {
-      // Check specific repo for commits today
-      const url = `https://api.github.com/repos/${username}/${specificRepo}/commits?author=${username}&since=${today}T00:00:00Z&until=${today}T23:59:59Z&per_page=1`;
-      const res = await fetch(url, { headers });
-      if (!res.ok) return false;
-      const data = await res.json();
-      return Array.isArray(data) && data.length > 0;
-    } else {
-      // Check any repo — use events API
-      const url = `https://api.github.com/users/${username}/events?per_page=30`;
-      const res = await fetch(url, { headers });
-      if (!res.ok) return false;
-      const events = await res.json();
-      return Array.isArray(events) && events.some(e =>
-        e.type === "PushEvent" && e.created_at?.startsWith(today)
-      );
-    }
+    const res = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id:     import.meta.env.VITE_STRAVA_CLIENT_ID,
+        client_secret: import.meta.env.VITE_STRAVA_CLIENT_SECRET,
+        refresh_token: profile.strava_refresh_token,
+        grant_type:    'refresh_token',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return null;
+    // Save new token
+    await sb.from('profiles').update({
+      strava_access_token: data.access_token,
+      strava_token_expiry: new Date(data.expires_at * 1000).toISOString(),
+    }).eq('id', profile.id);
+    return data.access_token;
+  } catch(e) { return null; }
+};
+
+// Extract rules from natural language using Claude
+const extractStravaRules = async (naturalLanguage) => {
+  if (!naturalLanguage.trim()) return { activity_types: ["Run"], min_duration: 600, min_distance: 1000 };
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 300,
+        messages: [{
+          role: "user",
+          content: `Extract workout verification rules from this goal: "${naturalLanguage}"
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "activity_types": ["Run"], 
+  "min_duration": 600,
+  "min_distance": 1000,
+  "max_speed_ms": null
+}
+Rules:
+- activity_types: array from ["Run","Ride","Swim","Walk","Workout","WeightTraining","Yoga","Hike"] 
+- min_duration: seconds (default 600 = 10min)
+- min_distance: metres (default 1000 = 1km, null if not distance-based like weightlifting)
+- max_speed_ms: metres/sec to detect cheating (null = no check, 6.0 = ~22km/h max for running)
+Examples: "run 5km" → min_distance:5000, "workout 20 min" → min_duration:1200 activity_types:["WeightTraining","Workout"], "any run" → defaults`
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '{}';
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
   } catch(e) {
-    console.warn("GitHub check failed:", e);
-    return false;
+    return { activity_types: ["Run"], min_duration: 600, min_distance: 1000 };
+  }
+};
+
+// Check Strava for activities today matching rules
+const checkStravaActivity = async (accessToken, rules) => {
+  const today = new Date();
+  const start = new Date(today); start.setHours(0,0,0,0);
+  const end   = new Date(today); end.setHours(23,59,59,999);
+
+  try {
+    const res = await fetch(
+      `https://www.strava.com/api/v3/athlete/activities?after=${Math.floor(start/1000)}&before=${Math.floor(end/1000)}&per_page=20`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) return { passed: false, reason: "Could not reach Strava." };
+    const activities = await res.json();
+
+    const types = rules.activity_types || ["Run"];
+    const matching = activities.filter(a => types.includes(a.type));
+
+    if (matching.length === 0)
+      return { passed: false, reason: `No ${types.join(" or ")} logged on Strava today.` };
+
+    for (const act of matching) {
+      const dur  = act.elapsed_time; // seconds
+      const dist = act.distance;     // metres
+      const spd  = act.average_speed; // m/s
+
+      if (rules.min_duration && dur < rules.min_duration)
+        return { passed: false, reason: `Activity too short (${Math.round(dur/60)}min, need ${Math.round(rules.min_duration/60)}min).` };
+
+      if (rules.min_distance && dist < rules.min_distance)
+        return { passed: false, reason: `Distance too short (${(dist/1000).toFixed(1)}km, need ${(rules.min_distance/1000).toFixed(1)}km).` };
+
+      if (rules.max_speed_ms && spd > rules.max_speed_ms)
+        return { passed: false, reason: `Suspicious speed detected (${(spd*3.6).toFixed(1)}km/h). Looks like a cheat.` };
+
+      return { passed: true, activity: act };
+    }
+    return { passed: false, reason: "No qualifying activity found." };
+  } catch(e) {
+    return { passed: false, reason: "Strava check failed. Try again." };
   }
 };
 
@@ -1559,13 +1638,13 @@ const makeCSS = () => `
   }
   .ob-skip:hover { color:var(--text-1); }
 
-  /* GITHUB VERIFIED BADGE */
-  .gh-badge {
+  /* STRAVA VERIFIED BADGE */
+  .strava-badge {
     display:inline-flex; align-items:center; gap:4px;
     font-family:'IBM Plex Mono',monospace; font-size:7px;
     letter-spacing:.1em; text-transform:uppercase;
-    color:#4A9D5A; background:#4A9D5A18;
-    border:1px solid #4A9D5A44; border-radius:4px;
+    color:#FC4C02; background:#FC4C0218;
+    border:1px solid #FC4C0244; border-radius:4px;
     padding:2px 6px; margin-top:4px;
     animation:fadein .3s ease both;
   }
@@ -2199,7 +2278,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
 
         {/* Tasks */}
         <div className="dv-label mt8">Today's Tasks — {doneTasks}/{safeKpis.length}</div>
-        <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} ghVerified={ghVerified} />
+        <TaskGrid tasks={safeKpis} taskState={kpis} toggle={toggle} stravaVerified={stravaVerified} />
 
         <div style={{display:"flex",justifyContent:"center",marginTop:32}}>
           <button className="btn btn-g" onClick={phase!=="idle"?endSession:onExit}>
@@ -2260,7 +2339,7 @@ const SCALED_LABELS = {
   dw:      "30 min focused work (scaled)",
 };
 
-const TaskGrid = ({ tasks, taskState, toggle, isScaled, ghVerified = {} }) => {
+const TaskGrid = ({ tasks, taskState, toggle, isScaled, stravaVerified = {} }) => {
   const done  = tasks.filter(t => taskState[t.key]).length;
   const total = tasks.length;
 
@@ -2312,7 +2391,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled, ghVerified = {} }) => {
       {/* Task cards grid */}
       <div className="tasks-grid">
         {tasks.map(t => {
-          const isDone    = taskState[t.key];
+          const isDone    = taskState[t.key] || stravaVerified[t.key]?.passed;
           const cat       = TASK_CATEGORIES[t.cat || "other"] || TASK_CATEGORIES.other;
           const cardColor = isScaled ? "#D4B22A" : cat.color;
           const label     = isScaled ? (SCALED_LABELS[t.key] || t.label + " (scaled)") : t.label;
@@ -2343,8 +2422,8 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled, ghVerified = {} }) => {
                   <div className="task-card-label" style={ isScaled && !isDone ? { color:"var(--text-1)", fontSize:12 } : {}}>
                     {label}
                   </div>
-                  {isDone && t.verifiedBy === "github" && (
-                    <div className="gh-badge">⬡ verified by github</div>
+                  {isDone && t.verification === "strava" && (
+                    <div className="strava-badge">⚡ verified by strava</div>
                   )}
                 </div>
                 <div className="task-cat-tag" style={{
@@ -2566,21 +2645,96 @@ const MOCK_INSIGHTS = {
   "Drill Sergeant": "28 days in and reading is sitting at 61%. That's not a habit, that's a suggestion. Thursday is where discipline goes to die for you — not anymore. Tighten up or admit you didn't actually want this.",
 };
 
-const AIInsight = ({ tone, mission }) => {
-  const [loading,   setLoading]   = useState(false);
-  const [insight,   setInsight]   = useState(MOCK_INSIGHTS[tone] || MOCK_INSIGHTS["Coach"]);
-  const [lastUpdate,setLastUpdate] = useState("Today, 8:04 AM");
+const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
+  const [loading,    setLoading]    = useState(false);
+  const [insight,    setInsight]    = useState("");
+  const [lastUpdate, setLastUpdate] = useState(null);
+
+  // Build a data snapshot from real state
+  const buildContext = () => {
+    if (!challenge) return null;
+    const tasks    = challenge.kpis || [];
+    const done     = tasks.filter(t => kpis?.[t.key]).length;
+    const total    = tasks.length;
+    const checkinDates = Object.keys(checkins || {}).sort();
+    const last7    = checkinDates.slice(-7).map(d => ({ date: d, score: checkins[d] }));
+    const avgScore = last7.length > 0
+      ? Math.round(last7.reduce((s,c) => s + (c.score||0), 0) / last7.length)
+      : null;
+
+    return {
+      challengeName: challenge.name,
+      dayNum:        challenge.dayNum,
+      totalDays:     challenge.totalDays,
+      streak:        challenge.streak,
+      consistency:   challenge.consistency,
+      mission,
+      tone,
+      todayDone:     done,
+      todayTotal:    total,
+      todayTasks:    tasks.map(t => ({ label: t.label, done: !!kpis?.[t.key] })),
+      last7Days:     last7,
+      avgScoreLast7: avgScore,
+      daysLogged:    checkinDates.length,
+    };
+  };
 
   const generate = async () => {
+    const ctx = buildContext();
+    if (!ctx) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1400));
-    setInsight(MOCK_INSIGHTS[tone] || MOCK_INSIGHTS["Coach"]);
-    setLastUpdate("Just now");
+    try {
+      const toneVoices = {
+        "Stoic":          "Speak like Marcus Aurelius. Blunt, philosophical, no flattery. Identify the gap between what they say they want and what the data shows.",
+        "Coach":          "Speak like a sharp personal coach. Warm but direct. Identify patterns and give one clear tactical suggestion.",
+        "Drill Sergeant": "Speak like a no-nonsense sergeant. No softening. Call out exactly what's weak and demand better.",
+      };
+      const voice = toneVoices[ctx.tone] || toneVoices["Coach"];
+
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 120,
+          messages: [{
+            role: "user",
+            content: `You are Forge Intelligence. ${voice}
+
+User data:
+- Challenge: ${ctx.challengeName}
+- Day ${ctx.dayNum} of ${ctx.totalDays}
+- Streak: ${ctx.streak} days
+- Consistency: ${ctx.consistency}%
+- Mission: "${ctx.mission || "Not set"}"
+- Today: ${ctx.todayDone}/${ctx.todayTotal} tasks done
+- Today's tasks: ${ctx.todayTasks.map(t => `${t.done ? "✓" : "✗"} ${t.label}`).join(", ")}
+- Last 7 days scores: ${ctx.last7Days.length > 0 ? ctx.last7Days.map(d => `${d.date}: ${d.score}%`).join(", ") : "No data yet"}
+- Avg score last 7 days: ${ctx.avgScoreLast7 !== null ? ctx.avgScoreLast7 + "%" : "No history yet"}
+- Total days logged: ${ctx.daysLogged}
+
+Write ONE insight. 2-3 sentences max. No preamble. No "Here is your insight:". Speak directly to the user. Reference their actual data — don't be generic.`
+          }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text?.trim() || "No insight generated.";
+      setInsight(text);
+      setLastUpdate(new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }));
+    } catch(e) {
+      setInsight("Could not reach Forge Intelligence. Check your connection.");
+    }
     setLoading(false);
   };
 
+  // Auto-generate on first load if we have data
   useEffect(() => {
-    setInsight(MOCK_INSIGHTS[tone] || MOCK_INSIGHTS["Coach"]);
+    if (challenge && !insight && !loading) generate();
+  }, [challenge?.id]);
+
+  useEffect(() => {
+    // Regenerate when tone changes if we already have data
+    if (challenge && insight) generate();
   }, [tone]);
 
   return (
@@ -2598,7 +2752,7 @@ const AIInsight = ({ tone, mission }) => {
       {loading ? (
         <div className="ai-text-loading">Analysing your last 7 days...</div>
       ) : (
-        <div className="ai-text">"{insight}"</div>
+        <div className="ai-text">{insight || "Waiting for data…"}</div>
       )}
 
       <div className="ai-footer">
@@ -2616,7 +2770,7 @@ const AIInsight = ({ tone, mission }) => {
 // ============================================================
 // HOME
 // ============================================================
-const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, ghVerified = {} }) => {
+const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, stravaVerified = {}, checkins = {} }) => {
   const safekpis = challenge.kpis || [];
   const done  = safekpis.filter(k => kpis[k.key]).length;
   const total = safekpis.length;
@@ -2666,7 +2820,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
 
       {/* AI INSIGHT */}
       <div className="a1 mt24">
-        <AIInsight tone={tone} mission={mission} />
+        <AIInsight tone={tone} mission={mission} challenge={challenge} kpis={kpis} checkins={checkins} />
       </div>
 
       {/* CHALLENGE ARENA */}
@@ -3296,15 +3450,13 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
       ? tpl.kpis.map((k,i) => ({ id: i, label: k.label }))
       : [{ id: 0, label: "" }]
   );
-  const [nonNeg,    setNonNeg]    = useState([]);
-  const [ghTasks,   setGhTasks]   = useState({}); // { taskId: { enabled, repo } }
+  const [nonNeg,      setNonNeg]      = useState([]);
+  const [stravaTasks,   setStravaTasks]   = useState({}); // { taskId: { goal, rules, loading } }
 
   const addTask      = () => setTasks(t => [...t, { id: Date.now(), label: "" }]);
   const removeTask   = (id) => setTasks(t => t.filter(x => x.id !== id));
   const updateTask   = (id, val) => setTasks(t => t.map(x => x.id === id ? { ...x, label: val } : x));
   const toggleNonNeg = (id) => setNonNeg(n => n.includes(id) ? n.filter(x => x !== id) : [...n, id]);
-  const toggleGh     = (id) => setGhTasks(g => ({ ...g, [id]: g[id] ? null : { enabled:true, repo:"" } }));
-  const setGhRepo    = (id, repo) => setGhTasks(g => ({ ...g, [id]: { ...g[id], repo } }));
 
   const STEPS = isSecondary
     ? ["Setup", "Tasks", "Confirm"]
@@ -3324,8 +3476,8 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
   const handleStart = () => {
     const tasksWithVerification = validTasks.map(t => ({
       ...t,
-      verification: ghTasks[t.id]?.enabled ? "github" : null,
-      github_repo:  ghTasks[t.id]?.repo || null,
+      verification: stravaTasks[t.id]?.rules ? "strava" : null,
+      strava_rules: stravaTasks[t.id]?.rules || null,
     }));
     onStart({ name, days, mission, nonNeg, tasks: tasksWithVerification, isSecondary });
   };
@@ -3472,73 +3624,88 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
           </div>
         )}
 
-        {/* STEP 5 (main only) — GitHub Verification */}
+        {/* STEP 5 — Strava Verification */}
         {!isSecondary && step === 5 && (
           <div className="flex col g16">
             <div>
-              <div className="modal-title" style={{fontSize:26}}>Verify with GitHub</div>
+              <div className="modal-title" style={{fontSize:26}}>Verify with Strava</div>
               <div className="modal-desc">
-                Optionally link tasks to GitHub. When you push a commit, Forge auto-ticks the task — no self-reporting.
+                Tell Forge in plain English what counts as completing each task. Claude will extract the rules — Strava will confirm it happened.
               </div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".12em",
-                color:"var(--text-2)",marginTop:6}}>
-                Requires your GitHub username in Settings → Integrations. Skip if not applicable.
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".1em",
+                color:"#FC4C02",marginTop:6}}>
+                ⚡ Requires Strava connected in Settings → Integrations
               </div>
             </div>
-            <div className="flex col g8">
-              {validTasks.length === 0 && (
-                <div className="f-mono c-2" style={{fontSize:12}}>No tasks defined yet.</div>
-              )}
+            <div className="flex col g10">
               {validTasks.map(t => {
-                const gh = ghTasks[t.id];
+                const sv = stravaTasks[t.id];
                 return (
                   <div key={t.id} style={{
-                    background:"var(--bg-2)",border:`1px solid ${gh?"#4A9D5A44":"var(--border-1)"}`,
-                    borderRadius:10,padding:"12px 16px",transition:"all .18s",
+                    background:"var(--bg-2)",
+                    border:`1px solid ${sv?.rules?"#FC4C0244":"var(--border-1)"}`,
+                    borderRadius:10,padding:"14px 16px",transition:"border .2s",
                   }}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-                      <span style={{fontSize:14,flex:1}}>{t.label}</span>
-                      <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}
-                        onClick={()=>toggleGh(t.id)}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:sv?10:0}}>
+                      <span style={{fontSize:14,flex:1,fontWeight:500}}>{t.label}</span>
+                      <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",flexShrink:0}}
+                        onClick={()=>setStravaTasks(g=>({...g,[t.id]:g[t.id]?null:{goal:"",rules:null,loading:false}}))}>
                         <div style={{
                           width:36,height:20,borderRadius:10,
-                          background:gh?"#4A9D5A":"var(--bg-3)",
-                          border:`1px solid ${gh?"#4A9D5A":"var(--border-1)"}`,
+                          background:sv?"#FC4C02":"var(--bg-3)",
+                          border:`1px solid ${sv?"#FC4C02":"var(--border-1)"}`,
                           position:"relative",transition:"all .2s",
                         }}>
                           <div style={{
-                            position:"absolute",top:2,
-                            left:gh?16:2,
+                            position:"absolute",top:2,left:sv?16:2,
                             width:14,height:14,borderRadius:"50%",
-                            background:gh?"#fff":"var(--text-2)",
-                            transition:"left .2s",
+                            background:sv?"#fff":"var(--text-2)",transition:"left .2s",
                           }} />
                         </div>
                         <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,
-                          letterSpacing:".1em",color:gh?"#4A9D5A":"var(--text-2)"}}>
-                          {gh?"GITHUB":"OFF"}
+                          letterSpacing:".1em",color:sv?"#FC4C02":"var(--text-2)"}}>
+                          {sv?"STRAVA":"OFF"}
                         </span>
                       </div>
                     </div>
-                    {gh && (
-                      <div style={{marginTop:10}}>
-                        <div className="field-l">Specific repo? <span style={{color:"var(--text-2)",fontWeight:400}}>(leave blank for any commit)</span></div>
-                        <input className="field" value={gh.repo||""}
-                          onChange={e=>setGhRepo(t.id, e.target.value)}
-                          placeholder="e.g. my-project (just the repo name)" style={{width:"100%"}} />
+                    {sv && (
+                      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                        <div>
+                          <div className="field-l">Describe what counts as done</div>
+                          <div style={{display:"flex",gap:8}}>
+                            <input className="field" style={{flex:1}}
+                              value={sv.goal||""}
+                              onChange={e=>setStravaTasks(g=>({...g,[t.id]:{...g[t.id],goal:e.target.value,rules:null}}))}
+                              placeholder='e.g. "run at least 5km" or "any workout over 20 minutes"' />
+                            <button className="btn btn-a"
+                              style={{flexShrink:0,background:"#FC4C02",borderColor:"#FC4C02"}}
+                              disabled={!sv.goal?.trim()||sv.loading}
+                              onClick={async()=>{
+                                setStravaTasks(g=>({...g,[t.id]:{...g[t.id],loading:true}}));
+                                const rules = await extractStravaRules(sv.goal);
+                                setStravaTasks(g=>({...g,[t.id]:{...g[t.id],rules,loading:false}}));
+                              }}>
+                              {sv.loading?"…":"Set"}
+                            </button>
+                          </div>
+                        </div>
+                        {sv.rules && (
+                          <div style={{padding:"8px 12px",background:"#FC4C0210",border:"1px solid #FC4C0230",borderRadius:6}}>
+                            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"#FC4C02",letterSpacing:".1em",marginBottom:4}}>⚡ RULES EXTRACTED</div>
+                            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-1)",lineHeight:1.8}}>
+                              Activities: {sv.rules.activity_types?.join(", ")}<br/>
+                              {sv.rules.min_duration && <>Min duration: {Math.round(sv.rules.min_duration/60)} min<br/></>}
+                              {sv.rules.min_distance && <>Min distance: {(sv.rules.min_distance/1000).toFixed(1)} km<br/></>}
+                              {sv.rules.max_speed_ms && <>Max speed: {(sv.rules.max_speed_ms*3.6).toFixed(1)} km/h (cheat guard)</>}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 );
               })}
             </div>
-            {Object.values(ghTasks).filter(Boolean).length > 0 && (
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".1em",
-                color:"#4A9D5A",padding:"8px 12px",background:"#4A9D5A12",
-                border:"1px solid #4A9D5A30",borderRadius:6}}>
-                ⬡ {Object.values(ghTasks).filter(Boolean).length} task{Object.values(ghTasks).filter(Boolean).length!==1?"s":""} will be auto-verified via GitHub
-              </div>
-            )}
           </div>
         )}
 
@@ -3573,11 +3740,11 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
                     {nonNeg.includes(t.id) && (
                       <span className="f-mono" style={{ fontSize:8, color:"var(--warn)", letterSpacing:".1em" }}>NON-NEG</span>
                     )}
-                    {ghTasks[t.id] && (
+                    {stravaTasks[t.id]?.rules && (
                       <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,letterSpacing:".1em",
-                        color:"#4A9D5A",background:"#4A9D5A18",border:"1px solid #4A9D5A44",
+                        color:"#FC4C02",background:"#FC4C0218",border:"1px solid #FC4C0244",
                         borderRadius:4,padding:"1px 5px"}}>
-                        ⬡ GITHUB{ghTasks[t.id]?.repo ? ` · ${ghTasks[t.id].repo}` : ""}
+                        ⚡ STRAVA
                       </span>
                     )}
                   </div>
@@ -4144,16 +4311,12 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [saving,      setSaving]      = useState(false);
   const [msg,         setMsg]         = useState(null);
   // Feedback
+  // Strava
+  const [stravaLoading, setStravaLoading] = useState(false);
   const [fbType,      setFbType]      = useState("suggestion");
   const [fbText,      setFbText]      = useState("");
   const [fbSending,   setFbSending]   = useState(false);
   const [fbDone,      setFbDone]      = useState(false);
-  // Integrations
-  const [ghUser,      setGhUser]      = useState(profile?.github_username || "");
-  const [ghToken,     setGhToken]     = useState(profile?.github_token || "");
-  const [ghSaving,    setGhSaving]    = useState(false);
-  const [ghMsg,       setGhMsg]       = useState(null);
-  const [ghTesting,   setGhTesting]   = useState(false);
 
   const flash = (type,text) => { setMsg({type,text}); setTimeout(()=>setMsg(null),4000); };
 
@@ -4296,73 +4459,53 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
 
       {/* ── Full-width bottom section ── */}
       <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:16}}>
-
         {/* Integrations */}
         <div className="srow a5">
           <div className="srow-title">Integrations</div>
-          <div className="srow-desc">Connect external services to auto-verify your tasks.</div>
-
-          {/* GitHub */}
+          <div className="srow-desc">Connect fitness apps to auto-verify your tasks.</div>
           <div style={{marginTop:16,padding:"16px 18px",background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:10}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:".06em"}}>GitHub</div>
-              {profile?.github_username && (
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".12em",
-                  color:"#4A9D5A",background:"#4A9D5A18",border:"1px solid #4A9D5A44",
-                  borderRadius:4,padding:"2px 7px"}}>
-                  ⬡ CONNECTED
-                </div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:".06em",color:"#FC4C02"}}>Strava</div>
+                {profile?.strava_athlete_name && (
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".12em",
+                    color:"#FC4C02",background:"#FC4C0218",border:"1px solid #FC4C0244",
+                    borderRadius:4,padding:"2px 7px"}}>
+                    ⚡ {profile.strava_athlete_name}
+                  </div>
+                )}
+              </div>
+              {profile?.strava_athlete_name && (
+                <button className="btn btn-g" style={{fontSize:11,padding:"4px 10px",color:"var(--err)",borderColor:"var(--err)30"}}
+                  onClick={()=>onSaveProfile({strava_access_token:null,strava_refresh_token:null,strava_token_expiry:null,strava_athlete_id:null,strava_athlete_name:null})}>
+                  Disconnect
+                </button>
               )}
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:10,maxWidth:400}}>
-              <div>
-                <div className="field-l">GitHub Username</div>
-                <input className="field" value={ghUser} onChange={e=>setGhUser(e.target.value)}
-                  placeholder="e.g. swishpaul23" style={{width:"100%"}} />
+            {profile?.strava_athlete_name ? (
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-1)",lineHeight:1.6}}>
+                Connected. Strava will auto-verify tasks tagged with Strava verification.
               </div>
-              <div>
-                <div className="field-l">Personal Access Token <span style={{color:"var(--text-2)",fontWeight:400}}>(optional — needed for private repos)</span></div>
-                <input className="field" type="password" value={ghToken} onChange={e=>setGhToken(e.target.value)}
-                  placeholder="ghp_xxxxxxxxxxxx" style={{width:"100%"}} />
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",marginTop:4,letterSpacing:".06em"}}>
-                  Generate at github.com/settings/tokens → read-only · repo scope
+            ) : (
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",lineHeight:1.6}}>
+                  Connect your Strava account to auto-verify workouts. No manual token needed.
                 </div>
-              </div>
-              {ghMsg && (
-                <div style={{padding:"8px 12px",borderRadius:6,
-                  background:ghMsg.type==="ok"?"#4A9D5A18":"var(--err)18",
-                  border:`1px solid ${ghMsg.type==="ok"?"#4A9D5A44":"var(--err)44"}`,
-                  color:ghMsg.type==="ok"?"#4A9D5A":"var(--err)",
-                  fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>
-                  {ghMsg.text}
-                </div>
-              )}
-              <div style={{display:"flex",gap:8}}>
-                <button className="btn btn-a" disabled={!ghUser.trim()||ghSaving}
-                  onClick={async()=>{
-                    setGhSaving(true); setGhMsg(null);
-                    try {
-                      await onSaveProfile({ github_username: ghUser.trim(), github_token: ghToken.trim()||null });
-                      setGhMsg({type:"ok", text:"✓ GitHub connected."});
-                    } catch(e) { setGhMsg({type:"err", text:e.message}); }
-                    finally { setGhSaving(false); }
+                <button className="btn btn-a" style={{alignSelf:"flex-start",background:"#FC4C02",borderColor:"#FC4C02"}}
+                  disabled={stravaLoading}
+                  onClick={()=>{
+                    if (!user) return;
+                    setStravaLoading(true);
+                    const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
+                    const redirectUri = encodeURIComponent(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-auth`);
+                    const scope = "read,activity:read";
+                    const state = user.id;
+                    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
                   }}>
-                  {ghSaving?"Saving…":"Save"}
-                </button>
-                <button className="btn btn-g" disabled={!ghUser.trim()||ghTesting}
-                  onClick={async()=>{
-                    setGhTesting(true); setGhMsg(null);
-                    const found = await checkGitHubCommits(ghUser.trim(), ghToken.trim()||null, null);
-                    setGhMsg(found
-                      ? {type:"ok",  text:`✓ Found commits today from @${ghUser.trim()}.`}
-                      : {type:"err", text:`No commits found today for @${ghUser.trim()}. Check your username or try later.`}
-                    );
-                    setGhTesting(false);
-                  }}>
-                  {ghTesting?"Checking…":"Test Connection"}
+                  {stravaLoading ? "Redirecting…" : "⚡ Connect Strava"}
                 </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -4464,6 +4607,80 @@ export default function App() {
     } catch(e) { console.warn("profile load:", e); }
   }, []);
 
+  // Load challenges + today's kpi state from Supabase
+  const loadChallenges = useCallback(async (uid) => {
+    if (!uid || !sb) return;
+    try {
+      // Load challenges
+      const { data: chs } = await sb
+        .from("challenges")
+        .select("*, challenge_tasks(*)")
+        .eq("user_id", uid)
+        .eq("archived", false)
+        .order("created_at", { ascending: true });
+
+      if (!chs || chs.length === 0) return;
+
+      const today = new Date().toISOString().split("T")[0];
+
+      const shaped = chs.map(ch => {
+        const startDate = new Date(ch.created_at);
+        startDate.setHours(0, 0, 0, 0);
+        const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0);
+        const dayNum = Math.floor((todayDate - startDate) / 86400000) + 1;
+
+        return {
+          id:         ch.id,
+          name:       ch.name,
+          tag:        ch.tag || "CUSTOM",
+          dayNum:     Math.min(dayNum, ch.total_days),
+          totalDays:  ch.total_days,
+          streak:     ch.streak || 0,
+          consistency:ch.consistency || 0,
+          color:      ch.color || "#D4922A",
+          mission:    ch.mission || "",
+          is_main:    ch.is_main,
+          created_at: ch.created_at,
+          kpis: (ch.challenge_tasks || [])
+            .sort((a,b) => a.sort_order - b.sort_order)
+            .map(t => ({
+              key:    t.key,
+              label:  t.label,
+              cat:    t.cat || "other",
+              nonNeg: t.non_neg || false,
+            })),
+        };
+      });
+
+      const main = shaped.find(c => c.is_main) || null;
+      const secondary = shaped.filter(c => !c.is_main).slice(0, 3);
+
+      if (main) {
+        setChallenges({ main: { ...main, wall: buildWall() }, secondary });
+
+        // Load today's kpi state from checkins
+        const { data: todayCheckin } = await sb
+          .from("checkins")
+          .select("completed_keys, score")
+          .eq("challenge_id", main.id)
+          .eq("date", today)
+          .maybeSingle();
+
+        if (todayCheckin?.completed_keys) {
+          const kpiState = {};
+          main.kpis.forEach(k => { kpiState[k.key] = todayCheckin.completed_keys.includes(k.key); });
+          setKpis(kpiState);
+          setLoggedToday(true);
+        } else {
+          setKpis(Object.fromEntries(main.kpis.map(k => [k.key, false])));
+        }
+
+        // Load mission from main challenge
+        if (main.mission) setMission(main.mission);
+      }
+    } catch(e) { console.warn("loadChallenges:", e); }
+  }, []);
+
   const saveProfile = useCallback(async (updates) => {
     if (!user?.id || !sb) return;
     try {
@@ -4479,12 +4696,12 @@ export default function App() {
     if (!sb) { setUser(null); return; }
     sb.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user.id);
+      if (session?.user) { loadProfile(session.user.id); loadChallenges(session.user.id); }
     });
     const { data: { subscription } } = sb.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user.id);
-      else setProfile(null);
+      if (session?.user) { loadProfile(session.user.id); loadChallenges(session.user.id); }
+      else { setProfile(null); setChallenges(EMPTY_CHALLENGES); setKpis(EMPTY_KPIS); }
     });
     return () => subscription.unsubscribe();
   }, [loadProfile]);
@@ -4496,7 +4713,7 @@ export default function App() {
   const [sparkTrigger, setSparkTrigger] = useState(false);
   const [loggedToday,  setLoggedToday]  = useState(false);
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
-  const [ghVerified,   setGhVerified]   = useState({}); // { taskKey: true } — tasks verified today
+  const [stravaVerified, setStravaVerified] = useState({}); // { taskKey: { passed, reason, activity } }
   const [theme,       setThemeState]  = useState("forge");
   const [tone,        setTone]        = useState("Coach");
   const [modal,       setModal]       = useState(null);
@@ -4537,26 +4754,72 @@ export default function App() {
     else setStage("app");
   }, [user, profile]);
 
-  const toggle = (key) => setKpis(p => ({ ...p, [key]: !p[key] }));
+  const toggle = (key) => {
+    setKpis(p => {
+      const next = { ...p, [key]: !p[key] };
+      // Persist in-progress kpi state to checkins as completed_keys
+      if (sb && user && challenges.main) {
+        const today = new Date().toISOString().split("T")[0];
+        const completed = Object.entries(next).filter(([,v])=>v).map(([k])=>k);
+        const total = (challenges.main.kpis || []).length;
+        const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+        sb.from("checkins").upsert({
+          challenge_id:   challenges.main.id,
+          date:           today,
+          score,
+          completed_keys: completed,
+          updated_at:     new Date().toISOString(),
+        }, { onConflict: "challenge_id,date" }).then(() => {});
+      }
+      return next;
+    });
+  };
 
   const handleAuthed = (name) => {
     if (name) setUserName(name);
     // Auth state change will trigger the useEffect above
   };
 
-  const handleStartChallenge = ({ name, days, mission: m, nonNeg, tasks, isSecondary }) => {
-    const newChallenge = {
-      id: `c${Date.now()}`, name, tag: "CUSTOM", dayNum: 1,
-      totalDays: parseInt(days), streak: 0, consistency: 100, color: "#9A9690",
-      kpis: tasks.map(t => ({ key:`task_${t.id}`, label:t.label, cat:"other", nonNeg:nonNeg.includes(t.id) })),
-    };
-    if (isSecondary) {
-      setChallenges(c => ({ ...c, secondary: [...c.secondary, newChallenge].slice(0,3) }));
-    } else {
-      setChallenges(c => ({ ...c, main: { ...newChallenge, wall: buildWall() } }));
-      if (m) setMission(m);
-      setKpis(Object.fromEntries(newChallenge.kpis.map(k => [k.key, false])));
-    }
+  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary }) => {
+    if (!user?.id || !sb) return;
+    try {
+      // Archive existing main if replacing
+      if (!isSecondary && challenges.main) {
+        await sb.from("challenges").update({ archived: true }).eq("id", challenges.main.id);
+      }
+
+      // Insert challenge row
+      const { data: chRow, error: chErr } = await sb.from("challenges").insert({
+        user_id:    user.id,
+        name,
+        tag:        "CUSTOM",
+        total_days: parseInt(days),
+        streak:     0,
+        consistency:100,
+        color:      isSecondary ? "#5DBF8A" : "#D4922A",
+        mission:    m || null,
+        is_main:    !isSecondary,
+        archived:   false,
+      }).select().single();
+
+      if (chErr || !chRow) throw chErr;
+
+      // Insert tasks
+      const kpis = tasks.map((t, i) => ({
+        challenge_id: chRow.id,
+        key:          `task_${chRow.id}_${i}`,
+        label:        t.label,
+        cat:          t.cat || "other",
+        non_neg:      nonNeg.includes(t.id),
+        sort_order:   i,
+      }));
+      if (kpis.length > 0) await sb.from("challenge_tasks").insert(kpis);
+
+      // Reload everything fresh from DB
+      await loadChallenges(user.id);
+      if (m && !isSecondary) setMission(m);
+
+    } catch(e) { console.warn("handleStartChallenge:", e); }
     setModal(null); setLibModal(false);
   };
 
@@ -4607,30 +4870,6 @@ export default function App() {
     load();
   }, [user, challenges.main?.id]);
 
-  // ── GitHub auto-verification ──────────────────────────────
-  useEffect(() => {
-    if (!profile?.github_username || !challenges.main) return;
-    const ghTasks = (challenges.main.kpis || []).filter(k => k.verification === "github");
-    if (ghTasks.length === 0) return;
-
-    const verify = async () => {
-      const verified = {};
-      for (const task of ghTasks) {
-        const hasCommit = await checkGitHubCommits(
-          profile.github_username,
-          profile.github_token || null,
-          task.github_repo || null
-        );
-        if (hasCommit) {
-          verified[task.key] = true;
-          // Auto-tick the task if not already done
-          setKpis(prev => prev[task.key] ? prev : { ...prev, [task.key]: true });
-        }
-      }
-      if (Object.keys(verified).length > 0) setGhVerified(verified);
-    };
-    verify();
-  }, [profile?.github_username, challenges.main?.id]);
 
   // ── Log a day ─────────────────────────────────────────────
   const handleLogDay = async (done, total) => {
@@ -4664,6 +4903,63 @@ export default function App() {
       } catch(e) { console.warn("save checkin:", e); }
     }
   };
+
+  // ── Strava auto-verification ─────────────────────────────
+  useEffect(() => {
+    if (!profile?.strava_access_token || !challenges.main) return;
+    const stravaTasks = (challenges.main.kpis || []).filter(k => k.verification === "strava" && k.strava_rules);
+    if (stravaTasks.length === 0) return;
+
+    const verify = async () => {
+      const token = await refreshStravaToken(profile, sb);
+      if (!token) return;
+      const results = {};
+      for (const task of stravaTasks) {
+        const result = await checkStravaActivity(token, task.strava_rules);
+        results[task.key] = result;
+        if (result.passed) {
+          setKpis(prev => prev[task.key] ? prev : { ...prev, [task.key]: true });
+        }
+      }
+      setStravaVerified(results);
+    };
+    verify();
+  }, [profile?.strava_access_token, challenges.main?.id]);
+
+  // Handle Strava OAuth callback redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('strava_connected')) {
+      window.history.replaceState({}, '', window.location.pathname);
+      // Reload profile to get new tokens
+      if (user) loadProfile(user.id);
+    }
+    if (params.get('strava_error')) {
+      console.warn('Strava error:', params.get('strava_error'));
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  // ── Midnight: advance day + reset today's kpis ──────────────
+  useEffect(() => {
+    if (!challenges.main) return;
+    const scheduleRefresh = () => {
+      const now  = new Date();
+      const next = new Date(now);
+      next.setHours(24, 0, 0, 0); // next calendar midnight
+      const ms = next - now;
+      return setTimeout(async () => {
+        // Reload challenges fresh — dayNum recomputes from created_at
+        if (user?.id) await loadChallenges(user.id);
+        // Reset today's kpi ticks for the new day
+        setKpis(Object.fromEntries((challenges.main?.kpis || []).map(k => [k.key, false])));
+        setLoggedToday(false);
+        scheduleRefresh(); // reschedule for next midnight
+      }, ms);
+    };
+    const t = scheduleRefresh();
+    return () => clearTimeout(t);
+  }, [challenges.main?.id, user?.id]);
 
   // ── Midnight auto-log ─────────────────────────────────────
   useEffect(() => {
@@ -4719,7 +5015,7 @@ export default function App() {
           </button>
         </div>
       );
-      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} ghVerified={ghVerified} />;
+      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} stravaVerified={stravaVerified} checkins={checkins} />;
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
