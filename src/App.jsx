@@ -2686,12 +2686,16 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
 // DEEP WORK ERROR BOUNDARY
 // ============================================================
 class DeepWorkBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { crashed: false }; }
-  static getDerivedStateFromError() { return { crashed: true }; }
+  constructor(props) { super(props); this.state = { crashed: false, error: null }; }
+  static getDerivedStateFromError(error) { return { crashed: true, error }; }
+  componentDidCatch(error, info) { console.error("[DeepWork crash]", error, info); }
   render() {
     if (this.state.crashed) return (
-      <div style={{position:"fixed",inset:0,background:"#080807",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+      <div style={{position:"fixed",inset:0,background:"#080807",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:24}}>
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"#56524D"}}>Something went wrong</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"#BF5D5D",maxWidth:480,textAlign:"center",lineHeight:1.6,wordBreak:"break-word"}}>
+          {this.state.error?.message || "Unknown error"}
+        </div>
         <button className="btn btn-g" onClick={this.props.onExit}>← Exit Deep Work</button>
       </div>
     );
