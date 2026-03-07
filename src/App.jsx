@@ -4380,7 +4380,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
         .from("profiles").select("id,full_name")
         .eq("invite_code", joinCode.trim().toUpperCase())
         .maybeSingle();
-      if (profileError) throw new Error("Something went wrong. Try again.");
+      if (profileError) throw new Error("Profile lookup failed: " + profileError.message);
       if (!targetProfile) throw new Error("No user found with that code. Double-check it.");
 
       // Check not already partners — use maybeSingle to avoid error on no results
@@ -4390,15 +4390,12 @@ const Partners = ({ user, profile, challenges, sb }) => {
         .maybeSingle();
       if (existing) throw new Error(existing.status === "active" ? "You're already partners." : "Request already sent.");
 
-      // Create partnership — use a unique random code to avoid conflicts
-      const uniqueCode = `${user.id.slice(0,8)}-${targetProfile.id.slice(0,8)}`;
       const { error: insertError } = await sb.from("partnerships").insert({
         user_id: user.id,
         partner_id: targetProfile.id,
-        invite_code: uniqueCode,
         status: "active",
       });
-      if (insertError) throw new Error("Failed to connect. " + insertError.message);
+      if (insertError) throw new Error("Insert failed: " + insertError.message + (insertError.details ? " | " + insertError.details : "") + (insertError.hint ? " | hint: " + insertError.hint : ""));
 
       setJoinCode("");
       await loadPartners();
