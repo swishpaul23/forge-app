@@ -4309,16 +4309,30 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const loadPartners = async () => {
     if (!sb || !user) return;
     try {
-      const { data } = await sb.from("partnerships")
-        .select("*, profiles!partnerships_partner_id_fkey(id,full_name,invite_code)")
-        .eq("user_id", user.id).eq("status","active");
+      // Fetch rows where I am user_id
+      const { data: asUser } = await sb.from("partnerships")
+        .select("*").eq("user_id", user.id).eq("status", "active");
+      // Fetch rows where I am partner_id
       const { data: asPartner } = await sb.from("partnerships")
-        .select("*, profiles!partnerships_user_id_fkey(id,full_name,invite_code)")
-        .eq("partner_id", user.id).eq("status","active");
-      const all = [
-        ...(data||[]).map(p => ({ ...p, partnerProfile: p.profiles })),
-        ...(asPartner||[]).map(p => ({ ...p, partnerProfile: p.profiles })),
-      ];
+        .select("*").eq("partner_id", user.id).eq("status", "active");
+
+      const rows = [...(asUser||[]), ...(asPartner||[])];
+      if (rows.length === 0) { setPartners([]); return; }
+
+      // Collect the other person's id for each row
+      const otherIds = rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id);
+      const uniqueIds = [...new Set(otherIds)];
+
+      // Fetch their profiles individually
+      const { data: profileRows } = await sb.from("profiles")
+        .select("id,full_name,invite_code").in("id", uniqueIds);
+      const profileMap = {};
+      (profileRows||[]).forEach(p => { profileMap[p.id] = p; });
+
+      const all = rows.map(r => {
+        const otherId = r.user_id === user.id ? r.partner_id : r.user_id;
+        return { ...r, partnerProfile: profileMap[otherId] || { id: otherId, full_name: "Partner", invite_code: "" } };
+      });
       setPartners(all);
     } catch(e) { console.warn("load partners:", e); }
   };
