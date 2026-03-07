@@ -36,7 +36,7 @@ const THEMES = {
     "--accent-mid": "#2A4A3850",
     "--text-0": "#0E0D0C",
     "--text-1": "#2A2826",
-    "--text-2": "#6A6660",
+    "--text-2": "#4A4540",
     "--text-3": "#A8A49E",
     "--border-0": "#DDD9D2",
     "--border-1": "#CECAC2",
@@ -424,13 +424,13 @@ const makeCSS = () => `
   .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; }
 
   /* PAGE HEADER */
-  .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
+  .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
   .pg-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,6vw,60px); letter-spacing:.02em; line-height:0.95; }
   .pg-sub   { font-size:15px; color:var(--text-1); margin-top:8px; }
 
   /* SECTION LABEL */
   .slabel {
-    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px;
     letter-spacing:.18em; text-transform:uppercase; color:var(--text-2);
     margin-bottom:12px;
   }
@@ -438,7 +438,7 @@ const makeCSS = () => `
   /* DIVIDER WITH LABEL */
   .dv-label {
     display:flex; align-items:center; gap:12px;
-    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.18em;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.18em;
     text-transform:uppercase; color:var(--text-2);
     margin:26px 0 14px;
   }
@@ -4951,7 +4951,7 @@ const ALL_THEMES = {
   neutrals: { label:"Elevated Neutrals",  desc:"Calm & Clarity. Warm greys, zero noise.",   swatch:"#8C7355", vars: {
     "--bg-0":"#FAF8F5","--bg-1":"#F0EDE8","--bg-2":"#E6E2DB","--bg-3":"#D8D3CB","--bg-4":"#FFFFFF",
     "--accent":"#8C7355","--accent-lo":"#8C735514","--accent-mid":"#8C735545",
-    "--text-0":"#1A1816","--text-1":"#605A52","--text-2":"#9E9890","--text-3":"#C8C2BA",
+    "--text-0":"#1A1816","--text-1":"#605A52","--text-2":"#706A62","--text-3":"#C8C2BA",
     "--border-0":"#E0DCD4","--border-1":"#CECAC2","--border-accent":"#8C735530",
     "--ok":"#4A7C59","--warn":"#B8880A","--err":"#A03030",
   }},
@@ -4972,7 +4972,7 @@ const ALL_THEMES = {
   pastel:   { label:"Sunwashed Pastels",   desc:"Energy & Joy. Casual planning, students.", swatch:"#E07B4A", vars: {
     "--bg-0":"#FFFBF7","--bg-1":"#FFF3EA","--bg-2":"#FFE8D6","--bg-3":"#FFD9C0","--bg-4":"#FFFFFF",
     "--accent":"#E07B4A","--accent-lo":"#E07B4A14","--accent-mid":"#E07B4A44",
-    "--text-0":"#2A1A10","--text-1":"#7A5040","--text-2":"#B89080","--text-3":"#D8C0B0",
+    "--text-0":"#2A1A10","--text-1":"#7A5040","--text-2":"#7A5848","--text-3":"#D8C0B0",
     "--border-0":"#F5DDD0","--border-1":"#EAC8B4","--border-accent":"#E07B4A30",
     "--ok":"#3DA870","--warn":"#E0A020","--err":"#D04040",
   }},
