@@ -4612,23 +4612,32 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
 const REACTIONS = ["🔥","💪","✓","⚡","👊"];
 
 const Partners = ({ user, profile, challenges, sb }) => {
-  const [partners,     setPartners]     = useState([]);
-  const [messages,     setMessages]     = useState([]);
-  const [activePartner,setActivePartner]= useState(null);
-  const [msgText,      setMsgText]      = useState("");
-  const [sending,      setSending]      = useState(false);
-  const [copied,       setCopied]       = useState(false);
-  const [joinCode,     setJoinCode]     = useState("");
-  const [joinError,    setJoinError]    = useState("");
-  const [joinLoading,  setJoinLoading]  = useState(false);
-  const [showAdd,      setShowAdd]      = useState(false);
-  const [unreadMap,    setUnreadMap]    = useState({});
+  const [partners,        setPartners]        = useState([]);
+  const [activePartner,   setActivePartner]   = useState(null);
+  const [msgText,         setMsgText]         = useState("");
+  const [sending,         setSending]         = useState(false);
+  const [copied,          setCopied]          = useState(false);
+  const [joinCode,        setJoinCode]        = useState("");
+  const [joinError,       setJoinError]       = useState("");
+  const [joinLoading,     setJoinLoading]     = useState(false);
+  const [showAdd,         setShowAdd]         = useState(false);
+  const [unreadMap,       setUnreadMap]       = useState({});
   const [partnersLoading, setPartnersLoading] = useState(true);
-  const [sentReaction, setSentReaction] = useState(null);
-  const [clearPref,    setClearPref]    = useState("never"); // never | 7d | 30d | session
-  const [showClearMenu,setShowClearMenu]= useState(false);
+  const [sentReaction,    setSentReaction]    = useState(null);
+  const [clearPref,       setClearPref]       = useState("never");
+  const [showClearMenu,   setShowClearMenu]   = useState(false);
+  // Per-partner message cache — keyed by partner ID, never wiped on switch
+  const msgCache = useRef({});
+  const [msgTick, setMsgTick] = useState(0); // increment to force re-render from cache
   const feedRef = useRef(null);
-  const loadedPartnerRef = useRef(null);
+  const activePartnerRef = useRef(null);
+
+  // Derive messages for active partner from cache
+  const messages = activePartner ? (msgCache.current[activePartner.partnerProfile.id] || []) : [];
+  const setMessages = (pid, updater) => {
+    msgCache.current[pid] = typeof updater === "function" ? updater(msgCache.current[pid] || []) : updater;
+    setMsgTick(t => t + 1);
+  };
 
   const CLEAR_OPTIONS = [
     { value:"never",   label:"Never clear" },
@@ -4682,20 +4691,20 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const loadMessages = async (partnerId) => {
     if (!sb || !user) return;
     try {
+      // 30 day window
+      const since = new Date(Date.now() - 30*24*3600*1000).toISOString();
       const { data } = await sb.from("partner_messages")
         .select("*")
         .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
-        .order("created_at", { ascending: true }).limit(100);
+        .gte("created_at", since)
+        .order("created_at", { ascending: true })
+        .limit(200);
       const confirmed = data || [];
-      // Merge: keep optimistic messages for THIS partner not yet confirmed in DB
-      setMessages(prev => {
+      // Merge: keep optimistic messages not yet in DB
+      setMessages(partnerId, prev => {
         const confirmedIds = new Set(confirmed.map(m => m.id));
-        const stillPending = prev.filter(m =>
-          String(m.id).startsWith("opt-") &&
-          !confirmedIds.has(m.id) &&
-          m.to_user_id === partnerId
-        );
-        return [...confirmed, ...stillPending];
+        const pending = (prev||[]).filter(m => String(m.id).startsWith("opt-") && !confirmedIds.has(m.id));
+        return [...confirmed, ...pending];
       });
       await sb.from("partner_messages").update({ read: true })
         .eq("to_user_id", user.id).eq("from_user_id", partnerId);
@@ -4705,30 +4714,16 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   useEffect(() => { loadPartners(); }, [user, profile]);
   useEffect(() => {
-    if (!activePartner) { setMessages([]); loadedPartnerRef.current = null; return; }
+    if (!activePartner) return;
     const pid = activePartner.partnerProfile.id;
-    // Only clear + reload if we actually switched to a different partner
-    if (loadedPartnerRef.current === pid) return;
-    loadedPartnerRef.current = pid;
-    setMessages([]);
-    // Load saved pref
+    activePartnerRef.current = pid;
+    // Load prefs
     const savedPref = localStorage.getItem(`forge_clearpref_${pid}`) || "never";
     setClearPref(savedPref);
-    const lastClear = localStorage.getItem(`forge_lastclear_${pid}`);
-    if (savedPref === "session") {
-      localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
-      clearMessagesForPartner(pid);
-      return;
-    } else if (savedPref === "7d" && lastClear && Date.now() - parseInt(lastClear) > 7*24*3600*1000) {
-      clearMessagesForPartner(pid);
-      localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
-      return;
-    } else if (savedPref === "30d" && lastClear && Date.now() - parseInt(lastClear) > 30*24*3600*1000) {
-      clearMessagesForPartner(pid);
-      localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
-      return;
+    // Only fetch if not already cached
+    if (!msgCache.current[pid]) {
+      loadMessages(pid);
     }
-    loadMessages(pid);
   }, [activePartner]);
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
@@ -4759,35 +4754,28 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   const sendMessage = async () => {
     if (!msgText.trim() || !activePartner || !sb) return;
+    const pid = activePartner.partnerProfile.id;
     const body = msgText.trim();
-    // Optimistic update — show immediately
-    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:activePartner.partnerProfile.id, body, type:"text", read:false, created_at:new Date().toISOString() };
-    setMessages(m => [...m, optimistic]);
+    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:pid, body, type:"text", read:false, created_at:new Date().toISOString() };
+    setMessages(pid, m => [...m, optimistic]);
     setMsgText("");
     setSending(true);
     try {
-      await sb.from("partner_messages").insert({
-        from_user_id: user.id, to_user_id: activePartner.partnerProfile.id,
-        body, type: "text", read: false,
-      });
-      // Reload to get real id + any incoming messages
-      await loadMessages(activePartner.partnerProfile.id);
+      await sb.from("partner_messages").insert({ from_user_id:user.id, to_user_id:pid, body, type:"text", read:false });
+      await loadMessages(pid);
     } catch(e) { console.warn("sendMessage:", e); }
     finally { setSending(false); }
   };
 
   const sendReaction = async (emoji) => {
     if (!activePartner || !sb) return;
+    const pid = activePartner.partnerProfile.id;
     setSentReaction(emoji); setTimeout(()=>setSentReaction(null),1500);
-    // Optimistic update
-    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:activePartner.partnerProfile.id, body:emoji, type:"text", read:false, created_at:new Date().toISOString() };
-    setMessages(m => [...m, optimistic]);
+    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:pid, body:emoji, type:"text", read:false, created_at:new Date().toISOString() };
+    setMessages(pid, m => [...m, optimistic]);
     try {
-      await sb.from("partner_messages").insert({
-        from_user_id: user.id, to_user_id: activePartner.partnerProfile.id,
-        body: emoji, type: "text", read: false,
-      });
-      await loadMessages(activePartner.partnerProfile.id);
+      await sb.from("partner_messages").insert({ from_user_id:user.id, to_user_id:pid, body:emoji, type:"text", read:false });
+      await loadMessages(pid);
     } catch(e) { console.warn("sendReaction:", e); }
   };
 
@@ -4813,7 +4801,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
     try {
       await sb.from("partner_messages").delete()
         .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`);
-      setMessages([]);
+      setMessages(partnerId, () => []);
     } catch(e) { console.warn("clearMessages:", e); }
   };
 
