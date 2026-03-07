@@ -4628,6 +4628,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const [clearPref,    setClearPref]    = useState("never"); // never | 7d | 30d | session
   const [showClearMenu,setShowClearMenu]= useState(false);
   const feedRef = useRef(null);
+  const loadedPartnerRef = useRef(null);
 
   const CLEAR_OPTIONS = [
     { value:"never",   label:"Never clear" },
@@ -4704,9 +4705,11 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   useEffect(() => { loadPartners(); }, [user, profile]);
   useEffect(() => {
-    if (!activePartner) { setMessages([]); return; }
+    if (!activePartner) { setMessages([]); loadedPartnerRef.current = null; return; }
     const pid = activePartner.partnerProfile.id;
-    // Always clear immediately to prevent bleed from previous partner
+    // Only clear + reload if we actually switched to a different partner
+    if (loadedPartnerRef.current === pid) return;
+    loadedPartnerRef.current = pid;
     setMessages([]);
     // Load saved pref
     const savedPref = localStorage.getItem(`forge_clearpref_${pid}`) || "never";
