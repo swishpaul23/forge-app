@@ -2693,9 +2693,6 @@ class DeepWorkBoundary extends React.Component {
     if (this.state.crashed) return (
       <div style={{position:"fixed",inset:0,background:"#080807",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:24}}>
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"#56524D"}}>Something went wrong</div>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"#BF5D5D",maxWidth:480,textAlign:"center",lineHeight:1.6,wordBreak:"break-word"}}>
-          {this.state.error?.message || "Unknown error"}
-        </div>
         <button className="btn btn-g" onClick={this.props.onExit}>← Exit Deep Work</button>
       </div>
     );
@@ -2715,7 +2712,7 @@ const TIMER_PRESETS = [
 
 const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
-const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
+const DeepWork = ({ challenge, kpis, toggle, onExit, stravaVerified = {} }) => {
   const safeKpis = (challenge && challenge.kpis) ? challenge.kpis : [];
   const doneTasks = safeKpis.filter(k => kpis && kpis[k.key]).length;
 
@@ -5951,7 +5948,7 @@ export default function App() {
   if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")}   onSkip={handleOnboardDone} />;
   if (stage==="ob_induct") return <OnboardInduct onDone={()=>setStage("ob_challenge")} userName={userName} />;
   if (stage==="ob_challenge") return <OnboardChallenge onStart={(t, customTasks)=>{ handleStartChallenge({ name:t.name, days:t.duration, mission:"", nonNeg:[], tasks:customTasks||t.kpis, isSecondary:false, tag:t.tag }); handleOnboardDone(); }} onSkip={handleOnboardDone} />;
-  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} /></DeepWorkBoundary>;
+  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} stravaVerified={stravaVerified} /></DeepWorkBoundary>;
 
   return (
     <div className="shell">
