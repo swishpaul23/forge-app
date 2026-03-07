@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // ============================================================
@@ -2683,6 +2683,23 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
 
 
 // ============================================================
+// DEEP WORK ERROR BOUNDARY
+// ============================================================
+class DeepWorkBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { crashed: false }; }
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) return (
+      <div style={{position:"fixed",inset:0,background:"#080807",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"#56524D"}}>Something went wrong</div>
+        <button className="btn btn-g" onClick={this.props.onExit}>← Exit Deep Work</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
+// ============================================================
 // DEEP WORK MODE
 // ============================================================
 const TIMER_PRESETS = [
@@ -2715,14 +2732,22 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
 
   const playBeep = () => {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.8);
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      // Resume context — required by autoplay policy in production
+      const resume = ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
+      resume.then(() => {
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.8);
+        } catch(e) {}
+      }).catch(()=>{});
     } catch(e) {}
   };
 
@@ -5922,7 +5947,7 @@ export default function App() {
   if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")}   onSkip={handleOnboardDone} />;
   if (stage==="ob_induct") return <OnboardInduct onDone={()=>setStage("ob_challenge")} userName={userName} />;
   if (stage==="ob_challenge") return <OnboardChallenge onStart={(t, customTasks)=>{ handleStartChallenge({ name:t.name, days:t.duration, mission:"", nonNeg:[], tasks:customTasks||t.kpis, isSecondary:false, tag:t.tag }); handleOnboardDone(); }} onSkip={handleOnboardDone} />;
-  if (dw)                  return <DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} />;
+  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} /></DeepWorkBoundary>;
 
   return (
     <div className="shell">
