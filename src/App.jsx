@@ -4700,11 +4700,19 @@ const Partners = ({ user, profile, challenges, sb }) => {
         .order("created_at", { ascending: true })
         .limit(200);
       const confirmed = data || [];
-      // Merge: keep optimistic messages not yet in DB
+      // Drop optimistic messages that have been confirmed in DB
+      // Match by body + sender + within 30s window
       setMessages(partnerId, prev => {
-        const confirmedIds = new Set(confirmed.map(m => m.id));
-        const pending = (prev||[]).filter(m => String(m.id).startsWith("opt-") && !confirmedIds.has(m.id));
-        return [...confirmed, ...pending];
+        const optimistics = (prev||[]).filter(m => String(m.id).startsWith("opt-"));
+        const stillPending = optimistics.filter(opt => {
+          const optTime = new Date(opt.created_at).getTime();
+          return !confirmed.some(c =>
+            c.from_user_id === opt.from_user_id &&
+            c.body === opt.body &&
+            Math.abs(new Date(c.created_at).getTime() - optTime) < 30000
+          );
+        });
+        return [...confirmed, ...stillPending];
       });
       await sb.from("partner_messages").update({ read: true })
         .eq("to_user_id", user.id).eq("from_user_id", partnerId);
