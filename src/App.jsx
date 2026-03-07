@@ -4623,6 +4623,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const [joinLoading,  setJoinLoading]  = useState(false);
   const [showAdd,      setShowAdd]      = useState(false);
   const [unreadMap,    setUnreadMap]    = useState({});
+  const [partnersLoading, setPartnersLoading] = useState(true);
   const [sentReaction, setSentReaction] = useState(null);
   const [clearPref,    setClearPref]    = useState("never"); // never | 7d | 30d | session
   const [showClearMenu,setShowClearMenu]= useState(false);
@@ -4655,7 +4656,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
       const { data: asUser }    = await sb.from("partnerships").select("*").eq("user_id",    user.id).eq("status","active");
       const { data: asPartner } = await sb.from("partnerships").select("*").eq("partner_id", user.id).eq("status","active");
       const rows = [...(asUser||[]), ...(asPartner||[])];
-      if (!rows.length) { setPartners([]); return; }
+      if (!rows.length) { setPartners([]); setPartnersLoading(false); return; }
       const otherIds = [...new Set(rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id))];
       const { data: profileRows } = await sb.from("profiles").select("id,full_name,invite_code").in("id", otherIds);
       const profileMap = Object.fromEntries((profileRows||[]).map(p => [p.id, p]));
@@ -4673,7 +4674,8 @@ const Partners = ({ user, profile, challenges, sb }) => {
         return { ...r, partnerProfile: profileMap[otherId] || { id:otherId, full_name:"Partner" }, challenge: chalMap[otherId] || null };
       });
       setPartners(all);
-    } catch(e) { console.warn("loadPartners:", e); }
+      setPartnersLoading(false);
+    } catch(e) { console.warn("loadPartners:", e); setPartnersLoading(false); }
   };
 
   const loadMessages = async (partnerId) => {
@@ -4865,6 +4867,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const feed = buildFeed(messages);
 
   // ── No partners empty state ──
+  if (partnersLoading) return <div className="page partners-page" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)"}}>Loading…</div></div>;
   if (!partners.length && !showAdd) return (
     <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
       <div className="p-no-partners">
