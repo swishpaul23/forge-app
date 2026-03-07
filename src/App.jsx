@@ -1144,6 +1144,61 @@ const makeCSS = () => `
     margin-top:4px;
   }
 
+  /* PARTNERS */
+  .partners-layout { display:flex; height:100%; overflow:hidden; }
+  .p-sidebar { width:260px; flex-shrink:0; border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
+  .p-sidebar-head { padding:20px 16px 14px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
+  .p-sidebar-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-2); margin-bottom:4px; }
+  .p-sidebar-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:.04em; line-height:1; }
+  .p-sidebar-actions { display:flex; gap:6px; margin-top:12px; }
+  .p-list { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:3px; }
+  .p-card { border-radius:8px; padding:10px 12px; cursor:pointer; border:1px solid transparent; transition:all .15s; position:relative; }
+  .p-card:hover { background:var(--bg-2); border-color:var(--border-1); }
+  .p-card.active { background:var(--accent-lo); border-color:var(--border-accent); }
+  .p-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+  .p-card-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.04em; line-height:1; }
+  .p-card-badge { background:var(--accent); color:#080807; font-size:8px; font-weight:500; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .p-card-challenge { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .p-card-meta { display:flex; align-items:center; gap:8px; }
+  .p-card-stat { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-2); display:flex; align-items:center; gap:3px; }
+  .p-card-stat span { color:var(--text-1); }
+  .p-card-bar { height:2px; background:var(--bg-3); border-radius:2px; margin-top:8px; }
+  .p-card-bar-fill { height:100%; border-radius:2px; background:var(--accent); opacity:.4; transition:width .3s; }
+  .p-card.active .p-card-bar-fill { opacity:1; }
+  .p-nudge-btn { position:absolute; right:10px; bottom:8px; font-size:13px; background:none; border:none; cursor:pointer; opacity:0; transition:opacity .15s; padding:2px 4px; }
+  .p-card:hover .p-nudge-btn { opacity:1; }
+  .p-thread { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .p-thread-head { padding:14px 20px; border-bottom:1px solid var(--border-0); display:flex; align-items:center; gap:14px; flex-shrink:0; }
+  .p-thread-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; line-height:1; }
+  .p-thread-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin-top:2px; }
+  .p-thread-bar { height:2px; background:var(--bg-3); flex-shrink:0; }
+  .p-thread-bar-fill { height:100%; background:var(--accent); transition:width .4s; }
+  .p-streak-pill { background:var(--bg-3); border:1px solid var(--border-1); border-radius:20px; padding:4px 12px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--text-1); display:flex; align-items:center; gap:5px; }
+  .p-streak-pill .n { font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--accent); letter-spacing:.04em; line-height:1; }
+  .p-feed { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:8px; }
+  .p-msg { display:flex; flex-direction:column; max-width:68%; }
+  .p-msg.me { align-self:flex-end; align-items:flex-end; }
+  .p-msg.them { align-self:flex-start; align-items:flex-start; }
+  .p-bubble { padding:9px 14px; font-size:13px; line-height:1.45; color:var(--text-0); }
+  .p-msg.me .p-bubble { background:var(--accent-lo); border:1px solid var(--border-accent); border-radius:12px 12px 3px 12px; }
+  .p-msg.them .p-bubble { background:var(--bg-2); border:1px solid var(--border-1); border-radius:12px 12px 12px 3px; }
+  .p-msg.reaction .p-bubble { background:none; border:none; font-size:22px; padding:0 4px; }
+  .p-msg-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); margin-top:3px; letter-spacing:.06em; }
+  .p-date-div { align-self:center; font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-3); display:flex; align-items:center; gap:10px; margin:4px 0; }
+  .p-date-div::before,.p-date-div::after { content:''; width:40px; height:1px; background:var(--border-0); }
+  .p-empty-thread { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-2); }
+  .p-composer { border-top:1px solid var(--border-0); padding:12px 16px; flex-shrink:0; }
+  .p-rxn-row { display:flex; gap:6px; margin-bottom:10px; align-items:center; }
+  .p-rxn-btn { background:var(--bg-2); border:1px solid var(--border-1); border-radius:7px; padding:5px 10px; font-size:16px; cursor:pointer; transition:all .15s; }
+  .p-rxn-btn:hover,.p-rxn-btn.sent { border-color:var(--accent); background:var(--accent-lo); }
+  .p-composer-row { display:flex; gap:8px; }
+  .p-input { flex:1; background:var(--bg-2); border:1px solid var(--border-1); border-radius:8px; padding:9px 14px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-0); outline:none; transition:border-color .15s; }
+  .p-input:focus { border-color:var(--accent); }
+  .p-input::placeholder { color:var(--text-2); }
+  .p-no-partners { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:0; }
+  .p-invite-box { background:var(--bg-2); border:1px solid var(--border-accent); border-radius:10px; padding:20px 28px; text-align:center; margin-bottom:24px; width:100%; max-width:360px; }
+  .p-invite-code { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:.22em; color:var(--accent); }
+
   /* SETTINGS */
   .srow { background:var(--bg-1); border:1px solid var(--border-0); border-radius:10px; padding:22px; }
   .srow-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; margin-bottom:4px; }
@@ -4541,82 +4596,75 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
 const REACTIONS = ["🔥","💪","✓","⚡","👊"];
 
 const Partners = ({ user, profile, challenges, sb }) => {
-  const [partners,    setPartners]    = useState([]);
-  const [messages,    setMessages]    = useState([]);
-  const [reactions,   setReactions]   = useState([]);
-  const [inviteCode,  setInviteCode]  = useState(profile?.invite_code || "");
-  const [joinCode,    setJoinCode]    = useState("");
-  const [joinError,   setJoinError]   = useState("");
-  const [joinLoading, setJoinLoading] = useState(false);
+  const [partners,      setPartners]      = useState([]);
+  const [messages,      setMessages]      = useState([]);
   const [activePartner, setActivePartner] = useState(null);
-  const [msgText,     setMsgText]     = useState("");
-  const [sending,     setSending]     = useState(false);
-  const [copied,      setCopied]      = useState(false);
-  const [tab,         setTab]         = useState("partners"); // partners | messages
+  const [msgText,       setMsgText]       = useState("");
+  const [sending,       setSending]       = useState(false);
+  const [copied,        setCopied]        = useState(false);
+  const [joinCode,      setJoinCode]      = useState("");
+  const [joinError,     setJoinError]     = useState("");
+  const [joinLoading,   setJoinLoading]   = useState(false);
+  const [showAddPanel,  setShowAddPanel]  = useState(false);
+  const [unreadMap,     setUnreadMap]     = useState({}); // { partnerId: count }
+  const [sentReaction,  setSentReaction]  = useState(null);
+  const feedRef = useRef(null);
 
-  const myCode = profile?.invite_code || inviteCode;
+  const myCode = profile?.invite_code || "";
 
-  // Load partnerships
+  // ── Load partnerships + unread counts ──
   const loadPartners = async () => {
     if (!sb || !user) return;
     try {
-      // Fetch rows where I am user_id
-      const { data: asUser } = await sb.from("partnerships")
-        .select("*").eq("user_id", user.id).eq("status", "active");
-      // Fetch rows where I am partner_id
-      const { data: asPartner } = await sb.from("partnerships")
-        .select("*").eq("partner_id", user.id).eq("status", "active");
-
+      const { data: asUser }    = await sb.from("partnerships").select("*").eq("user_id",    user.id).eq("status","active");
+      const { data: asPartner } = await sb.from("partnerships").select("*").eq("partner_id", user.id).eq("status","active");
       const rows = [...(asUser||[]), ...(asPartner||[])];
-      if (rows.length === 0) { setPartners([]); return; }
+      if (!rows.length) { setPartners([]); return; }
 
-      // Collect the other person's id for each row
-      const otherIds = rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id);
-      const uniqueIds = [...new Set(otherIds)];
+      const otherIds = [...new Set(rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id))];
 
-      // Fetch their profiles individually
+      // Profiles
       const { data: profileRows } = await sb.from("profiles")
-        .select("id,full_name,invite_code").in("id", uniqueIds);
-      const profileMap = {};
-      (profileRows||[]).forEach(p => { profileMap[p.id] = p; });
+        .select("id,full_name,invite_code").in("id", otherIds);
+      const profileMap = Object.fromEntries((profileRows||[]).map(p => [p.id, p]));
+
+      // Challenges (main only)
+      const { data: chalRows } = await sb.from("challenges")
+        .select("user_id,name,tag,day_num,total_days,streak,archived")
+        .in("user_id", otherIds).eq("is_main", true).eq("archived", false);
+      const chalMap = Object.fromEntries((chalRows||[]).map(c => [c.user_id, c]));
+
+      // Unread counts — messages sent TO me that are unread
+      const { data: unreadRows } = await sb.from("partner_messages")
+        .select("from_user_id").eq("to_user_id", user.id).eq("read", false);
+      const counts = {};
+      (unreadRows||[]).forEach(r => { counts[r.from_user_id] = (counts[r.from_user_id]||0) + 1; });
+      setUnreadMap(counts);
 
       const all = rows.map(r => {
         const otherId = r.user_id === user.id ? r.partner_id : r.user_id;
-        return { ...r, partnerProfile: profileMap[otherId] || { id: otherId, full_name: "Partner", invite_code: "" } };
+        return { ...r, partnerProfile: profileMap[otherId] || { id:otherId, full_name:"Partner" }, challenge: chalMap[otherId] || null };
       });
       setPartners(all);
-    } catch(e) { console.warn("load partners:", e); }
+    } catch(e) { console.warn("loadPartners:", e); }
   };
 
-  // Load messages
+  // ── Load messages for a partner ──
   const loadMessages = async (partnerId) => {
     if (!sb || !user) return;
     try {
       const { data } = await sb.from("partner_messages")
-        .select("*, from:from_user_id(full_name)")
+        .select("*")
         .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
         .order("created_at", { ascending: true })
-        .limit(50);
+        .limit(100);
       setMessages(data || []);
       // Mark as read
       await sb.from("partner_messages")
         .update({ read: true })
-        .eq("to_user_id", user.id)
-        .eq("from_user_id", partnerId);
-    } catch(e) { console.warn("load messages:", e); }
-  };
-
-  // Load reactions
-  const loadReactions = async (partnerId) => {
-    if (!sb || !user) return;
-    try {
-      const { data } = await sb.from("partner_reactions")
-        .select("*")
-        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setReactions(data || []);
-    } catch(e) { console.warn("load reactions:", e); }
+        .eq("to_user_id", user.id).eq("from_user_id", partnerId);
+      setUnreadMap(m => ({ ...m, [partnerId]: 0 }));
+    } catch(e) { console.warn("loadMessages:", e); }
   };
 
   useEffect(() => { loadPartners(); }, [user, profile]);
@@ -4624,9 +4672,14 @@ const Partners = ({ user, profile, challenges, sb }) => {
   useEffect(() => {
     if (!activePartner) return;
     loadMessages(activePartner.partnerProfile.id);
-    loadReactions(activePartner.partnerProfile.id);
   }, [activePartner]);
 
+  // Auto-scroll feed to bottom
+  useEffect(() => {
+    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+  }, [messages]);
+
+  // ── Actions ──
   const copyCode = () => {
     navigator.clipboard.writeText(myCode);
     setCopied(true);
@@ -4636,34 +4689,24 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const joinPartner = async () => {
     setJoinError(""); setJoinLoading(true);
     try {
-      if (!sb) throw new Error("Not connected");
       if (!joinCode.trim()) throw new Error("Enter an invite code.");
       if (joinCode.trim().toUpperCase() === myCode) throw new Error("That's your own code.");
-
-      // Find profile with this invite code
-      const { data: targetProfile, error: profileError } = await sb
-        .from("profiles").select("id,full_name")
-        .eq("invite_code", joinCode.trim().toUpperCase())
-        .maybeSingle();
-      if (profileError) throw new Error("Profile lookup failed: " + profileError.message);
-      if (!targetProfile) throw new Error("No user found with that code. Double-check it.");
-
-      // Check not already partners — use maybeSingle to avoid error on no results
+      const { data: targetProfile, error: pErr } = await sb.from("profiles")
+        .select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
+      if (pErr) throw new Error("Lookup failed: " + pErr.message);
+      if (!targetProfile) throw new Error("No user found with that code.");
       const { data: existing } = await sb.from("partnerships")
         .select("id,status")
         .or(`and(user_id.eq.${user.id},partner_id.eq.${targetProfile.id}),and(user_id.eq.${targetProfile.id},partner_id.eq.${user.id})`)
         .maybeSingle();
-      if (existing) throw new Error(existing.status === "active" ? "You're already partners." : "Request already sent.");
-
-      const { error: insertError } = await sb.from("partnerships").insert({
-        user_id: user.id,
-        partner_id: targetProfile.id,
+      if (existing) throw new Error(existing.status === "active" ? "Already partners." : "Request already sent.");
+      const { error: iErr } = await sb.from("partnerships").insert({
+        user_id: user.id, partner_id: targetProfile.id,
         invite_code: `${user.id.slice(0,8)}${targetProfile.id.slice(0,8)}`.toUpperCase(),
         status: "active",
       });
-      if (insertError) throw new Error("Insert failed: " + insertError.message + (insertError.details ? " | " + insertError.details : "") + (insertError.hint ? " | hint: " + insertError.hint : ""));
-
-      setJoinCode("");
+      if (iErr) throw new Error(iErr.message);
+      setJoinCode(""); setShowAddPanel(false);
       await loadPartners();
     } catch(e) { setJoinError(e.message); }
     finally { setJoinLoading(false); }
@@ -4677,23 +4720,40 @@ const Partners = ({ user, profile, challenges, sb }) => {
         from_user_id: user.id,
         to_user_id: activePartner.partnerProfile.id,
         body: msgText.trim(),
+        type: "text",
+        read: false,
       });
       setMsgText("");
       await loadMessages(activePartner.partnerProfile.id);
-    } catch(e) { console.warn("send message:", e); }
+    } catch(e) { console.warn("sendMessage:", e); }
     finally { setSending(false); }
   };
 
   const sendReaction = async (emoji) => {
     if (!activePartner || !sb) return;
+    setSentReaction(emoji);
+    setTimeout(() => setSentReaction(null), 1500);
     try {
-      await sb.from("partner_reactions").insert({
+      await sb.from("partner_messages").insert({
         from_user_id: user.id,
         to_user_id: activePartner.partnerProfile.id,
-        emoji,
+        body: emoji,
+        type: "reaction",
+        read: false,
       });
-      await loadReactions(activePartner.partnerProfile.id);
-    } catch(e) { console.warn("send reaction:", e); }
+      await loadMessages(activePartner.partnerProfile.id);
+    } catch(e) { console.warn("sendReaction:", e); }
+  };
+
+  const nudgePartner = async (partnerId, e) => {
+    e.stopPropagation();
+    if (!sb) return;
+    try {
+      await sb.from("partner_messages").insert({
+        from_user_id: user.id, to_user_id: partnerId,
+        body: "🔥", type: "reaction", read: false,
+      });
+    } catch(e) { console.warn("nudge:", e); }
   };
 
   const removePartner = async (partnershipId) => {
@@ -4703,174 +4763,208 @@ const Partners = ({ user, profile, challenges, sb }) => {
     await loadPartners();
   };
 
-  // ── Render partner detail view ──
-  if (activePartner) {
-    const p = activePartner.partnerProfile;
-    return (
-      <div className="page">
-        <div className="a0" style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
-          <button className="btn btn-g" style={{padding:"6px 12px"}} onClick={()=>setActivePartner(null)}>← Back</button>
-          <div>
-            <div className="pg-tag">Accountability Partner</div>
-            <div className="pg-title">{p.full_name || "Partner"}</div>
-          </div>
-        </div>
+  const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+  const fmtDate = (ts) => {
+    const d = new Date(ts); const now = new Date();
+    if (d.toDateString() === now.toDateString()) return "Today";
+    const y = new Date(now); y.setDate(now.getDate()-1);
+    if (d.toDateString() === y.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], { month:"short", day:"numeric" });
+  };
+  const lastActive = (ts) => {
+    if (!ts) return "";
+    const diff = Date.now() - new Date(ts).getTime();
+    const h = Math.floor(diff/3600000);
+    if (h < 1) return "just now";
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h/24)}d ago`;
+  };
 
-        {/* Reactions */}
-        <div className="a1" style={{marginBottom:20}}>
-          <div className="slabel">Send a Reaction</div>
-          <div style={{display:"flex",gap:10}}>
-            {REACTIONS.map(e => (
-              <button key={e} className="btn btn-g"
-                style={{fontSize:20,padding:"8px 14px",borderRadius:10}}
-                onClick={()=>sendReaction(e)}>
-                {e}
+  // Group messages by date for dividers
+  const groupedMessages = messages.reduce((acc, m) => {
+    const d = fmtDate(m.created_at);
+    if (!acc.length || acc[acc.length-1].date !== d) acc.push({ date: d, msgs: [] });
+    acc[acc.length-1].msgs.push(m);
+    return acc;
+  }, []);
+
+  // ── No partners ──
+  if (!partners.length && !showAddPanel) return (
+    <div className="page" style={{display:"flex",flexDirection:"column",height:"100%"}}>
+      <div className="p-no-partners">
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Accountability</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",marginBottom:8}}>Find Your People.</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",lineHeight:1.65,textAlign:"center",maxWidth:340,marginBottom:32}}>
+          Share your invite code with someone grinding alongside you. When they connect, you'll see their progress and messages here.
+        </div>
+        <div className="p-invite-box">
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Your invite code</div>
+          <div className="p-invite-code">{myCode || "Loading…"}</div>
+          <button className="btn btn-g" style={{marginTop:10,width:"100%",justifyContent:"center"}} onClick={copyCode}>{copied?"✓ Copied":"Copy Code"}</button>
+        </div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",marginBottom:16}}>— or enter their code —</div>
+        <div style={{display:"flex",gap:8,width:"100%",maxWidth:360}}>
+          <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center",flex:1}}
+            value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
+            placeholder="Enter invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinPartner()} />
+          <button className="btn btn-a" onClick={joinPartner} disabled={joinLoading}>{joinLoading?"…":"Connect →"}</button>
+        </div>
+        {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:10}}>{joinError}</div>}
+      </div>
+    </div>
+  );
+
+  // ── Main layout ──
+  const ap = activePartner;
+  const pName = ap?.partnerProfile?.full_name?.split(" ")[0] || "Partner";
+  const chal  = ap?.challenge;
+  const pct   = chal ? Math.round((chal.day_num / chal.total_days) * 100) : 0;
+
+  return (
+    <div className="page" style={{padding:0,height:"100%",display:"flex",flexDirection:"column"}}>
+      <div className="partners-layout" style={{flex:1,overflow:"hidden"}}>
+
+        {/* ── Sidebar ── */}
+        <div className="p-sidebar">
+          <div className="p-sidebar-head">
+            <div className="p-sidebar-tag">Accountability</div>
+            <div className="p-sidebar-title">Partners</div>
+            <div className="p-sidebar-actions">
+              <button className="btn btn-a" style={{fontSize:9,padding:"5px 10px",letterSpacing:".14em"}}
+                onClick={()=>setShowAddPanel(v=>!v)}>
+                {showAddPanel ? "✕ Close" : "+ Add"}
               </button>
-            ))}
-          </div>
-          {reactions.length > 0 && (
-            <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
-              {reactions.slice(0,8).map(r => (
-                <div key={r.id} style={{
-                  background:"var(--bg-2)",border:"1px solid var(--border-1)",
-                  borderRadius:8,padding:"4px 10px",
-                  fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",
-                  display:"flex",gap:6,alignItems:"center",
-                }}>
-                  <span style={{fontSize:14}}>{r.emoji}</span>
-                  <span>{r.from_user_id === user.id ? "You" : p.full_name?.split(" ")[0]}</span>
-                </div>
-              ))}
+              <button className="btn btn-g" style={{fontSize:9,padding:"5px 10px",letterSpacing:".12em"}}
+                onClick={copyCode}>{copied?"✓ Copied":`Code: ${myCode}`}</button>
             </div>
-          )}
-        </div>
 
-        {/* Messages */}
-        <div className="a2">
-          <div className="slabel">Messages</div>
-          <div style={{
-            background:"var(--bg-1)",border:"1px solid var(--border-0)",
-            borderRadius:10,padding:16,maxHeight:320,overflowY:"auto",
-            display:"flex",flexDirection:"column",gap:8,marginBottom:12,
-          }}>
-            {messages.length === 0 && (
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",textAlign:"center",padding:"24px 0"}}>
-                No messages yet. Say something.
+            {/* Add partner inline panel */}
+            {showAddPanel && (
+              <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6}}>
+                <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".1em",textAlign:"center",fontSize:11}}
+                  value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="Invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinPartner()} />
+                <button className="btn btn-a" style={{width:"100%",justifyContent:"center"}}
+                  onClick={joinPartner} disabled={joinLoading}>{joinLoading?"Connecting…":"Connect →"}</button>
+                {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:9}}>{joinError}</div>}
               </div>
             )}
-            {messages.map(m => {
-              const isMe = m.from_user_id === user.id;
+          </div>
+
+          {/* Partner list */}
+          <div className="p-list">
+            {partners.map(p => {
+              const ch = p.challenge;
+              const pId = p.partnerProfile.id;
+              const unread = unreadMap[pId] || 0;
+              const barPct = ch ? Math.round((ch.day_num/ch.total_days)*100) : 0;
+              const isActive = ap?.id === p.id;
               return (
-                <div key={m.id} style={{
-                  alignSelf:isMe?"flex-end":"flex-start",
-                  maxWidth:"75%",
-                  background:isMe?"var(--accent-lo)":"var(--bg-2)",
-                  border:`1px solid ${isMe?"var(--border-accent)":"var(--border-1)"}`,
-                  borderRadius:isMe?"12px 12px 3px 12px":"12px 12px 12px 3px",
-                  padding:"8px 14px",
-                }}>
-                  <div style={{fontSize:14,color:"var(--text-0)",lineHeight:1.4}}>{m.body}</div>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",marginTop:4}}>
-                    {isMe?"You":p.full_name?.split(" ")[0]} · {new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+                <div key={p.id} className={`p-card ${isActive?"active":""}`}
+                  onClick={()=>setActivePartner(p)}>
+                  <div className="p-card-top">
+                    <div className="p-card-name">{p.partnerProfile.full_name?.split(" ")[0] || "Partner"}</div>
+                    {unread > 0 && <div className="p-card-badge">{unread}</div>}
                   </div>
+                  {ch
+                    ? <div className="p-card-challenge">{ch.name} · Day {ch.day_num}</div>
+                    : <div className="p-card-challenge" style={{color:"var(--text-2)"}}>No active challenge</div>
+                  }
+                  <div className="p-card-meta">
+                    {ch && <div className="p-card-stat">🔥 <span>{ch.streak}</span></div>}
+                    <div className="p-card-stat" style={{marginLeft:"auto"}}>{lastActive(p.updated_at)}</div>
+                  </div>
+                  {ch && <div className="p-card-bar"><div className="p-card-bar-fill" style={{width:`${barPct}%`}} /></div>}
+                  <button className="p-nudge-btn" onClick={(e)=>nudgePartner(pId,e)} title="Nudge">🔥</button>
                 </div>
               );
             })}
           </div>
-          <div style={{display:"flex",gap:8}}>
-            <input className="field" style={{flex:1}}
-              value={msgText} onChange={e=>setMsgText(e.target.value)}
-              placeholder="Send a message…"
-              onKeyDown={e=>e.key==="Enter"&&sendMessage()} />
-            <button className="btn btn-a" onClick={sendMessage} disabled={sending||!msgText.trim()}>
-              Send
-            </button>
-          </div>
         </div>
 
-        <div style={{marginTop:24}}>
-          <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)"}}
-            onClick={()=>removePartner(activePartner.id)}>
-            Remove Partner
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Main partners list ──
-  return (
-    <div className="page">
-      <div className="a0">
-        <div className="pg-tag">Accountability</div>
-        <div className="pg-title">Partners</div>
-        <div className="pg-sub">Share your grind. Stay accountable.</div>
-      </div>
-
-      {/* Your invite code */}
-      <div className="srow a1 mt24">
-        <div className="srow-title">Your Invite Code</div>
-        <div className="srow-desc">Share this with someone to become accountability partners.</div>
-        <div style={{display:"flex",gap:10,alignItems:"center",marginTop:8}}>
-          <div style={{
-            fontFamily:"'Bebas Neue',sans-serif",fontSize:32,letterSpacing:".2em",
-            color:"var(--accent)",background:"var(--bg-2)",
-            border:"1px solid var(--border-accent)",
-            borderRadius:8,padding:"10px 20px",
-          }}>
-            {myCode || "Loading…"}
-          </div>
-          <button className="btn btn-g" onClick={copyCode}>
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
-      </div>
-
-      {/* Join a partner */}
-      <div className="srow a2 mt16">
-        <div className="srow-title">Add a Partner</div>
-        <div className="srow-desc">Enter their invite code to connect.</div>
-        {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:11,margin:"8px 0"}}>{joinError}</div>}
-        <div style={{display:"flex",gap:8,marginTop:8,maxWidth:340}}>
-          <input className="field" style={{flex:1,textTransform:"uppercase",letterSpacing:".1em"}}
-            value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
-            placeholder="XXXXXXXX" maxLength={8} />
-          <button className="btn btn-a" onClick={joinPartner} disabled={joinLoading}>
-            {joinLoading ? "…" : "Connect"}
-          </button>
-        </div>
-      </div>
-
-      {/* Partner list */}
-      <div className="a3 mt24">
-        <div className="slabel">Your Partners — {partners.length}</div>
-        {partners.length === 0 ? (
-          <div style={{
-            background:"var(--bg-1)",border:"1px dashed var(--border-1)",
-            borderRadius:10,padding:"32px",textAlign:"center",
-          }}>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:"var(--text-3)",letterSpacing:".04em"}}>No Partners Yet</div>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:6,letterSpacing:".1em"}}>Share your code or enter a friend's to get started</div>
-          </div>
-        ) : (
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {partners.map(p => (
-              <div key={p.id} className="card"
-                style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",padding:"16px 20px"}}
-                onClick={()=>setActivePartner(p)}>
+        {/* ── Thread panel ── */}
+        <div className="p-thread">
+          {!ap ? (
+            <div className="p-empty-thread">
+              <div style={{fontSize:28,opacity:.2}}>◆</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".22em",textTransform:"uppercase",opacity:.4}}>Select a partner</div>
+            </div>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="p-thread-head">
                 <div>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em"}}>
-                    {p.partnerProfile?.full_name || "Partner"}
-                  </div>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",letterSpacing:".1em",marginTop:2}}>
-                    ACTIVE PARTNER · TAP TO VIEW
+                  <div className="p-thread-name">{pName}</div>
+                  <div className="p-thread-meta">
+                    {chal ? `${chal.name} · Day ${chal.day_num} of ${chal.total_days}` : "No active challenge"}
                   </div>
                 </div>
-                <div style={{color:"var(--accent)",fontSize:18}}>→</div>
+                <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
+                  {chal && (
+                    <div className="p-streak-pill">
+                      <span className="n">{chal.streak}</span> day streak
+                    </div>
+                  )}
+                  <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)",fontSize:10,padding:"4px 10px"}}
+                    onClick={()=>removePartner(ap.id)}>Remove</button>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+              {chal && <div className="p-thread-bar"><div className="p-thread-bar-fill" style={{width:`${pct}%`}} /></div>}
+
+              {/* Feed */}
+              <div className="p-feed" ref={feedRef}>
+                {messages.length === 0 && (
+                  <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",textAlign:"center",letterSpacing:".1em"}}>No messages yet.</div>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-3)",letterSpacing:".08em"}}>Say something.</div>
+                  </div>
+                )}
+                {groupedMessages.map(group => (
+                  <React.Fragment key={group.date}>
+                    <div className="p-date-div">{group.date}</div>
+                    {group.msgs.map(m => {
+                      const isMe = m.from_user_id === user.id;
+                      const isReaction = m.type === "reaction";
+                      return (
+                        <div key={m.id} className={`p-msg ${isMe?"me":"them"} ${isReaction?"reaction":""}`}>
+                          <div className="p-bubble">{m.body}</div>
+                          {!isReaction && (
+                            <div className="p-msg-meta">{isMe?"You":pName} · {fmtTime(m.created_at)}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Composer */}
+              <div className="p-composer">
+                <div className="p-rxn-row">
+                  {REACTIONS.map(e => (
+                    <button key={e} className={`p-rxn-btn ${sentReaction===e?"sent":""}`}
+                      onClick={()=>sendReaction(e)}>{e}</button>
+                  ))}
+                  <div style={{marginLeft:"auto",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",letterSpacing:".1em",alignSelf:"center"}}>
+                    Quick reactions
+                  </div>
+                </div>
+                <div className="p-composer-row">
+                  <input className="p-input" value={msgText}
+                    onChange={e=>setMsgText(e.target.value)}
+                    placeholder={`Message ${pName}…`}
+                    onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendMessage()} />
+                  <button className="btn btn-a" onClick={sendMessage}
+                    disabled={sending||!msgText.trim()}
+                    style={{padding:"9px 18px",letterSpacing:".1em"}}>
+                    Send →
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
       </div>
     </div>
   );
