@@ -422,6 +422,7 @@ const makeCSS = () => `
 
   /* PAGE */
   .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; }
+  .page.partners-page { padding:0; max-width:100%; height:100%; }
 
   /* PAGE HEADER */
   .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
@@ -1146,7 +1147,7 @@ const makeCSS = () => `
 
   /* PARTNERS */
   .partners-layout { display:flex; height:100%; overflow:hidden; }
-  .p-sidebar { width:240px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
+  .p-sidebar { width:264px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
   .p-sidebar-head { padding:16px 14px 12px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
   .p-sidebar-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-2); margin-bottom:3px; }
   .p-sidebar-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; line-height:1; margin-bottom:10px; }
@@ -4711,13 +4712,18 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   const sendMessage = async () => {
     if (!msgText.trim() || !activePartner || !sb) return;
+    const body = msgText.trim();
+    // Optimistic update — show immediately
+    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:activePartner.partnerProfile.id, body, type:"text", read:false, created_at:new Date().toISOString() };
+    setMessages(m => [...m, optimistic]);
+    setMsgText("");
     setSending(true);
     try {
       await sb.from("partner_messages").insert({
         from_user_id: user.id, to_user_id: activePartner.partnerProfile.id,
-        body: msgText.trim(), type: "text", read: false,
+        body, type: "text", read: false,
       });
-      setMsgText("");
+      // Reload to get real id + any incoming messages
       await loadMessages(activePartner.partnerProfile.id);
     } catch(e) { console.warn("sendMessage:", e); }
     finally { setSending(false); }
@@ -4726,6 +4732,9 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const sendReaction = async (emoji) => {
     if (!activePartner || !sb) return;
     setSentReaction(emoji); setTimeout(()=>setSentReaction(null),1500);
+    // Optimistic update
+    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:activePartner.partnerProfile.id, body:emoji, type:"text", read:false, created_at:new Date().toISOString() };
+    setMessages(m => [...m, optimistic]);
     try {
       await sb.from("partner_messages").insert({
         from_user_id: user.id, to_user_id: activePartner.partnerProfile.id,
@@ -4803,7 +4812,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   // ── No partners empty state ──
   if (!partners.length && !showAdd) return (
-    <div className="page" style={{display:"flex",flexDirection:"column",height:"100%"}}>
+    <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
       <div className="p-no-partners">
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Accountability</div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",marginBottom:8}}>Find Your People.</div>
@@ -4828,7 +4837,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
   );
 
   return (
-    <div className="page" style={{padding:0,height:"100%",display:"flex",flexDirection:"column"}}>
+    <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
       <div className="partners-layout" style={{flex:1,overflow:"hidden"}}>
 
         {/* ── Sidebar ── */}
