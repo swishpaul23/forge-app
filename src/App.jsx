@@ -1146,50 +1146,65 @@ const makeCSS = () => `
 
   /* PARTNERS */
   .partners-layout { display:flex; height:100%; overflow:hidden; }
-  .p-sidebar { width:260px; flex-shrink:0; border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
-  .p-sidebar-head { padding:20px 16px 14px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
-  .p-sidebar-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-2); margin-bottom:4px; }
-  .p-sidebar-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:.04em; line-height:1; }
-  .p-sidebar-actions { display:flex; gap:6px; margin-top:12px; }
-  .p-list { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:3px; }
-  .p-card { border-radius:8px; padding:10px 12px; cursor:pointer; border:1px solid transparent; transition:all .15s; position:relative; }
-  .p-card:hover { background:var(--bg-2); border-color:var(--border-1); }
-  .p-card.active { background:var(--accent-lo); border-color:var(--border-accent); }
-  .p-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
-  .p-card-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.04em; line-height:1; }
-  .p-card-badge { background:var(--accent); color:#080807; font-size:8px; font-weight:500; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .p-card-challenge { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .p-card-meta { display:flex; align-items:center; gap:8px; }
-  .p-card-stat { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-2); display:flex; align-items:center; gap:3px; }
-  .p-card-stat span { color:var(--text-1); }
-  .p-card-bar { height:2px; background:var(--bg-3); border-radius:2px; margin-top:8px; }
-  .p-card-bar-fill { height:100%; border-radius:2px; background:var(--accent); opacity:.4; transition:width .3s; }
-  .p-card.active .p-card-bar-fill { opacity:1; }
-  .p-nudge-btn { position:absolute; right:10px; bottom:8px; font-size:13px; background:none; border:none; cursor:pointer; opacity:0; transition:opacity .15s; padding:2px 4px; }
-  .p-card:hover .p-nudge-btn { opacity:1; }
+  .p-sidebar { width:240px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
+  .p-sidebar-head { padding:16px 14px 12px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
+  .p-sidebar-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-2); margin-bottom:3px; }
+  .p-sidebar-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; line-height:1; margin-bottom:10px; }
+  .p-sidebar-actions { display:flex; gap:6px; }
+  .p-section { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.26em; text-transform:uppercase; color:var(--text-3); padding:10px 8px 4px; }
+  .p-list { flex:1; overflow-y:auto; padding:4px; display:flex; flex-direction:column; }
+  /* Discord-style DM rows */
+  .p-row { display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:6px; cursor:pointer; transition:background .12s; position:relative; }
+  .p-row:hover { background:var(--bg-2); }
+  .p-row.active { background:var(--bg-3); }
+  .p-avatar { width:34px; height:34px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:.04em; color:#080807; position:relative; }
+  .p-avatar-dot { position:absolute; bottom:0; right:0; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg-1); }
+  .p-dot-online { background:var(--ok); }
+  .p-dot-away { background:var(--accent); }
+  .p-dot-offline { background:var(--text-3); }
+  .p-row-info { flex:1; min-width:0; }
+  .p-row-name { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:.04em; line-height:1; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .p-row-sub { font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--text-2); letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .p-row-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; }
+  .p-unread { background:var(--accent); color:#080807; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:600; min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  .p-ts { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); }
+  .p-nudge-btn { position:absolute; right:8px; font-size:13px; background:none; border:none; cursor:pointer; opacity:0; transition:opacity .12s; padding:2px 4px; }
+  .p-row:hover .p-nudge-btn { opacity:1; }
+  /* Thread */
   .p-thread { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-  .p-thread-head { padding:14px 20px; border-bottom:1px solid var(--border-0); display:flex; align-items:center; gap:14px; flex-shrink:0; }
-  .p-thread-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; line-height:1; }
-  .p-thread-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin-top:2px; }
+  .p-thread-head { padding:12px 18px; border-bottom:1px solid var(--border-0); display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .p-thread-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:13px; color:#080807; }
+  .p-thread-name { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:.04em; line-height:1; }
+  .p-thread-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-top:2px; }
   .p-thread-bar { height:2px; background:var(--bg-3); flex-shrink:0; }
   .p-thread-bar-fill { height:100%; background:var(--accent); transition:width .4s; }
-  .p-streak-pill { background:var(--bg-3); border:1px solid var(--border-1); border-radius:20px; padding:4px 12px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--text-1); display:flex; align-items:center; gap:5px; }
-  .p-streak-pill .n { font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--accent); letter-spacing:.04em; line-height:1; }
-  .p-feed { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:8px; }
-  .p-msg { display:flex; flex-direction:column; max-width:68%; }
-  .p-msg.me { align-self:flex-end; align-items:flex-end; }
-  .p-msg.them { align-self:flex-start; align-items:flex-start; }
-  .p-bubble { padding:9px 14px; font-size:13px; line-height:1.45; color:var(--text-0); }
-  .p-msg.me .p-bubble { background:var(--accent-lo); border:1px solid var(--border-accent); border-radius:12px 12px 3px 12px; }
-  .p-msg.them .p-bubble { background:var(--bg-2); border:1px solid var(--border-1); border-radius:12px 12px 12px 3px; }
-  .p-msg.reaction .p-bubble { background:none; border:none; font-size:22px; padding:0 4px; }
-  .p-msg-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); margin-top:3px; letter-spacing:.06em; }
-  .p-date-div { align-self:center; font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-3); display:flex; align-items:center; gap:10px; margin:4px 0; }
-  .p-date-div::before,.p-date-div::after { content:''; width:40px; height:1px; background:var(--border-0); }
-  .p-empty-thread { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-2); }
-  .p-composer { border-top:1px solid var(--border-0); padding:12px 16px; flex-shrink:0; }
-  .p-rxn-row { display:flex; gap:6px; margin-bottom:10px; align-items:center; }
-  .p-rxn-btn { background:var(--bg-2); border:1px solid var(--border-1); border-radius:7px; padding:5px 10px; font-size:16px; cursor:pointer; transition:all .15s; }
+  .p-streak-pill { background:var(--bg-3); border:1px solid var(--border-1); border-radius:20px; padding:3px 10px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.08em; color:var(--text-1); display:flex; align-items:center; gap:5px; }
+  .p-streak-pill .n { font-family:'Bebas Neue',sans-serif; font-size:15px; color:var(--accent); letter-spacing:.04em; line-height:1; }
+  /* Feed — Discord grouped messages */
+  .p-feed { flex:1; overflow-y:auto; padding:12px 0 8px; display:flex; flex-direction:column; }
+  .p-date-div { align-self:stretch; display:flex; align-items:center; margin:6px 18px; }
+  .p-date-div::before,.p-date-div::after { content:''; flex:1; height:1px; background:var(--border-0); }
+  .p-date-div span { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-3); padding:0 10px; white-space:nowrap; }
+  .p-group { display:flex; gap:10px; padding:2px 18px; transition:background .1s; }
+  .p-group:hover { background:rgba(255,255,255,.012); }
+  .p-group.me { flex-direction:row-reverse; }
+  .p-group-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:12px; color:#080807; }
+  .p-group-avatar.ghost { visibility:hidden; }
+  .p-group-body { display:flex; flex-direction:column; gap:2px; max-width:65%; }
+  .p-group-header { display:flex; align-items:baseline; gap:8px; margin-bottom:3px; }
+  .p-group.me .p-group-header { flex-direction:row-reverse; }
+  .p-group-name { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; color:var(--text-0); }
+  .p-group-name.me { color:var(--accent); }
+  .p-group-ts { font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--text-2); }
+  .p-group.me .p-group-body { align-items:flex-end; }
+  .p-bubble { display:inline-block; padding:7px 12px; font-size:13px; line-height:1.45; color:var(--text-0); border-radius:4px; word-break:break-word; }
+  .p-group.them .p-bubble { background:var(--bg-2); border-radius:4px 14px 14px 14px; }
+  .p-group.me .p-bubble { background:var(--accent-lo); border:1px solid var(--border-accent); border-radius:14px 4px 14px 14px; }
+  .p-empty-thread { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+  /* Composer */
+  .p-composer { border-top:1px solid var(--border-0); padding:10px 16px 12px; flex-shrink:0; }
+  .p-rxn-row { display:flex; gap:5px; margin-bottom:8px; align-items:center; }
+  .p-rxn-btn { background:var(--bg-2); border:1px solid var(--border-1); border-radius:6px; padding:4px 8px; font-size:16px; cursor:pointer; transition:all .12s; line-height:1; }
   .p-rxn-btn:hover,.p-rxn-btn.sent { border-color:var(--accent); background:var(--accent-lo); }
   .p-composer-row { display:flex; gap:8px; }
   .p-input { flex:1; background:var(--bg-2); border:1px solid var(--border-1); border-radius:8px; padding:9px 14px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-0); outline:none; transition:border-color .15s; }
@@ -4596,23 +4611,34 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
 const REACTIONS = ["🔥","💪","✓","⚡","👊"];
 
 const Partners = ({ user, profile, challenges, sb }) => {
-  const [partners,      setPartners]      = useState([]);
-  const [messages,      setMessages]      = useState([]);
-  const [activePartner, setActivePartner] = useState(null);
-  const [msgText,       setMsgText]       = useState("");
-  const [sending,       setSending]       = useState(false);
-  const [copied,        setCopied]        = useState(false);
-  const [joinCode,      setJoinCode]      = useState("");
-  const [joinError,     setJoinError]     = useState("");
-  const [joinLoading,   setJoinLoading]   = useState(false);
-  const [showAddPanel,  setShowAddPanel]  = useState(false);
-  const [unreadMap,     setUnreadMap]     = useState({}); // { partnerId: count }
-  const [sentReaction,  setSentReaction]  = useState(null);
+  const [partners,     setPartners]     = useState([]);
+  const [messages,     setMessages]     = useState([]);
+  const [activePartner,setActivePartner]= useState(null);
+  const [msgText,      setMsgText]      = useState("");
+  const [sending,      setSending]      = useState(false);
+  const [copied,       setCopied]       = useState(false);
+  const [joinCode,     setJoinCode]     = useState("");
+  const [joinError,    setJoinError]    = useState("");
+  const [joinLoading,  setJoinLoading]  = useState(false);
+  const [showAdd,      setShowAdd]      = useState(false);
+  const [unreadMap,    setUnreadMap]    = useState({});
+  const [sentReaction, setSentReaction] = useState(null);
   const feedRef = useRef(null);
 
   const myCode = profile?.invite_code || "";
 
-  // ── Load partnerships + unread counts ──
+  // Deterministic avatar colour from name
+  const avatarColor = (name) => {
+    const colors = ['#D4922A','#5DBF8A','#4A8FD4','#8B5CF6','#BF5D5D','#0DBEAA','#E07B4A','#D4B22A'];
+    if (!name) return colors[0];
+    return colors[name.charCodeAt(0) % colors.length];
+  };
+  const initials = (name) => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    return parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+  };
+
   const loadPartners = async () => {
     if (!sb || !user) return;
     try {
@@ -4620,27 +4646,18 @@ const Partners = ({ user, profile, challenges, sb }) => {
       const { data: asPartner } = await sb.from("partnerships").select("*").eq("partner_id", user.id).eq("status","active");
       const rows = [...(asUser||[]), ...(asPartner||[])];
       if (!rows.length) { setPartners([]); return; }
-
       const otherIds = [...new Set(rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id))];
-
-      // Profiles
-      const { data: profileRows } = await sb.from("profiles")
-        .select("id,full_name,invite_code").in("id", otherIds);
+      const { data: profileRows } = await sb.from("profiles").select("id,full_name,invite_code").in("id", otherIds);
       const profileMap = Object.fromEntries((profileRows||[]).map(p => [p.id, p]));
-
-      // Challenges (main only)
       const { data: chalRows } = await sb.from("challenges")
         .select("user_id,name,tag,day_num,total_days,streak,archived")
         .in("user_id", otherIds).eq("is_main", true).eq("archived", false);
       const chalMap = Object.fromEntries((chalRows||[]).map(c => [c.user_id, c]));
-
-      // Unread counts — messages sent TO me that are unread
       const { data: unreadRows } = await sb.from("partner_messages")
         .select("from_user_id").eq("to_user_id", user.id).eq("read", false);
       const counts = {};
       (unreadRows||[]).forEach(r => { counts[r.from_user_id] = (counts[r.from_user_id]||0) + 1; });
       setUnreadMap(counts);
-
       const all = rows.map(r => {
         const otherId = r.user_id === user.id ? r.partner_id : r.user_id;
         return { ...r, partnerProfile: profileMap[otherId] || { id:otherId, full_name:"Partner" }, challenge: chalMap[otherId] || null };
@@ -4649,64 +4666,44 @@ const Partners = ({ user, profile, challenges, sb }) => {
     } catch(e) { console.warn("loadPartners:", e); }
   };
 
-  // ── Load messages for a partner ──
   const loadMessages = async (partnerId) => {
     if (!sb || !user) return;
     try {
       const { data } = await sb.from("partner_messages")
         .select("*")
         .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
-        .order("created_at", { ascending: true })
-        .limit(100);
+        .order("created_at", { ascending: true }).limit(100);
       setMessages(data || []);
-      // Mark as read
-      await sb.from("partner_messages")
-        .update({ read: true })
+      await sb.from("partner_messages").update({ read: true })
         .eq("to_user_id", user.id).eq("from_user_id", partnerId);
       setUnreadMap(m => ({ ...m, [partnerId]: 0 }));
     } catch(e) { console.warn("loadMessages:", e); }
   };
 
   useEffect(() => { loadPartners(); }, [user, profile]);
+  useEffect(() => { if (activePartner) loadMessages(activePartner.partnerProfile.id); }, [activePartner]);
+  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
-  useEffect(() => {
-    if (!activePartner) return;
-    loadMessages(activePartner.partnerProfile.id);
-  }, [activePartner]);
-
-  // Auto-scroll feed to bottom
-  useEffect(() => {
-    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
-  }, [messages]);
-
-  // ── Actions ──
-  const copyCode = () => {
-    navigator.clipboard.writeText(myCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const copyCode = () => { navigator.clipboard.writeText(myCode); setCopied(true); setTimeout(()=>setCopied(false),2000); };
 
   const joinPartner = async () => {
     setJoinError(""); setJoinLoading(true);
     try {
       if (!joinCode.trim()) throw new Error("Enter an invite code.");
       if (joinCode.trim().toUpperCase() === myCode) throw new Error("That's your own code.");
-      const { data: targetProfile, error: pErr } = await sb.from("profiles")
-        .select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
-      if (pErr) throw new Error("Lookup failed: " + pErr.message);
-      if (!targetProfile) throw new Error("No user found with that code.");
-      const { data: existing } = await sb.from("partnerships")
-        .select("id,status")
-        .or(`and(user_id.eq.${user.id},partner_id.eq.${targetProfile.id}),and(user_id.eq.${targetProfile.id},partner_id.eq.${user.id})`)
-        .maybeSingle();
-      if (existing) throw new Error(existing.status === "active" ? "Already partners." : "Request already sent.");
+      const { data: tp, error: pErr } = await sb.from("profiles").select("id,full_name")
+        .eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
+      if (pErr) throw new Error(pErr.message);
+      if (!tp) throw new Error("No user found with that code.");
+      const { data: ex } = await sb.from("partnerships").select("id,status")
+        .or(`and(user_id.eq.${user.id},partner_id.eq.${tp.id}),and(user_id.eq.${tp.id},partner_id.eq.${user.id})`).maybeSingle();
+      if (ex) throw new Error(ex.status === "active" ? "Already partners." : "Already sent.");
       const { error: iErr } = await sb.from("partnerships").insert({
-        user_id: user.id, partner_id: targetProfile.id,
-        invite_code: `${user.id.slice(0,8)}${targetProfile.id.slice(0,8)}`.toUpperCase(),
-        status: "active",
+        user_id: user.id, partner_id: tp.id,
+        invite_code: `${user.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status: "active",
       });
       if (iErr) throw new Error(iErr.message);
-      setJoinCode(""); setShowAddPanel(false);
+      setJoinCode(""); setShowAdd(false);
       await loadPartners();
     } catch(e) { setJoinError(e.message); }
     finally { setJoinLoading(false); }
@@ -4717,11 +4714,8 @@ const Partners = ({ user, profile, challenges, sb }) => {
     setSending(true);
     try {
       await sb.from("partner_messages").insert({
-        from_user_id: user.id,
-        to_user_id: activePartner.partnerProfile.id,
-        body: msgText.trim(),
-        type: "text",
-        read: false,
+        from_user_id: user.id, to_user_id: activePartner.partnerProfile.id,
+        body: msgText.trim(), type: "text", read: false,
       });
       setMsgText("");
       await loadMessages(activePartner.partnerProfile.id);
@@ -4731,80 +4725,99 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   const sendReaction = async (emoji) => {
     if (!activePartner || !sb) return;
-    setSentReaction(emoji);
-    setTimeout(() => setSentReaction(null), 1500);
+    setSentReaction(emoji); setTimeout(()=>setSentReaction(null),1500);
     try {
       await sb.from("partner_messages").insert({
-        from_user_id: user.id,
-        to_user_id: activePartner.partnerProfile.id,
-        body: emoji,
-        type: "reaction",
-        read: false,
+        from_user_id: user.id, to_user_id: activePartner.partnerProfile.id,
+        body: emoji, type: "text", read: false,
       });
       await loadMessages(activePartner.partnerProfile.id);
     } catch(e) { console.warn("sendReaction:", e); }
   };
 
-  const nudgePartner = async (partnerId, e) => {
+  const nudge = async (partnerId, e) => {
     e.stopPropagation();
     if (!sb) return;
     try {
       await sb.from("partner_messages").insert({
         from_user_id: user.id, to_user_id: partnerId,
-        body: "🔥", type: "reaction", read: false,
+        body: "🔥", type: "text", read: false,
       });
-    } catch(e) { console.warn("nudge:", e); }
+    } catch(e) {}
   };
 
-  const removePartner = async (partnershipId) => {
+  const removePartner = async (id) => {
     if (!window.confirm("Remove this accountability partner?")) return;
-    await sb.from("partnerships").delete().eq("id", partnershipId);
-    setActivePartner(null);
-    await loadPartners();
+    await sb.from("partnerships").delete().eq("id", id);
+    setActivePartner(null); await loadPartners();
   };
 
-  const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
-  const fmtDate = (ts) => {
-    const d = new Date(ts); const now = new Date();
+  const fmtTime = ts => new Date(ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+  const fmtDate = ts => {
+    const d = new Date(ts), now = new Date();
     if (d.toDateString() === now.toDateString()) return "Today";
     const y = new Date(now); y.setDate(now.getDate()-1);
     if (d.toDateString() === y.toDateString()) return "Yesterday";
     return d.toLocaleDateString([], { month:"short", day:"numeric" });
   };
-  const lastActive = (ts) => {
+  const lastActive = ts => {
     if (!ts) return "";
-    const diff = Date.now() - new Date(ts).getTime();
-    const h = Math.floor(diff/3600000);
-    if (h < 1) return "just now";
-    if (h < 24) return `${h}h ago`;
-    return `${Math.floor(h/24)}d ago`;
+    const h = Math.floor((Date.now()-new Date(ts).getTime())/3600000);
+    if (h < 1) return "now"; if (h < 24) return `${h}h`; return `${Math.floor(h/24)}d`;
   };
 
-  // Group messages by date for dividers
-  const groupedMessages = messages.reduce((acc, m) => {
-    const d = fmtDate(m.created_at);
-    if (!acc.length || acc[acc.length-1].date !== d) acc.push({ date: d, msgs: [] });
-    acc[acc.length-1].msgs.push(m);
-    return acc;
-  }, []);
+  // Group consecutive messages by sender + date
+  const buildGroups = (msgs) => {
+    const groups = [];
+    msgs.forEach(m => {
+      const date = fmtDate(m.created_at);
+      const isMe = m.from_user_id === user.id;
+      const last = groups[groups.length-1];
+      if (last && last.date === date && last.isMe === isMe) {
+        last.msgs.push(m);
+      } else {
+        groups.push({ date, isMe, msgs:[m] });
+      }
+    });
+    return groups;
+  };
 
-  // ── No partners ──
-  if (!partners.length && !showAddPanel) return (
+  // Inject date dividers between groups
+  const buildFeed = (msgs) => {
+    const groups = buildGroups(msgs);
+    const feed = [];
+    let lastDate = null;
+    groups.forEach((g,i) => {
+      if (g.date !== lastDate) { feed.push({ type:"date", date:g.date, key:`date-${i}` }); lastDate = g.date; }
+      feed.push({ type:"group", ...g, key:`group-${i}` });
+    });
+    return feed;
+  };
+
+  const ap = activePartner;
+  const pName = ap?.partnerProfile?.full_name?.split(" ")[0] || "Partner";
+  const pFullName = ap?.partnerProfile?.full_name || "Partner";
+  const chal = ap?.challenge;
+  const pct = chal ? Math.round((chal.day_num/chal.total_days)*100) : 0;
+  const feed = buildFeed(messages);
+
+  // ── No partners empty state ──
+  if (!partners.length && !showAdd) return (
     <div className="page" style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div className="p-no-partners">
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Accountability</div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",marginBottom:8}}>Find Your People.</div>
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",lineHeight:1.65,textAlign:"center",maxWidth:340,marginBottom:32}}>
-          Share your invite code with someone grinding alongside you. When they connect, you'll see their progress and messages here.
+          Share your invite code with someone grinding alongside you.
         </div>
         <div className="p-invite-box">
           <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Your invite code</div>
-          <div className="p-invite-code">{myCode || "Loading…"}</div>
+          <div className="p-invite-code">{myCode||"Loading…"}</div>
           <button className="btn btn-g" style={{marginTop:10,width:"100%",justifyContent:"center"}} onClick={copyCode}>{copied?"✓ Copied":"Copy Code"}</button>
         </div>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",marginBottom:16}}>— or enter their code —</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",marginBottom:14}}>— or enter their code —</div>
         <div style={{display:"flex",gap:8,width:"100%",maxWidth:360}}>
-          <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center",flex:1}}
+          <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center"}}
             value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
             placeholder="Enter invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinPartner()} />
           <button className="btn btn-a" onClick={joinPartner} disabled={joinLoading}>{joinLoading?"…":"Connect →"}</button>
@@ -4813,12 +4826,6 @@ const Partners = ({ user, profile, challenges, sb }) => {
       </div>
     </div>
   );
-
-  // ── Main layout ──
-  const ap = activePartner;
-  const pName = ap?.partnerProfile?.full_name?.split(" ")[0] || "Partner";
-  const chal  = ap?.challenge;
-  const pct   = chal ? Math.round((chal.day_num / chal.total_days) * 100) : 0;
 
   return (
     <div className="page" style={{padding:0,height:"100%",display:"flex",flexDirection:"column"}}>
@@ -4830,139 +4837,128 @@ const Partners = ({ user, profile, challenges, sb }) => {
             <div className="p-sidebar-tag">Accountability</div>
             <div className="p-sidebar-title">Partners</div>
             <div className="p-sidebar-actions">
-              <button className="btn btn-a" style={{fontSize:9,padding:"5px 10px",letterSpacing:".14em"}}
-                onClick={()=>setShowAddPanel(v=>!v)}>
-                {showAddPanel ? "✕ Close" : "+ Add"}
-              </button>
-              <button className="btn btn-g" style={{fontSize:9,padding:"5px 10px",letterSpacing:".12em"}}
+              <button className="btn btn-a" style={{fontSize:9,padding:"4px 10px",letterSpacing:".12em"}}
+                onClick={()=>setShowAdd(v=>!v)}>{showAdd?"✕ Close":"+ Add"}</button>
+              <button className="btn btn-g" style={{fontSize:9,padding:"4px 10px",letterSpacing:".1em"}}
                 onClick={copyCode}>{copied?"✓ Copied":`Code: ${myCode}`}</button>
             </div>
-
-            {/* Add partner inline panel */}
-            {showAddPanel && (
-              <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6}}>
+            {showAdd && (
+              <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
                 <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".1em",textAlign:"center",fontSize:11}}
                   value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
                   placeholder="Invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinPartner()} />
                 <button className="btn btn-a" style={{width:"100%",justifyContent:"center"}}
                   onClick={joinPartner} disabled={joinLoading}>{joinLoading?"Connecting…":"Connect →"}</button>
-                {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:9}}>{joinError}</div>}
+                {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,marginTop:2}}>{joinError}</div>}
               </div>
             )}
           </div>
 
-          {/* Partner list */}
           <div className="p-list">
+            <div className="p-section">Direct Messages</div>
             {partners.map(p => {
-              const ch = p.challenge;
               const pId = p.partnerProfile.id;
+              const name = p.partnerProfile.full_name || "Partner";
+              const ch = p.challenge;
               const unread = unreadMap[pId] || 0;
-              const barPct = ch ? Math.round((ch.day_num/ch.total_days)*100) : 0;
               const isActive = ap?.id === p.id;
               return (
-                <div key={p.id} className={`p-card ${isActive?"active":""}`}
-                  onClick={()=>setActivePartner(p)}>
-                  <div className="p-card-top">
-                    <div className="p-card-name">{p.partnerProfile.full_name?.split(" ")[0] || "Partner"}</div>
-                    {unread > 0 && <div className="p-card-badge">{unread}</div>}
+                <div key={p.id} className={`p-row ${isActive?"active":""}`} onClick={()=>setActivePartner(p)}>
+                  <div className="p-avatar" style={{background:avatarColor(name)}}>
+                    {initials(name)}
+                    <div className="p-avatar-dot p-dot-offline" />
                   </div>
-                  {ch
-                    ? <div className="p-card-challenge">{ch.name} · Day {ch.day_num}</div>
-                    : <div className="p-card-challenge" style={{color:"var(--text-2)"}}>No active challenge</div>
-                  }
-                  <div className="p-card-meta">
-                    {ch && <div className="p-card-stat">🔥 <span>{ch.streak}</span></div>}
-                    <div className="p-card-stat" style={{marginLeft:"auto"}}>{lastActive(p.updated_at)}</div>
+                  <div className="p-row-info">
+                    <div className="p-row-name">{name.split(" ")[0]}</div>
+                    <div className="p-row-sub">{ch ? `${ch.name} · Day ${ch.day_num}` : "No active challenge"}</div>
                   </div>
-                  {ch && <div className="p-card-bar"><div className="p-card-bar-fill" style={{width:`${barPct}%`}} /></div>}
-                  <button className="p-nudge-btn" onClick={(e)=>nudgePartner(pId,e)} title="Nudge">🔥</button>
+                  <div className="p-row-right">
+                    {unread > 0 && <div className="p-unread">{unread}</div>}
+                    <div className="p-ts">{lastActive(p.updated_at)}</div>
+                  </div>
+                  <button className="p-nudge-btn" onClick={e=>nudge(pId,e)} title="Nudge 🔥">🔥</button>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* ── Thread panel ── */}
+        {/* ── Thread ── */}
         <div className="p-thread">
           {!ap ? (
             <div className="p-empty-thread">
-              <div style={{fontSize:28,opacity:.2}}>◆</div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".22em",textTransform:"uppercase",opacity:.4}}>Select a partner</div>
+              <div style={{fontSize:28,opacity:.15}}>◆</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",opacity:.5}}>Select a partner</div>
             </div>
-          ) : (
-            <>
-              {/* Header */}
-              <div className="p-thread-head">
-                <div>
-                  <div className="p-thread-name">{pName}</div>
-                  <div className="p-thread-meta">
-                    {chal ? `${chal.name} · Day ${chal.day_num} of ${chal.total_days}` : "No active challenge"}
-                  </div>
+          ) : (<>
+            {/* Header */}
+            <div className="p-thread-head">
+              <div className="p-thread-avatar" style={{background:avatarColor(pFullName)}}>{initials(pFullName)}</div>
+              <div>
+                <div className="p-thread-name">{pName}</div>
+                <div className="p-thread-meta">{chal ? `${chal.name} · Day ${chal.day_num} of ${chal.total_days}` : "No active challenge"}</div>
+              </div>
+              <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
+                {chal && <div className="p-streak-pill"><span className="n">{chal.streak}</span> day streak</div>}
+                <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)",fontSize:10,padding:"4px 10px"}}
+                  onClick={()=>removePartner(ap.id)}>Remove</button>
+              </div>
+            </div>
+            {chal && <div className="p-thread-bar"><div className="p-thread-bar-fill" style={{width:`${pct}%`}} /></div>}
+
+            {/* Feed */}
+            <div className="p-feed" ref={feedRef}>
+              {messages.length === 0 && (
+                <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6}}>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",letterSpacing:".1em"}}>No messages yet.</div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-3)",letterSpacing:".06em"}}>Say something.</div>
                 </div>
-                <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
-                  {chal && (
-                    <div className="p-streak-pill">
-                      <span className="n">{chal.streak}</span> day streak
+              )}
+              {feed.map(item => {
+                if (item.type === "date") return (
+                  <div key={item.key} className="p-date-div"><span>{item.date}</span></div>
+                );
+                const { isMe, msgs, key } = item;
+                const name = isMe ? "You" : pName;
+                const color = isMe ? "#4A8FD4" : avatarColor(pFullName);
+                const ini = isMe ? initials(profile?.full_name||"Me") : initials(pFullName);
+                return (
+                  <div key={key} className={`p-group ${isMe?"me":"them"}`}>
+                    <div className="p-group-avatar" style={{background:color}}>{ini}</div>
+                    <div className="p-group-body">
+                      <div className="p-group-header">
+                        <span className={`p-group-name ${isMe?"me":""}`}>{name}</span>
+                        <span className="p-group-ts">{fmtTime(msgs[0].created_at)}</span>
+                      </div>
+                      {msgs.map(m => (
+                        <div key={m.id} className="p-bubble">{m.body}</div>
+                      ))}
                     </div>
-                  )}
-                  <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)",fontSize:10,padding:"4px 10px"}}
-                    onClick={()=>removePartner(ap.id)}>Remove</button>
-                </div>
-              </div>
-              {chal && <div className="p-thread-bar"><div className="p-thread-bar-fill" style={{width:`${pct}%`}} /></div>}
-
-              {/* Feed */}
-              <div className="p-feed" ref={feedRef}>
-                {messages.length === 0 && (
-                  <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",textAlign:"center",letterSpacing:".1em"}}>No messages yet.</div>
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-3)",letterSpacing:".08em"}}>Say something.</div>
                   </div>
-                )}
-                {groupedMessages.map(group => (
-                  <React.Fragment key={group.date}>
-                    <div className="p-date-div">{group.date}</div>
-                    {group.msgs.map(m => {
-                      const isMe = m.from_user_id === user.id;
-                      const isReaction = m.type === "reaction";
-                      return (
-                        <div key={m.id} className={`p-msg ${isMe?"me":"them"} ${isReaction?"reaction":""}`}>
-                          <div className="p-bubble">{m.body}</div>
-                          {!isReaction && (
-                            <div className="p-msg-meta">{isMe?"You":pName} · {fmtTime(m.created_at)}</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </React.Fragment>
+                );
+              })}
+            </div>
+
+            {/* Composer */}
+            <div className="p-composer">
+              <div className="p-rxn-row">
+                {REACTIONS.map(e => (
+                  <button key={e} className={`p-rxn-btn ${sentReaction===e?"sent":""}`}
+                    onClick={()=>sendReaction(e)}>{e}</button>
                 ))}
+                <span style={{marginLeft:"auto",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",letterSpacing:".1em"}}>Quick reactions</span>
               </div>
-
-              {/* Composer */}
-              <div className="p-composer">
-                <div className="p-rxn-row">
-                  {REACTIONS.map(e => (
-                    <button key={e} className={`p-rxn-btn ${sentReaction===e?"sent":""}`}
-                      onClick={()=>sendReaction(e)}>{e}</button>
-                  ))}
-                  <div style={{marginLeft:"auto",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",letterSpacing:".1em",alignSelf:"center"}}>
-                    Quick reactions
-                  </div>
-                </div>
-                <div className="p-composer-row">
-                  <input className="p-input" value={msgText}
-                    onChange={e=>setMsgText(e.target.value)}
-                    placeholder={`Message ${pName}…`}
-                    onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendMessage()} />
-                  <button className="btn btn-a" onClick={sendMessage}
-                    disabled={sending||!msgText.trim()}
-                    style={{padding:"9px 18px",letterSpacing:".1em"}}>
-                    Send →
-                  </button>
-                </div>
+              <div className="p-composer-row">
+                <input className="p-input" value={msgText}
+                  onChange={e=>setMsgText(e.target.value)}
+                  placeholder={`Message ${pName}…`}
+                  onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendMessage()} />
+                <button className="btn btn-a" onClick={sendMessage}
+                  disabled={sending||!msgText.trim()}
+                  style={{padding:"9px 18px",letterSpacing:".1em"}}>Send →</button>
               </div>
-            </>
-          )}
+            </div>
+          </>)}
         </div>
 
       </div>
