@@ -3409,7 +3409,7 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || "{}");
       const ageMs = Date.now() - (cached.ts || 0);
-      if (cached.text && ageMs < 60 * 60 * 1000) {
+      if (cached.text && ageMs < 2 * 60 * 60 * 1000) {
         setInsight(cached.text);
         setLastUpdate(cached.time || "");
         return; // fresh cache — don't call API
@@ -5208,8 +5208,7 @@ const Tutorial = ({ onDone }) => {
 // ============================================================
 // TALOS — Autonomous Task Agent
 // ============================================================
-const TALOS_GEMINI_MODEL = "gemini-2.5-flash-preview-04-17";
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+// TALOS tone prompts — used by Edge Function but defined here for reference
 
 const TALOS_TONE_PROMPTS = {
   "Stoic":          "You are TALOS — calm, minimal, precise. No hype. Acknowledge what was done, note what remains. Short sentences.",
@@ -5245,70 +5244,36 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
   const addMsg = (role, text) => setMessages(m => [...m, { role, text }]);
 
   const callGemini = async (userText) => {
-    if (!GEMINI_API_KEY) {
-      addMsg("talos", "⚠ No Gemini API key found. Add VITE_GEMINI_API_KEY to your Vercel env vars.");
-      return;
-    }
     if (!tasks.length) {
       addMsg("talos", "No tasks found for your active challenge. Set up a challenge first.");
       return;
     }
-
     setLoading(true);
-
-    const tonePersonality = TALOS_TONE_PROMPTS[tone] || TALOS_TONE_PROMPTS["Stoic"];
-    const taskList = tasks.map(t => `key="${t.key}" label="${t.label}"${kpis[t.key] ? " [already done]" : ""}`).join("\n");
-    const systemPrompt = `${tonePersonality}
-
-The user has these tasks today. Keys are EXACT — copy them character-for-character:
-${taskList}
-
-Return ONLY a JSON object, no other text:
-{"matched": ["exact_key"], "reply": "your response"}
-
-Rules:
-- matched must contain ONLY keys from the list above, copied exactly. If key is "w1" use "w1" not "workout".
-- Skip tasks marked [already done].
-- If nothing clearly matches: {"matched": [], "reply": "..."}
-- reply is 1-2 sentences matching your personality.`;
-
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${TALOS_GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/talos`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type":  "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
           body: JSON.stringify({
-            contents: [{ role:"user", parts:[{ text: `${systemPrompt}\n\nUser says: "${userText}"` }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 300, responseMimeType: "application/json" },
+            userText,
+            tasks: tasks.map(t => ({ key: t.key, label: t.label })),
+            kpis,
+            tone,
           }),
         }
       );
       const data = await res.json();
-      console.log("[TALOS] Gemini raw:", JSON.stringify(data).slice(0, 300));
-
-      if (data.error) {
-        addMsg("talos", `⚠ Gemini error ${data.error.code}: ${data.error.message}`);
-        return;
-      }
-
-      const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-      const parsed = JSON.parse(raw);
-      console.log("[TALOS] matched:", parsed.matched, "| available keys:", tasks.map(t=>t.key));
-
-      const matchedKeys   = parsed.matched || [];
-      const matchedTasks  = tasks.filter(t => matchedKeys.includes(t.key) && !kpis[t.key]);
-      const reply         = parsed.reply || "Done.";
-
+      const matchedKeys  = data.matched || [];
+      const matchedTasks = tasks.filter(t => matchedKeys.includes(t.key) && !kpis[t.key]);
+      const reply        = data.reply || "Done.";
       addMsg("talos", reply);
-
-      if (matchedTasks.length > 0) {
-        setPending({ tasks: matchedTasks, raw: userText });
-      } else if (matchedKeys.length > 0) {
-        addMsg("talos", `⚠ Debug: got keys [${matchedKeys.join(", ")}] but expected [${tasks.map(t=>t.key).join(", ")}]`);
-      }
+      if (matchedTasks.length > 0) setPending({ tasks: matchedTasks, raw: userText });
     } catch(e) {
-      addMsg("talos", "Something went wrong reaching Gemini. Check your API key and connection.");
+      addMsg("talos", "Couldn't reach TALOS server. Check your connection.");
       console.warn("TALOS error:", e);
     } finally {
       setLoading(false);
