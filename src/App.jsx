@@ -6375,7 +6375,7 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="rail">
-        <div className="rail-logo" onClick={()=>setPage("home")}><img src="/forge_icon_dark.png" style={{width:26,height:26,objectFit:"contain"}} /></div>
+        <div className="rail-logo" onClick={()=>setPage("home")}><img src="/forge_icon_dark.png" style={{width:39,height:39,objectFit:"contain"}} /></div>
         <div className="rail-nav">
           {NAV.map(n=>(
             <div key={n.id} id={`tut-${n.id}`} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
