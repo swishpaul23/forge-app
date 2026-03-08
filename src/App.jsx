@@ -3522,7 +3522,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
 
         {/* ── RIGHT COLUMN: tasks ── */}
         <div className="home-right">
-      <div className="a4" style={{marginTop:0}}>
+      <div className="a4" style={{marginTop:82}}>
         <div className="flex between center mb12">
           <div className="slabel" style={{ marginBottom:0 }}>Today's Tasks</div>
           {isRecovery && (
