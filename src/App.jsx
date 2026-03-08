@@ -330,6 +330,7 @@ const makeCSS = () => `
     .home-left, .home-right { flex:none; width:100%; }
   }
   .page.partners-page { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
+  .page.talos-page    { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
 
   /* PAGE HEADER */
   .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
@@ -5195,11 +5196,353 @@ const Tutorial = ({ onDone }) => {
   );
 };
 
+// ============================================================
+// TALOS — Autonomous Task Agent
+// ============================================================
+const TALOS_GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+
+const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday }) => {
+  const [messages,    setMessages]    = useState([
+    { role:"talos", text:"TALOS online. Tell me what you've done today — I'll match it to your tasks and tick them off." }
+  ]);
+  const [input,       setInput]       = useState("");
+  const [loading,     setLoading]     = useState(false);
+  const [pending,     setPending]     = useState(null);  // { tasks:[{key,label}], raw:string }
+  const [listening,   setListening]   = useState(false);
+  const feedRef  = useRef(null);
+  const inputRef = useRef(null);
+  const recogRef = useRef(null);
+
+  const tasks = challenge?.kpis || [];
+  const doneTasks  = tasks.filter(t => kpis[t.key]);
+  const totalTasks = tasks.length;
+
+  // Auto-scroll
+  useEffect(() => {
+    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+  }, [messages, pending]);
+
+  const addMsg = (role, text) => setMessages(m => [...m, { role, text }]);
+
+  const callGemini = async (userText) => {
+    if (!GEMINI_API_KEY) {
+      addMsg("talos", "⚠ No Gemini API key found. Add VITE_GEMINI_API_KEY to your Vercel env vars.");
+      return;
+    }
+    if (!tasks.length) {
+      addMsg("talos", "No tasks found for your active challenge. Set up a challenge first.");
+      return;
+    }
+
+    setLoading(true);
+
+    const taskList = tasks.map(t => `- key:"${t.key}" label:"${t.label}"${kpis[t.key] ? " [already done]" : ""}`).join("\n");
+    const systemPrompt = `You are TALOS, a discipline agent embedded in the Forge app.
+The user has these tasks today:
+${taskList}
+
+When the user describes what they've done, identify which tasks match and return a JSON object ONLY — no markdown, no explanation:
+{"matched": ["task_key_1", "task_key_2"], "reply": "short 1-sentence confirmation"}
+
+Rules:
+- Only match tasks that are clearly described. Don't guess.
+- Skip tasks already marked [already done].
+- If nothing matches, return {"matched": [], "reply": "I couldn't match that to any tasks. Try being more specific."}
+- reply must be short, direct, no filler.`;
+
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${TALOS_GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role:"user", parts:[{ text: `${systemPrompt}\n\nUser says: "${userText}"` }] }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
+          }),
+        }
+      );
+      const data = await res.json();
+      const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+      const clean = raw.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+
+      const matchedKeys   = parsed.matched || [];
+      const matchedTasks  = tasks.filter(t => matchedKeys.includes(t.key) && !kpis[t.key]);
+      const reply         = parsed.reply || "Done.";
+
+      addMsg("talos", reply);
+
+      if (matchedTasks.length > 0) {
+        setPending({ tasks: matchedTasks, raw: userText });
+      }
+    } catch(e) {
+      addMsg("talos", "Something went wrong reaching Gemini. Check your API key and connection.");
+      console.warn("TALOS error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    addMsg("user", text);
+    await callGemini(text);
+  };
+
+  const handleConfirm = () => {
+    if (!pending) return;
+    const keys = pending.tasks.map(t => t.key);
+    onTickTasks(keys);
+    addMsg("talos", `✓ Ticked ${pending.tasks.length} task${pending.tasks.length > 1 ? "s" : ""}. ${doneTasks.length + pending.tasks.length >= totalTasks ? "All done — logging your day." : `${totalTasks - doneTasks.length - pending.tasks.length} remaining.`}`);
+    // Auto-log if all tasks now done
+    if (doneTasks.length + pending.tasks.length >= totalTasks && !loggedToday) {
+      onLogDay();
+    }
+    setPending(null);
+  };
+
+  const handleDeny = () => {
+    addMsg("talos", "Cancelled. Tell me more specifically what you've completed.");
+    setPending(null);
+  };
+
+  // Voice input via Web Speech API
+  const toggleVoice = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addMsg("talos", "Voice input not supported in this browser. Try Chrome.");
+      return;
+    }
+    if (listening) {
+      recogRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const recog = new SpeechRecognition();
+    recog.continuous = false;
+    recog.interimResults = false;
+    recog.lang = "en-US";
+    recog.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      setInput(transcript);
+      setListening(false);
+    };
+    recog.onerror = () => setListening(false);
+    recog.onend   = () => setListening(false);
+    recogRef.current = recog;
+    recog.start();
+    setListening(true);
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", background:"var(--bg-0)" }}>
+
+      {/* Header */}
+      <div style={{
+        padding:"20px 28px 18px", borderBottom:"1px solid var(--border-0)",
+        display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexShrink:0,
+      }}>
+        <div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
+            Autonomous Agent
+          </div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:38, letterSpacing:".06em", color:"var(--text-0)", lineHeight:1 }}>
+            TALOS
+          </div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9.5, color:"var(--text-2)", marginTop:5, letterSpacing:".06em" }}>
+            {challenge?.name ? `${challenge.name} · Day ${challenge.dayNum}` : "No active challenge"}
+          </div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:6, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em", color:"var(--ok)" }}>
+          <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--ok)", animation:"pulse 2.5s ease infinite" }} />
+          ONLINE
+        </div>
+      </div>
+
+      {/* Body — chat + context panel */}
+      <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
+
+        {/* Chat column */}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", borderRight:"1px solid var(--border-0)" }}>
+
+          {/* Messages */}
+          <div ref={feedRef} style={{ flex:1, overflowY:"auto", padding:"24px 28px", display:"flex", flexDirection:"column", gap:16 }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ display:"flex", gap:12, flexDirection: m.role==="user" ? "row-reverse" : "row", alignItems:"flex-start" }}>
+                {m.role === "talos" && (
+                  <div style={{
+                    width:32, height:32, borderRadius:"50%", flexShrink:0,
+                    background:"var(--accent-lo)", border:"1px solid var(--border-accent)",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:"var(--accent)",
+                  }}>T</div>
+                )}
+                <div style={{
+                  maxWidth:480, padding:"11px 16px", lineHeight:1.6, fontSize:13.5,
+                  borderRadius: m.role==="user" ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
+                  background: m.role==="user" ? "var(--accent-lo)" : "var(--bg-2)",
+                  border: m.role==="user" ? "1px solid var(--accent-mid)" : "1px solid var(--border-1)",
+                  color: m.role==="user" ? "var(--text-0)" : "var(--text-1)",
+                  marginLeft: m.role==="user" ? "auto" : 0,
+                }}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+
+            {/* Loading indicator */}
+            {loading && (
+              <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
+                <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--accent-lo)", border:"1px solid var(--border-accent)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:"var(--accent)", flexShrink:0 }}>T</div>
+                <div style={{ padding:"14px 18px", background:"var(--bg-2)", border:"1px solid var(--border-1)", borderRadius:"4px 12px 12px 12px", display:"flex", gap:5, alignItems:"center" }}>
+                  {[0,1,2].map(i => (
+                    <div key={i} style={{ width:6, height:6, borderRadius:"50%", background:"var(--accent)", opacity:.4, animation:`pulse 1.2s ${i*.2}s ease infinite` }} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Confirm bar */}
+          {pending && (
+            <div style={{ margin:"0 20px 16px", padding:"14px 18px", background:"var(--ok)12", border:"1px solid var(--ok)40", borderRadius:12, flexShrink:0 }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".18em", textTransform:"uppercase", color:"var(--ok)", marginBottom:12 }}>
+                ⚡ TALOS identified — confirm to apply
+              </div>
+              {pending.tasks.map(t => (
+                <div key={t.key} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 0", fontSize:13, color:"var(--text-0)", borderBottom:"1px solid var(--border-0)" }}>
+                  <div style={{ width:20, height:20, borderRadius:"50%", background:"var(--ok)20", border:"1.5px solid var(--ok)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"var(--ok)", flexShrink:0 }}>✓</div>
+                  {t.label}
+                  {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:7, color:"var(--warn)", letterSpacing:".1em" }}>◆ NON-NEG</span>}
+                </div>
+              ))}
+              <div style={{ display:"flex", gap:10, marginTop:14 }}>
+                <button onClick={handleConfirm} style={{ flex:1, background:"var(--ok)", color:"#080807", border:"none", borderRadius:7, padding:"10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".14em", cursor:"pointer", fontWeight:600 }}>
+                  ✓ Confirm & Tick
+                </button>
+                <button onClick={handleDeny} style={{ padding:"10px 18px", background:"transparent", color:"var(--text-2)", border:"1px solid var(--border-1)", borderRadius:7, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, cursor:"pointer" }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Input row */}
+          <div style={{ padding:"14px 20px", borderTop:"1px solid var(--border-0)", display:"flex", gap:10, alignItems:"center", flexShrink:0 }}>
+            <button onClick={toggleVoice} style={{
+              width:40, height:40, borderRadius:10, border:`1px solid ${listening ? "var(--err)" : "var(--border-1)"}`,
+              background: listening ? "var(--err)20" : "var(--bg-2)",
+              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:16, flexShrink:0, transition:"all .15s",
+            }}>
+              {listening ? "⏹" : "🎙"}
+            </button>
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
+              placeholder={listening ? "Listening…" : "Tell TALOS what you've done today…"}
+              style={{
+                flex:1, background:"var(--bg-2)", border:"1px solid var(--border-1)",
+                borderRadius:10, padding:"11px 16px", fontSize:14,
+                color:"var(--text-0)", outline:"none", fontFamily:"'DM Sans',sans-serif",
+              }}
+              onFocus={e => e.target.style.borderColor = "var(--accent)"}
+              onBlur={e => e.target.style.borderColor = "var(--border-1)"}
+            />
+            <button onClick={handleSend} disabled={!input.trim() || loading} style={{
+              width:40, height:40, borderRadius:10, background: input.trim() && !loading ? "var(--accent)" : "var(--bg-3)",
+              border:"none", cursor: input.trim() && !loading ? "pointer" : "default",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:16, color: input.trim() && !loading ? "#080807" : "var(--text-3)",
+              transition:"all .15s", flexShrink:0,
+            }}>↑</button>
+          </div>
+        </div>
+
+        {/* Context panel — live task state */}
+        <div style={{ width:260, padding:"20px 18px", overflowY:"auto", flexShrink:0, borderLeft:"1px solid var(--border-0)" }}>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:14 }}>
+            Today's Tasks
+          </div>
+          {tasks.length === 0 && (
+            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-3)", letterSpacing:".08em" }}>No active challenge</div>
+          )}
+          {tasks.map(t => (
+            <div key={t.key} style={{
+              display:"flex", alignItems:"center", gap:10, padding:"9px 12px",
+              borderRadius:8, marginBottom:6, transition:"all .2s",
+              background: kpis[t.key] ? "var(--ok)12" : "var(--bg-2)",
+              border:`1px solid ${kpis[t.key] ? "var(--ok)40" : "var(--border-1)"}`,
+            }}>
+              <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, transition:"all .2s", background: kpis[t.key] ? "var(--ok)" : "var(--border-1)" }} />
+              <span style={{ fontSize:12, color: kpis[t.key] ? "var(--ok)" : "var(--text-1)", flex:1 }}>{t.label}</span>
+              {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:6.5, color:"var(--warn)", letterSpacing:".08em" }}>◆</span>}
+            </div>
+          ))}
+
+          {/* Progress bar */}
+          {tasks.length > 0 && (
+            <div style={{ marginTop:20 }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:10 }}>
+                Completion
+              </div>
+              <div style={{ height:4, background:"var(--bg-3)", borderRadius:2 }}>
+                <div style={{ height:"100%", borderRadius:2, background:"var(--ok)", transition:"width .4s ease", width:`${tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0}%` }} />
+              </div>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"var(--text-2)", marginTop:6 }}>
+                {doneTasks.length} / {tasks.length} tasks
+              </div>
+            </div>
+          )}
+
+          {/* Log day shortcut */}
+          {doneTasks.length > 0 && !loggedToday && (
+            <button onClick={onLogDay} style={{
+              width:"100%", marginTop:20, padding:"10px", borderRadius:8,
+              background:"var(--accent-lo)", border:"1px solid var(--border-accent)",
+              fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em",
+              textTransform:"uppercase", color:"var(--accent)", cursor:"pointer",
+              transition:"all .15s",
+            }}
+            onMouseOver={e => e.target.style.background = "var(--accent)"}
+            onMouseOut={e => e.target.style.background = "var(--accent-lo)"}
+            >
+              Log Day →
+            </button>
+          )}
+          {loggedToday && (
+            <div style={{ marginTop:20, padding:"10px 12px", background:"var(--ok)12", border:"1px solid var(--ok)40", borderRadius:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em", color:"var(--ok)" }}>
+              ✓ Day logged
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const IconTalos = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M7.5 8H4L2 17h20l-2-9h-3.5" />
+    <path d="M10 17v3.5h4V17" />
+    <line x1="9" y1="8" x2="9" y2="8.01" strokeWidth={2.5} />
+    <line x1="15" y1="8" x2="15" y2="8.01" strokeWidth={2.5} />
+  </svg>
+);
+
 const NAV = [
   { id:"home",     icon:<IconDashboard />, tip:"Dashboard"  },
   { id:"wall",     icon:<IconTracking />,  tip:"The Wall"    },
   { id:"library",  icon:<IconLibrary />,   tip:"Library"     },
   { id:"partners", icon:<IconPartners />,  tip:"Partners"    },
+  { id:"talos",    icon:<IconTalos />,     tip:"TALOS"       },
   { id:"settings", icon:<IconSettings />,  tip:"Settings"    },
 ];
 
@@ -6431,6 +6774,27 @@ export default function App() {
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
+    if (page==="talos") return (
+      <div className="page talos-page">
+        <Talos
+          challenge={activeChallenge}
+          kpis={kpis}
+          loggedToday={loggedToday}
+          onTickTasks={(keys) => {
+            setKpis(prev => {
+              const updated = { ...prev };
+              keys.forEach(k => { updated[k] = true; });
+              return updated;
+            });
+          }}
+          onLogDay={() => {
+            const safeTasks = activeChallenge.kpis || [];
+            const done = safeTasks.filter(t => kpis[t.key]).length;
+            handleLogDay(done, safeTasks.length);
+          }}
+        />
+      </div>
+    );
   };
 
   // ── Stage routing ─────────────────────────────────────────
