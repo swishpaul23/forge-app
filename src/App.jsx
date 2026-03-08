@@ -3398,7 +3398,7 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
         } catch(e) {}
       }
     } catch(e) {
-      setInsight("Could not reach Forge Intelligence. Check your connection.");
+      setInsight("Could not reach TALOS Insights. Check your connection.");
     }
     setLoading(false);
   };
@@ -3429,7 +3429,7 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
       <div className="ai-block-header">
         <div className="ai-block-label">
           <div className="ai-dot" />
-          Forge Intelligence · {tone} Mode
+          TALOS Insights · {tone} Mode
         </div>
         <button className="btn btn-g" style={{ padding:"4px 12px", fontSize:10 }} onClick={generate} disabled={loading}>
           {loading ? "Thinking..." : "↻ Refresh"}
@@ -4199,7 +4199,7 @@ const Settings = ({ theme, setTheme, tone, setTone, userName, setUserName }) => 
 
         <div className="srow a3">
           <div className="srow-title">TALOS Tone</div>
-          <div className="srow-desc">How Forge Intelligence speaks in your daily debrief and weekly synthesis.</div>
+          <div className="srow-desc">How TALOS Insights speaks in your daily debrief and weekly synthesis.</div>
           <div className="flex g8 wrap">
             {tones.map(t => (
               <button key={t} className={`btn ${tone===t?"btn-a":"btn-g"}`} onClick={() => setTone(t)}>{t}</button>
