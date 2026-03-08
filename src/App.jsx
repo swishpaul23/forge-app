@@ -236,7 +236,7 @@ const makeCSS = () => `
 
   /* ICON RAIL */
   .rail {
-    width:58px; min-height:100vh;
+    width:60px; min-height:100vh;
     background:var(--bg-1);
     border-right:1px solid var(--border-0);
     display:flex; flex-direction:column; align-items:center;
@@ -246,17 +246,15 @@ const makeCSS = () => `
   }
 
   .rail-logo {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:19px; color:var(--accent);
-    letter-spacing:.12em;
-    writing-mode:vertical-rl;
-    transform:rotate(180deg);
+    width:26px; height:26px;
     padding-bottom:18px;
     border-bottom:1px solid var(--border-0);
     margin-bottom:14px;
     cursor:pointer;
     transition:opacity .2s;
+    flex-shrink:0;
   }
+  .rail-logo img { width:26px; height:26px; object-fit:contain; display:block; }
   .rail-logo:hover { opacity:.7; }
 
   .rail-nav { display:flex; flex-direction:column; gap:2px; width:100%; align-items:center; }
@@ -288,7 +286,7 @@ const makeCSS = () => `
   .rail-streak-l { font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--text-2); letter-spacing:.1em; text-transform:uppercase; }
 
   /* MAIN AREA */
-  .main { margin-left:58px; flex:1; display:flex; flex-direction:column; min-width:0; overflow-x:hidden; }
+  .main { margin-left:60px; flex:1; display:flex; flex-direction:column; min-width:0; overflow-x:hidden; }
 
   /* TOPBAR */
   .topbar {
@@ -1392,10 +1390,8 @@ const makeCSS = () => `
   }
   .auth-left-logo {
     position:absolute; top:36px; left:40px;
-    font-family:'Bebas Neue',sans-serif;
-    font-size:22px; letter-spacing:.14em;
-    color:var(--accent);
   }
+  .auth-left-logo img { height:96px; width:auto; display:block; }
   .auth-left-stats {
     position:absolute; bottom:40px; left:40px; right:40px;
     display:flex; gap:28px;
@@ -2191,7 +2187,6 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-bg" />
-        <div className="auth-left-logo">FORGE</div>
 
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
@@ -2216,6 +2211,10 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* RIGHT PANEL */}
       <div className="auth-right">
         <div className="auth-form">
+          {/* Logo */}
+          <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+            <img src="/forge_wordmark_dark.png" alt="Forge" style={{height:144,width:"auto"}} />
+          </div>
           {/* Tab toggle */}
           <div className="auth-tab-row">
             <button className={`auth-tab ${mode==="login"?"on":""}`}  onClick={() => { setMode("login");  setError(""); }}>Log In</button>
@@ -3566,7 +3565,7 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
 
       {/* The bar */}
       <div style={{
-        position:"fixed", bottom:0, left:58, right:0,
+        position:"fixed", bottom:0, left:60, right:0,
         background:"var(--bg-1)", borderTop:"1px solid var(--border-0)",
         padding:"12px 28px", display:"flex", alignItems:"center",
         justifyContent:"space-between", zIndex:80,
@@ -5170,7 +5169,6 @@ const AuthScreen = ({ onAuthed }) => {
     <div className="auth-screen">
       <div className="auth-left">
         <div className="auth-left-bg" />
-        <div className="auth-left-logo">FORGE</div>
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
           <div className="auth-quote-text">{quote.text}</div>
@@ -5187,6 +5185,9 @@ const AuthScreen = ({ onAuthed }) => {
       </div>
       <div className="auth-right">
         <div className="auth-form">
+          <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+            <img src="/forge_wordmark_dark.png" alt="Forge" style={{height:144,width:"auto"}} />
+          </div>
           <div className="auth-tab-row">
             <button className={`auth-tab ${mode==="login"?"on":""}`}  onClick={()=>{setMode("login");setErr("");}}>Log In</button>
             <button className={`auth-tab ${mode==="signup"?"on":""}`} onClick={()=>{setMode("signup");setErr("");}}>Create Account</button>
@@ -6000,7 +6001,9 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="rail">
-        <div className="rail-logo" onClick={()=>setPage("home")}>FORGE</div>
+        <div className="rail-logo" onClick={()=>setPage("home")}>
+          <img src="/forge_icon_dark.png" alt="Forge" />
+        </div>
         <div className="rail-nav">
           {NAV.map(n=>(
             <div key={n.id} id={`tut-${n.id}`} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
