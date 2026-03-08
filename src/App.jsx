@@ -4191,7 +4191,7 @@ const Settings = ({ theme, setTheme, tone, setTone, userName, setUserName }) => 
         </div>
 
         <div className="srow a3">
-          <div className="srow-title">AI Tone</div>
+          <div className="srow-title">TALOS Tone</div>
           <div className="srow-desc">How Forge Intelligence speaks in your daily debrief and weekly synthesis.</div>
           <div className="flex g8 wrap">
             {tones.map(t => (
@@ -5205,9 +5205,19 @@ const Tutorial = ({ onDone }) => {
 const TALOS_GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday }) => {
+const TALOS_TONE_PROMPTS = {
+  "Stoic":          "You are TALOS — calm, minimal, precise. No hype. Acknowledge what was done, note what remains. Short sentences.",
+  "Coach":          "You are TALOS — warm, encouraging, direct. Celebrate wins, push for more. Sound like a great coach who believes in the user.",
+  "Drill Sergeant": "You are TALOS — intense, demanding, no excuses. Acknowledge completions quickly then immediately push for the next task. High energy.",
+};
+
+const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, user, challenges }) => {
   const [messages,    setMessages]    = useState([
-    { role:"talos", text:"TALOS online. Tell me what you've done today — I'll match it to your tasks and tick them off." }
+    { role:"talos", text: tone === "Drill Sergeant"
+        ? "TALOS online. What did you get done? Talk to me."
+        : tone === "Coach"
+        ? "Hey! TALOS here. Tell me what you've crushed today and I'll tick it off for you."
+        : "TALOS online. Tell me what you've done today — I'll match it to your tasks and tick them off." }
   ]);
   const [input,       setInput]       = useState("");
   const [loading,     setLoading]     = useState(false);
@@ -5240,19 +5250,21 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday }) => {
 
     setLoading(true);
 
-    const taskList = tasks.map(t => `- key:"${t.key}" label:"${t.label}"${kpis[t.key] ? " [already done]" : ""}`).join("\n");
-    const systemPrompt = `You are TALOS, a discipline agent embedded in the Forge app.
-The user has these tasks today:
+    const tonePersonality = TALOS_TONE_PROMPTS[tone] || TALOS_TONE_PROMPTS["Stoic"];
+    const taskList = tasks.map(t => `key="${t.key}" label="${t.label}"${kpis[t.key] ? " [already done]" : ""}`).join("\n");
+    const systemPrompt = `${tonePersonality}
+
+The user has these tasks today. Keys are EXACT — copy them character-for-character:
 ${taskList}
 
-When the user describes what they've done, identify which tasks match and return a JSON object ONLY — no markdown, no explanation:
-{"matched": ["task_key_1", "task_key_2"], "reply": "short 1-sentence confirmation"}
+Return ONLY a JSON object, no other text:
+{"matched": ["exact_key"], "reply": "your response"}
 
 Rules:
-- Only match tasks that are clearly described. Don't guess.
-- Skip tasks already marked [already done].
-- If nothing matches, return {"matched": [], "reply": "I couldn't match that to any tasks. Try being more specific."}
-- reply must be short, direct, no filler.`;
+- matched must contain ONLY keys from the list above, copied exactly. If key is "w1" use "w1" not "workout".
+- Skip tasks marked [already done].
+- If nothing clearly matches: {"matched": [], "reply": "..."}
+- reply is 1-2 sentences matching your personality.`;
 
     try {
       const res = await fetch(
@@ -5262,14 +5274,13 @@ Rules:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role:"user", parts:[{ text: `${systemPrompt}\n\nUser says: "${userText}"` }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
+            generationConfig: { temperature: 0.2, maxOutputTokens: 300, responseMimeType: "application/json" },
           }),
         }
       );
       const data = await res.json();
       const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-      const clean = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      const parsed = JSON.parse(raw);
 
       const matchedKeys   = parsed.matched || [];
       const matchedTasks  = tasks.filter(t => matchedKeys.includes(t.key) && !kpis[t.key]);
@@ -5978,8 +5989,8 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
 
           {/* AI Tone */}
           <div className="srow a5">
-            <div className="srow-title">AI Tone</div>
-            <div className="srow-desc">How Forge speaks in your daily debrief.</div>
+            <div className="srow-title">TALOS Tone</div>
+            <div className="srow-desc">How TALOS speaks to you — in daily debriefs and as your agent.</div>
             <div className="flex col g8" style={{marginTop:10}}>
               {tones.map(t=>(
                 <button key={t} className={`btn ${tone===t?"btn-a":"btn-g"}`}
@@ -6783,10 +6794,28 @@ export default function App() {
           challenge={activeChallenge}
           kpis={kpis}
           loggedToday={loggedToday}
+          tone={tone}
+          sb={sb}
+          user={user}
+          challenges={challenges}
           onTickTasks={(keys) => {
             setKpis(prev => {
               const updated = { ...prev };
               keys.forEach(k => { updated[k] = true; });
+              // Persist to Supabase — same as toggle()
+              if (sb && user && challenges.main) {
+                const today = new Date().toISOString().split("T")[0];
+                const completed = Object.entries(updated).filter(([,v])=>v).map(([k])=>k);
+                const total = (challenges.main.kpis || []).length;
+                const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+                sb.from("checkins").upsert({
+                  challenge_id:   challenges.main.id,
+                  date:           today,
+                  score,
+                  completed_keys: completed,
+                  updated_at:     new Date().toISOString(),
+                }, { onConflict: "challenge_id,date" }).then(() => {});
+              }
               return updated;
             });
           }}
