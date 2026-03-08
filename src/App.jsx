@@ -3387,21 +3387,39 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
       });
       const data = await res.json();
       const text = data.text || data.error || "No insight generated.";
+      const time = new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
       setInsight(text);
-      setLastUpdate(new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }));
+      setLastUpdate(time);
+      // Cache for 1 hour
+      if (challenge?.id) {
+        try {
+          localStorage.setItem(`forge_insight_${challenge.id}`, JSON.stringify({ text, time, ts: Date.now() }));
+        } catch(e) {}
+      }
     } catch(e) {
       setInsight("Could not reach Forge Intelligence. Check your connection.");
     }
     setLoading(false);
   };
 
-  // Auto-generate on first load if we have data
+  // Load cached insight on mount, generate only if stale (>1hr) or missing
   useEffect(() => {
-    if (challenge && !insight && !loading) generate();
+    if (!challenge) return;
+    const cacheKey = `forge_insight_${challenge.id}`;
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || "{}");
+      const ageMs = Date.now() - (cached.ts || 0);
+      if (cached.text && ageMs < 60 * 60 * 1000) {
+        setInsight(cached.text);
+        setLastUpdate(cached.time || "");
+        return; // fresh cache — don't call API
+      }
+    } catch(e) {}
+    generate();
   }, [challenge?.id]);
 
   useEffect(() => {
-    // Regenerate when tone changes if we already have data
+    // Regenerate when tone changes only if we already have a cached insight
     if (challenge && insight) generate();
   }, [tone]);
 
@@ -5190,7 +5208,7 @@ const Tutorial = ({ onDone }) => {
 // ============================================================
 // TALOS — Autonomous Task Agent
 // ============================================================
-const TALOS_GEMINI_MODEL = "gemini-1.5-flash-8b";
+const TALOS_GEMINI_MODEL = "gemini-2.5-flash-preview-04-17";
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 const TALOS_TONE_PROMPTS = {
