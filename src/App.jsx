@@ -2207,7 +2207,6 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-bg" />
-        <div className="auth-left-logo"><img src="/forge_wordmark_dark.png" style={{height:144,objectFit:"contain"}} /></div>
 
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
@@ -2231,6 +2230,10 @@ const Auth = ({ onLogin, onSignup }) => {
 
       {/* RIGHT PANEL */}
       <div className="auth-right">
+        {/* Logo centred above the form island */}
+        <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+          <img src="/forge_wordmark_dark.png" style={{height:166,objectFit:"contain"}} />
+        </div>
         <div className="auth-form">
           {/* Tab toggle */}
           <div className="auth-tab-row">
@@ -5248,7 +5251,6 @@ const AuthScreen = ({ onAuthed }) => {
     <div className="auth-screen">
       <div className="auth-left">
         <div className="auth-left-bg" />
-        <div className="auth-left-logo"><img src="/forge_wordmark_dark.png" style={{height:144,objectFit:"contain"}} /></div>
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
           <div className="auth-quote-text">{quote.text}</div>
@@ -5264,6 +5266,10 @@ const AuthScreen = ({ onAuthed }) => {
         </div>
       </div>
       <div className="auth-right">
+        {/* Logo centred above the form island */}
+        <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+          <img src="/forge_wordmark_dark.png" style={{height:166,objectFit:"contain"}} />
+        </div>
         <div className="auth-form">
           <div className="auth-tab-row">
             <button className={`auth-tab ${mode==="login"?"on":""}`}  onClick={()=>{setMode("login");setErr("");}}>Log In</button>
