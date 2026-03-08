@@ -2352,7 +2352,7 @@ const OnboardWho = ({ onNext, onSkip }) => (
       </div>
       <div className="ob-eyebrow">Who Forge is for</div>
       <div className="ob-headline">
-        Built for<br /><span>builders.</span>
+        Built for<br /><span>You.</span>
       </div>
       <div className="ob-body">
         Not everyone is ready for this. Forge is for the ones who've decided — really decided — that the old version of themselves isn't good enough.
