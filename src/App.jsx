@@ -315,7 +315,7 @@ const makeCSS = () => `
 
   .home-page { padding:36px 32px 100px; width:100%; max-width:1400px; box-sizing:border-box; }
   .home-layout { display:flex; gap:28px; align-items:flex-start; width:100%; }
-  .home-left  { flex:0 0 420px; min-width:0; }
+  .home-left  { flex:0 0 580px; min-width:0; }
   .home-right { flex:1; min-width:320px; }
   @media (max-width:960px) {
     .home-layout { flex-direction:column; }
@@ -2983,6 +2983,28 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
   const done  = tasks.filter(t => taskState[t.key]).length;
   const total = tasks.length;
 
+  // Scaled completion: hit 100% when all non-negs are done
+  const nonNegTasks   = tasks.filter(t => t.nonNeg);
+  const nonNegDone    = nonNegTasks.filter(t => taskState[t.key]).length;
+  const hasNonNegs    = nonNegTasks.length > 0;
+  const allNonNegDone = hasNonNegs && nonNegDone === nonNegTasks.length;
+  const scaledDone    = isScaled ? (hasNonNegs ? nonNegDone : done) : done;
+  const scaledTotal   = isScaled ? (hasNonNegs ? nonNegTasks.length : total) : total;
+  const displayPct    = scaledTotal > 0 ? Math.round((scaledDone / scaledTotal) * 100) : 0;
+  const ringDone      = isScaled ? scaledDone : done;
+  const ringTotal     = isScaled ? scaledTotal : total;
+
+  // Sub-message logic
+  const getSubMessage = () => {
+    if (isScaled) {
+      if (allNonNegDone && done < total) return "Non-negs locked in — keep going if you can.";
+      if (allNonNegDone && done === total) return "All tasks done — scaled day complete.";
+      return `${nonNegTasks.length - nonNegDone} non-neg${nonNegTasks.length - nonNegDone === 1 ? "" : "s"} remaining`;
+    }
+    if (done === total && total > 0) return "All tasks done — excellent.";
+    return `${total - done} task${total - done === 1 ? "" : "s"} remaining`;
+  };
+
   const catSummary = Object.entries(
     tasks.reduce((acc, t) => {
       const cat = t.cat || "other";
@@ -2997,16 +3019,14 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
     <div>
       {/* Ring header */}
       <div className="ring-wrap" style={ isScaled ? { borderColor:"#D4B22A30", background:"#D4B22A06" } : {}}>
-        <CompletionRing done={done} total={total} isScaled={isScaled} />
+        <CompletionRing done={ringDone} total={ringTotal} isScaled={isScaled} />
         <div className="ring-info">
-          <div className="ring-pct" style={{ color: isScaled ? "#D4B22A" : done===total && total>0 ? "var(--ok)" : done>0 ? "var(--accent)" : "var(--text-2)" }}>
-            {total > 0 ? Math.round((done/total)*100) : 0}%
+          <div className="ring-pct" style={{ color: isScaled ? (allNonNegDone ? "var(--ok)" : "#D4B22A") : done===total && total>0 ? "var(--ok)" : done>0 ? "var(--accent)" : "var(--text-2)" }}>
+            {displayPct}%
             {isScaled && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, marginLeft:8, color:"#D4B22A", letterSpacing:".1em" }}>SCALED</span>}
           </div>
           <div className="ring-sub">
-            {isScaled
-              ? "Scaled day — minimum viable tasks active"
-              : done === total && total > 0 ? "All tasks done — excellent." : `${total - done} task${total-done===1?"":"s"} remaining`}
+            {getSubMessage()}
           </div>
           <div className="ring-cats">
             {catSummary.map(([cat, s]) => {
