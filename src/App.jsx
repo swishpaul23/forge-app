@@ -236,7 +236,7 @@ const makeCSS = () => `
 
   /* ICON RAIL */
   .rail {
-    width:60px; min-height:100vh;
+    width:58px; min-height:100vh;
     background:var(--bg-1);
     border-right:1px solid var(--border-0);
     display:flex; flex-direction:column; align-items:center;
@@ -246,15 +246,17 @@ const makeCSS = () => `
   }
 
   .rail-logo {
-    width:26px; height:26px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:19px; color:var(--accent);
+    letter-spacing:.12em;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
     padding-bottom:18px;
     border-bottom:1px solid var(--border-0);
     margin-bottom:14px;
     cursor:pointer;
     transition:opacity .2s;
-    flex-shrink:0;
   }
-  .rail-logo img { width:26px; height:26px; object-fit:contain; display:block; }
   .rail-logo:hover { opacity:.7; }
 
   .rail-nav { display:flex; flex-direction:column; gap:2px; width:100%; align-items:center; }
@@ -286,7 +288,7 @@ const makeCSS = () => `
   .rail-streak-l { font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--text-2); letter-spacing:.1em; text-transform:uppercase; }
 
   /* MAIN AREA */
-  .main { margin-left:60px; flex:1; display:flex; flex-direction:column; min-width:0; overflow-x:hidden; }
+  .main { margin-left:58px; flex:1; display:flex; flex-direction:column; min-width:0; overflow-x:hidden; }
 
   /* TOPBAR */
   .topbar {
@@ -310,6 +312,15 @@ const makeCSS = () => `
 
   /* PAGE */
   .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; }
+
+  .home-page { padding:36px 32px 100px; width:100%; max-width:1400px; box-sizing:border-box; }
+  .home-layout { display:flex; gap:28px; align-items:flex-start; width:100%; }
+  .home-left  { flex:0 0 420px; min-width:0; }
+  .home-right { flex:1; min-width:320px; }
+  @media (max-width:960px) {
+    .home-layout { flex-direction:column; }
+    .home-left, .home-right { flex:none; width:100%; }
+  }
   .page.partners-page { padding:0; max-width:100%; height:100%; }
 
   /* PAGE HEADER */
@@ -1390,8 +1401,10 @@ const makeCSS = () => `
   }
   .auth-left-logo {
     position:absolute; top:36px; left:40px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px; letter-spacing:.14em;
+    color:var(--accent);
   }
-  .auth-left-logo img { height:96px; width:auto; display:block; }
   .auth-left-stats {
     position:absolute; bottom:40px; left:40px; right:40px;
     display:flex; gap:28px;
@@ -2187,6 +2200,7 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-bg" />
+        <div className="auth-left-logo">FORGE</div>
 
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
@@ -2211,10 +2225,6 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* RIGHT PANEL */}
       <div className="auth-right">
         <div className="auth-form">
-          {/* Logo */}
-          <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
-            <img src="/forge_wordmark_dark.png" alt="Forge" style={{height:144,width:"auto"}} />
-          </div>
           {/* Tab toggle */}
           <div className="auth-tab-row">
             <button className={`auth-tab ${mode==="login"?"on":""}`}  onClick={() => { setMode("login");  setError(""); }}>Log In</button>
@@ -2669,8 +2679,9 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
   const [preset,      setPreset]      = useState(0);
   const [customWork,  setCustomWork]  = useState(25);
   const [customBrk,   setCustomBrk]  = useState(5);
-  const [phase,       setPhase]       = useState("idle");   // idle | work | break | summary
+  const [phase,       setPhase]       = useState("idle");   // idle | work | break | paused | summary
   const [timeLeft,    setTimeLeft]    = useState(0);
+  const [pausedPhase, setPausedPhase] = useState(null);  // remembers work|break when paused
   const [cycle,       setCycle]       = useState(0);
   const [totalFocused,setTotalFocused]= useState(0);
   const [sessionTasks,setSessionTasks]= useState(doneTasks);
@@ -2712,6 +2723,17 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
     playBeep();
   };
 
+  const pauseTimer = () => {
+    clearInterval(timerRef.current);
+    setPausedPhase(phase);
+    setPhase("paused");
+  };
+
+  const resumeTimer = () => {
+    setPhase(pausedPhase);  // restores work|break — useEffect picks it up with current timeLeft
+    setPausedPhase(null);
+  };
+
   const endSession = () => {
     clearInterval(timerRef.current);
     setPhase("idle");
@@ -2720,6 +2742,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
 
   useEffect(() => {
     if (phase !== "work" && phase !== "break") return;
+    // Don't reset timeLeft here — startWork/startBreak/resumeTimer already set it
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
@@ -2737,7 +2760,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
       });
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [phase, preset, customWork, customBrk]);
+  }, [phase]);
 
   // Track task completions during session
   useEffect(() => {
@@ -2869,10 +2892,20 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
           )}
           {(phase === "work" || phase === "break") && (
             <>
-              <button className="btn btn-g" onClick={()=>{clearInterval(timerRef.current);setPhase("idle");setTimeLeft(0);}}>
+              <button className="btn btn-g" onClick={pauseTimer}>
                 Pause
               </button>
               <button className="btn btn-a" style={{background:"var(--ok)",borderColor:"var(--ok)"}} onClick={endSession}>
+                End Session
+              </button>
+            </>
+          )}
+          {phase === "paused" && (
+            <>
+              <button className="btn btn-a" onClick={resumeTimer}>
+                ▶ Resume
+              </button>
+              <button className="btn btn-g" onClick={endSession}>
                 End Session
               </button>
             </>
@@ -3029,6 +3062,14 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
                   <div className="task-card-label" style={ isScaled && !isDone ? { color:"var(--text-1)", fontSize:12 } : {}}>
                     {label}
                   </div>
+                  {t.nonNeg && (
+                    <div style={{
+                      fontFamily:"'IBM Plex Mono',monospace", fontSize:7, letterSpacing:".14em",
+                      color:"var(--warn)", marginTop:3, display:"flex", alignItems:"center", gap:4,
+                    }}>
+                      ◆ NON-NEG
+                    </div>
+                  )}
                 </div>
                 <div className="task-cat-tag" style={{
                   color: cardColor,
@@ -3402,7 +3443,12 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
   };
 
   return (
-    <div className="page">
+    <div className="home-page">
+      <div className="home-layout">
+
+        {/* ── LEFT COLUMN: header, AI, challenges, stats ── */}
+        <div className="home-left">
+
       {/* JARVIS HEADER */}
       <div className="jarvis-header a0">
         <div className="jarvis-tag">Forge · {fmtDate()}</div>
@@ -3452,8 +3498,11 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
         ))}
       </div>
 
-      {/* Tasks */}
-      <div className="a4 mt24">
+        </div>{/* end home-left */}
+
+        {/* ── RIGHT COLUMN: tasks ── */}
+        <div className="home-right">
+      <div className="a4">
         <div className="flex between center mb12">
           <div className="slabel" style={{ marginBottom:0 }}>Today's Tasks</div>
           {isRecovery && (
@@ -3502,6 +3551,9 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
           isScaled={isScaled}
         />
       </div>
+        </div>{/* end home-right */}
+
+      </div>{/* end home-layout */}
 
       {/* RECOVERY MODAL */}
       {showRecovery && (
@@ -3565,7 +3617,7 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
 
       {/* The bar */}
       <div style={{
-        position:"fixed", bottom:0, left:60, right:0,
+        position:"fixed", bottom:0, left:58, right:0,
         background:"var(--bg-1)", borderTop:"1px solid var(--border-0)",
         padding:"12px 28px", display:"flex", alignItems:"center",
         justifyContent:"space-between", zIndex:80,
@@ -5169,6 +5221,7 @@ const AuthScreen = ({ onAuthed }) => {
     <div className="auth-screen">
       <div className="auth-left">
         <div className="auth-left-bg" />
+        <div className="auth-left-logo">FORGE</div>
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
           <div className="auth-quote-text">{quote.text}</div>
@@ -5185,9 +5238,6 @@ const AuthScreen = ({ onAuthed }) => {
       </div>
       <div className="auth-right">
         <div className="auth-form">
-          <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
-            <img src="/forge_wordmark_dark.png" alt="Forge" style={{height:144,width:"auto"}} />
-          </div>
           <div className="auth-tab-row">
             <button className={`auth-tab ${mode==="login"?"on":""}`}  onClick={()=>{setMode("login");setErr("");}}>Log In</button>
             <button className={`auth-tab ${mode==="signup"?"on":""}`} onClick={()=>{setMode("signup");setErr("");}}>Create Account</button>
@@ -6001,9 +6051,7 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="rail">
-        <div className="rail-logo" onClick={()=>setPage("home")}>
-          <img src="/forge_icon_dark.png" alt="Forge" />
-        </div>
+        <div className="rail-logo" onClick={()=>setPage("home")}>FORGE</div>
         <div className="rail-nav">
           {NAV.map(n=>(
             <div key={n.id} id={`tut-${n.id}`} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
