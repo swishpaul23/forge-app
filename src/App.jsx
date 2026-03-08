@@ -2207,7 +2207,7 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-bg" />
-        <div className="auth-left-logo">FORGE</div>
+        <div className="auth-left-logo"><img src="/forge_wordmark_dark.png" style={{height:144,objectFit:"contain"}} /></div>
 
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
@@ -5248,7 +5248,7 @@ const AuthScreen = ({ onAuthed }) => {
     <div className="auth-screen">
       <div className="auth-left">
         <div className="auth-left-bg" />
-        <div className="auth-left-logo">FORGE</div>
+        <div className="auth-left-logo"><img src="/forge_wordmark_dark.png" style={{height:144,objectFit:"contain"}} /></div>
         <div className="auth-left-quote">
           <div className="auth-quote-mark">"</div>
           <div className="auth-quote-text">{quote.text}</div>
@@ -6369,7 +6369,7 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="rail">
-        <div className="rail-logo" onClick={()=>setPage("home")}>FORGE</div>
+        <div className="rail-logo" onClick={()=>setPage("home")}><img src="/forge_icon_dark.png" style={{width:26,height:26,objectFit:"contain"}} /></div>
         <div className="rail-nav">
           {NAV.map(n=>(
             <div key={n.id} id={`tut-${n.id}`} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
