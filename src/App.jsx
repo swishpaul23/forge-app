@@ -295,7 +295,7 @@ const makeCSS = () => `
   .rail-streak-l { font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--text-2); letter-spacing:.1em; text-transform:uppercase; }
 
   /* MAIN AREA */
-  .main { margin-left:58px; flex:1; display:flex; flex-direction:column; min-width:0; overflow-x:hidden; }
+  .main { margin-left:58px; flex:1; display:flex; flex-direction:column; align-items:center; min-width:0; overflow-x:hidden; }
 
   /* TOPBAR */
   .topbar {
@@ -318,7 +318,7 @@ const makeCSS = () => `
   .lvl-dot { width:5px; height:5px; border-radius:50%; }
 
   /* PAGE */
-  .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; }
+  .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; margin:0 auto; }
 
   .home-page { padding:36px 32px 100px; width:100%; max-width:1400px; box-sizing:border-box; }
   .home-layout { display:flex; gap:28px; align-items:flex-start; width:100%; }
@@ -328,7 +328,7 @@ const makeCSS = () => `
     .home-layout { flex-direction:column; }
     .home-left, .home-right { flex:none; width:100%; }
   }
-  .page.partners-page { padding:0; max-width:100%; height:100%; }
+  .page.partners-page { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
 
   /* PAGE HEADER */
   .pg-tag   { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:5px; }
@@ -5086,11 +5086,18 @@ const Tutorial = ({ onDone }) => {
     if (!targetRect || current.position === "center") {
       return { ...base, top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 322 };
     }
+    const W = window.innerWidth;
     if (current.position === "right") {
-      return { ...base, top: targetRect.top - PAD, left: targetRect.left + targetRect.width + PAD + 16 };
+      const idealLeft = targetRect.left + targetRect.width + PAD + 16;
+      // If it would overflow, flip to left of the target instead
+      const fitsRight = idealLeft + base.width + 16 <= W;
+      const left = fitsRight ? idealLeft : targetRect.left - base.width - PAD - 16;
+      return { ...base, top: targetRect.top - PAD, left: Math.max(8, left) };
     }
     if (current.position === "bottom") {
-      return { ...base, top: targetRect.top + targetRect.height + PAD + 16, left: targetRect.left - PAD, width: 322 };
+      const idealLeft = targetRect.left - PAD;
+      const left = Math.min(idealLeft, W - 322 - 16);
+      return { ...base, top: targetRect.top + targetRect.height + PAD + 16, left: Math.max(8, left), width: 322 };
     }
     return base;
   };
