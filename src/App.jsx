@@ -315,8 +315,8 @@ const makeCSS = () => `
 
   .home-page { padding:36px 32px 100px; width:100%; max-width:1400px; box-sizing:border-box; }
   .home-layout { display:flex; gap:28px; align-items:flex-start; width:100%; }
-  .home-left  { flex:0 0 580px; min-width:0; }
-  .home-right { flex:1; min-width:320px; }
+  .home-left  { flex:0 0 calc(50% - 14px); min-width:0; }
+  .home-right { flex:1; min-width:320px; padding-top:0; }
   @media (max-width:960px) {
     .home-layout { flex-direction:column; }
     .home-left, .home-right { flex:none; width:100%; }
@@ -3522,7 +3522,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
 
         {/* ── RIGHT COLUMN: tasks ── */}
         <div className="home-right">
-      <div className="a4">
+      <div className="a4" style={{marginTop:0}}>
         <div className="flex between center mb12">
           <div className="slabel" style={{ marginBottom:0 }}>Today's Tasks</div>
           {isRecovery && (
