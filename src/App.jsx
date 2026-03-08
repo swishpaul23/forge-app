@@ -174,6 +174,13 @@ const getLevel  = (days) => [...LEVELS].reverse().find(l => days >= l.minDays) |
 const pct       = (a, b) => Math.round((a / b) * 100);
 const fmtDate   = () => new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 const greeting  = () => { const h = new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Still at it"; };
+// VAPID: convert base64url public key to Uint8Array for pushManager.subscribe
+const urlBase64ToUint8Array = (base64String) => {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g,"+").replace(/_/g,"/");
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+};
 const wallColor = (score) => { if (score===null) return "var(--bg-3)"; if (score===0) return "var(--bg-2)"; if (score<50) return "var(--accent-lo)"; if (score<75) return "var(--accent-mid)"; return "var(--accent)"; };
 const fmtCellDate = (dateStr) => { const d = new Date(dateStr + "T00:00:00"); return `${d.toLocaleString("en-US",{month:"short"}).toUpperCase()}/${String(d.getDate()).padStart(2,"0")}`; };
 
@@ -5325,6 +5332,112 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [fbSending,   setFbSending]   = useState(false);
   const [fbDone,      setFbDone]      = useState(false);
 
+  // Notifications
+  const [notifEnabled,  setNotifEnabled]  = useState(false);
+  const [notifLoading,  setNotifLoading]  = useState(false);
+  const [notifPerm,     setNotifPerm]     = useState(() => typeof Notification !== "undefined" ? Notification.permission : "default");
+  const [timingMode,    setTimingMode]    = useState("smart");   // "smart" | "manual"
+  const [manualHour,    setManualHour]    = useState(20);
+  const [manualMinute,  setManualMinute]  = useState(0);
+  const [smartHourEst,  setSmartHourEst]  = useState(null);     // estimated smart hour shown to user
+  const [notifSaved,    setNotifSaved]    = useState(false);
+
+  // Load existing notif prefs on mount
+  useEffect(() => {
+    if (!sb || !profile?.id) return;
+    sb.from("notification_prefs").select("*").eq("user_id", profile.id).maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        setNotifEnabled(data.enabled || false);
+        setTimingMode(data.timing_mode || "smart");
+        setManualHour(data.manual_hour ?? 20);
+        setManualMinute(data.manual_minute ?? 0);
+        // Compute smart hour estimate from checkin_hours
+        const hours = data.checkin_hours || [];
+        if (hours.length >= 3) {
+          const avg = Math.round(hours.slice(-14).reduce((a,b) => a+b, 0) / Math.min(hours.length, 14));
+          setSmartHourEst(avg);
+        }
+      });
+  }, [profile?.id]);
+
+  const fmtHour = (h, m=0) => {
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12  = h % 12 === 0 ? 12 : h % 12;
+    const mm   = String(m).padStart(2,"0");
+    return `${h12}:${mm} ${ampm}`;
+  };
+
+  const subscribeAndSave = async () => {
+    if (!sb || !profile?.id) return;
+    setNotifLoading(true);
+    try {
+      // 1. Request browser permission
+      const perm = await Notification.requestPermission();
+      setNotifPerm(perm);
+      if (perm !== "granted") { setNotifLoading(false); return; }
+
+      // 2. Register service worker + get push subscription
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      const sub = existing || await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+          import.meta.env.VITE_VAPID_PUBLIC_KEY || ""
+        ),
+      });
+
+      const keys = sub.toJSON().keys || {};
+
+      // 3. Save subscription to DB
+      await sb.from("push_subscriptions").upsert({
+        user_id:  profile.id,
+        endpoint: sub.endpoint,
+        p256dh:   keys.p256dh || "",
+        auth_key: keys.auth   || "",
+        platform: "web",
+      }, { onConflict: "user_id,endpoint" });
+
+      // 4. Upsert notification prefs
+      await sb.from("notification_prefs").upsert({
+        user_id:         profile.id,
+        enabled:         true,
+        timing_mode:     timingMode,
+        manual_hour:     manualHour,
+        manual_minute:   manualMinute,
+        daily_reminder:  true,
+        milestone_alerts:true,
+        nudge_alerts:    true,
+      }, { onConflict: "user_id" });
+
+      setNotifEnabled(true);
+      setNotifSaved(true);
+      setTimeout(() => setNotifSaved(false), 3000);
+    } catch(e) { flash("err", e.message); }
+    finally { setNotifLoading(false); }
+  };
+
+  const disableNotifs = async () => {
+    if (!sb || !profile?.id) return;
+    await sb.from("notification_prefs").upsert({ user_id: profile.id, enabled: false }, { onConflict: "user_id" });
+    // Unsubscribe from push
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { await sub.unsubscribe(); await sb.from("push_subscriptions").delete().eq("endpoint", sub.endpoint); }
+    } catch(e) {}
+    setNotifEnabled(false);
+  };
+
+  const saveTimingPrefs = async () => {
+    if (!sb || !profile?.id) return;
+    await sb.from("notification_prefs").upsert({
+      user_id: profile.id, timing_mode: timingMode,
+      manual_hour: manualHour, manual_minute: manualMinute,
+    }, { onConflict: "user_id" });
+    setNotifSaved(true); setTimeout(() => setNotifSaved(false), 2500);
+  };
+
   const flash = (type,text) => { setMsg({type,text}); setTimeout(()=>setMsg(null),4000); };
 
   const saveName = async () => {
@@ -5467,6 +5580,118 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
 
       {/* ── Full-width bottom section ── */}
       <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:16}}>
+
+        {/* Notifications */}
+        <div className="srow a5">
+          <div className="srow-title">Notifications</div>
+          <div className="srow-desc">Daily reminders, partner nudges, and milestone alerts — sent to this browser.</div>
+
+          {notifPerm === "denied" && (
+            <div style={{marginTop:12,padding:"10px 14px",background:"var(--err)18",border:"1px solid var(--err)44",borderRadius:8,fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--err)"}}>
+              ✕ Notifications blocked in browser settings. Enable them in your browser's site permissions, then return here.
+            </div>
+          )}
+
+          {/* Enable/disable toggle */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14,padding:"12px 16px",background:"var(--bg-2)",borderRadius:10,border:"1px solid var(--border-1)"}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Push Notifications</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".1em",color:"var(--text-2)",marginTop:2}}>
+                {notifEnabled ? "ACTIVE — browser subscribed" : "INACTIVE"}
+              </div>
+            </div>
+            <button
+              className={`btn ${notifEnabled ? "btn-g" : "btn-a"}`}
+              style={{padding:"8px 18px",fontSize:12}}
+              onClick={notifEnabled ? disableNotifs : subscribeAndSave}
+              disabled={notifLoading || notifPerm === "denied"}
+            >
+              {notifLoading ? "…" : notifEnabled ? "Disable" : "Enable"}
+            </button>
+          </div>
+
+          {/* Timing options — only show when enabled */}
+          {notifEnabled && (
+            <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".18em",textTransform:"uppercase",color:"var(--text-2)"}}>
+                Reminder Timing
+              </div>
+
+              {/* Smart option */}
+              <div
+                onClick={() => setTimingMode("smart")}
+                style={{
+                  display:"flex",alignItems:"flex-start",gap:14,padding:"14px 16px",
+                  background: timingMode==="smart" ? "var(--accent-lo)" : "var(--bg-2)",
+                  border:`1px solid ${timingMode==="smart" ? "var(--accent)" : "var(--border-1)"}`,
+                  borderRadius:10, cursor:"pointer", transition:"all .15s",
+                }}
+              >
+                <div style={{
+                  width:18,height:18,borderRadius:"50%",flexShrink:0,marginTop:2,
+                  border:`2px solid ${timingMode==="smart" ? "var(--accent)" : "var(--border-1)"}`,
+                  background: timingMode==="smart" ? "var(--accent)" : "transparent",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                }}>
+                  {timingMode==="smart" && <div style={{width:6,height:6,borderRadius:"50%",background:"#080807"}} />}
+                </div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Smart Timing</div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:3,lineHeight:1.5}}>
+                    Learns when you usually check in and sends the reminder then.
+                    {smartHourEst !== null
+                      ? <span style={{color:"var(--accent)"}}> Estimated: {fmtHour(smartHourEst)}.</span>
+                      : <span style={{color:"var(--text-3)"}}> Needs 3+ check-ins to calibrate — falls back to 8:00 PM until then.</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {/* Manual option */}
+              <div
+                onClick={() => setTimingMode("manual")}
+                style={{
+                  display:"flex",alignItems:"flex-start",gap:14,padding:"14px 16px",
+                  background: timingMode==="manual" ? "var(--accent-lo)" : "var(--bg-2)",
+                  border:`1px solid ${timingMode==="manual" ? "var(--accent)" : "var(--border-1)"}`,
+                  borderRadius:10, cursor:"pointer", transition:"all .15s",
+                }}
+              >
+                <div style={{
+                  width:18,height:18,borderRadius:"50%",flexShrink:0,marginTop:2,
+                  border:`2px solid ${timingMode==="manual" ? "var(--accent)" : "var(--border-1)"}`,
+                  background: timingMode==="manual" ? "var(--accent)" : "transparent",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                }}>
+                  {timingMode==="manual" && <div style={{width:6,height:6,borderRadius:"50%",background:"#080807"}} />}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Set a Time</div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:3}}>
+                    Pick exactly when you want the reminder each day.
+                  </div>
+                  {timingMode==="manual" && (
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginTop:12}} onClick={e=>e.stopPropagation()}>
+                      <select className="field" value={manualHour} onChange={e=>setManualHour(Number(e.target.value))}
+                        style={{width:110,cursor:"pointer"}}>
+                        {Array.from({length:24},(_,i)=>i).map(h=>(
+                          <option key={h} value={h}>{fmtHour(h)}</option>
+                        ))}
+                      </select>
+                      <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)"}}>daily</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button className="btn btn-a" style={{alignSelf:"flex-start",marginTop:4}}
+                onClick={saveTimingPrefs}>
+                {notifSaved ? "✓ Saved" : "Save Timing"}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Feedback */}
         <div className="srow a5">
           <div className="srow-title">Feedback</div>
@@ -5719,6 +5944,12 @@ export default function App() {
   }, [user]);
 
   // Supabase auth listener
+  // Register service worker for push notifications
+  useEffect(() => {
+    if ("serviceWorker" in navigator)
+      navigator.serviceWorker.register("/sw.js").catch(console.warn);
+  }, []);
+
   useEffect(() => {
     if (!sb) { setUser(null); return; }
     sb.auth.getSession().then(({ data: { session } }) => {
