@@ -4221,16 +4221,17 @@ const Settings = ({ theme, setTheme, tone, setTone, userName, setUserName }) => 
 // CHALLENGE CREATION WIZARD
 // ============================================================
 const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
-  const [step,    setStep]    = useState(1);
-  const [name,    setName]    = useState(tpl?.id === "custom" ? "" : tpl?.name || "");
-  const [days,    setDays]    = useState(tpl?.duration || 30);
-  const [mission, setMission] = useState("");
-  const [tasks,   setTasks]   = useState(
+  const [step,      setStep]      = useState(1);
+  const [name,      setName]      = useState(tpl?.id === "custom" ? "" : tpl?.name || "");
+  const [days,      setDays]      = useState(tpl?.duration || 30);
+  const [mission,   setMission]   = useState("");
+  const [tasks,     setTasks]     = useState(
     tpl?.kpis?.length > 0
       ? tpl.kpis.map((k,i) => ({ id: i, label: k.label }))
       : [{ id: 0, label: "" }]
   );
-  const [nonNeg,      setNonNeg]      = useState([]);
+  const [nonNeg,    setNonNeg]    = useState([]);
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   const addTask      = () => setTasks(t => [...t, { id: Date.now(), label: "" }]);
   const removeTask   = (id) => setTasks(t => t.filter(x => x.id !== id));
@@ -4238,8 +4239,8 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
   const toggleNonNeg = (id) => setNonNeg(n => n.includes(id) ? n.filter(x => x !== id) : [...n, id]);
 
   const STEPS = isSecondary
-    ? ["Setup", "Tasks", "Confirm"]
-    : ["Setup", "Mission", "Tasks", "Non-Negotiables", "Confirm"];
+    ? ["Setup", "Tasks", "Start Date", "Confirm"]
+    : ["Setup", "Mission", "Tasks", "Non-Negotiables", "Start Date", "Confirm"];
   const totalSteps = STEPS.length;
 
   const canNext = () => {
@@ -4253,11 +4254,14 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
   const validTasks = tasks.filter(t => t.label.trim());
 
   const handleStart = () => {
-    onStart({ name, days, mission, nonNeg, tasks: validTasks, isSecondary });
+    onStart({ name, days, mission, nonNeg, tasks: validTasks, isSecondary, startDate });
   };
 
   // Map logical step to STEPS label
   const stepLabel = STEPS[step - 1];
+
+  // Which step index is "Start Date"
+  const startDateStep = STEPS.indexOf("Start Date") + 1;
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -4398,6 +4402,54 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
           </div>
         )}
 
+        {/* START DATE step */}
+        {step === startDateStep && (
+          <div className="flex col g16">
+            <div>
+              <div className="modal-title" style={{ fontSize:26 }}>When do you start?</div>
+              <div className="modal-desc">Set your start date. Useful if you're planning ahead or it's late in the day.</div>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:12, marginTop:8 }}>
+              {/* Today / Tomorrow quick picks */}
+              {[
+                { label:"Today",    value: new Date().toISOString().split("T")[0] },
+                { label:"Tomorrow", value: (() => { const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().split("T")[0]; })() },
+              ].map(opt => (
+                <div key={opt.label} onClick={() => setStartDate(opt.value)}
+                  style={{
+                    display:"flex", alignItems:"center", gap:14, padding:"14px 16px",
+                    background: startDate === opt.value ? "var(--accent-lo)" : "var(--bg-2)",
+                    border:`1px solid ${startDate === opt.value ? "var(--accent)" : "var(--border-1)"}`,
+                    borderRadius:10, cursor:"pointer", transition:"all .15s",
+                  }}>
+                  <div style={{
+                    width:18, height:18, borderRadius:"50%", flexShrink:0,
+                    border:`2px solid ${startDate === opt.value ? "var(--accent)" : "var(--border-1)"}`,
+                    background: startDate === opt.value ? "var(--accent)" : "transparent",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                  }}>
+                    {startDate === opt.value && <div style={{width:6,height:6,borderRadius:"50%",background:"#080807"}} />}
+                  </div>
+                  <div>
+                    <div style={{fontSize:14, fontWeight:500, color:"var(--text-0)"}}>{opt.label}</div>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-2)", marginTop:2}}>{opt.value}</div>
+                  </div>
+                </div>
+              ))}
+              {/* Custom date picker */}
+              <div style={{ marginTop:4 }}>
+                <div className="field-l">Or pick a custom date</div>
+                <input type="date" className="field"
+                  value={startDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={e => setStartDate(e.target.value)}
+                  style={{width:"100%", cursor:"pointer"}}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CONFIRM — last step */}
         {step === totalSteps && (
           <div className="flex col g16">
@@ -4406,7 +4458,11 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
               <div className="modal-desc">Review your challenge before it begins.</div>
             </div>
             <div className="flex col g10">
-              {[{ l:"Challenge", v: name }, { l:"Duration", v: `${days} days` }].map(r => (
+              {[
+                { l:"Challenge", v: name },
+                { l:"Duration",  v: `${days} days` },
+                { l:"Start Date", v: startDate === new Date().toISOString().split("T")[0] ? `${startDate} (Today)` : startDate },
+              ].map(r => (
                 <div key={r.l} className="flex between" style={{ padding:"10px 14px", background:"var(--bg-2)", borderRadius:7 }}>
                   <span className="f-mono c-2" style={{ fontSize:9, letterSpacing:".12em", textTransform:"uppercase" }}>{r.l}</span>
                   <span style={{ fontSize:15, fontWeight:500 }}>{r.v}</span>
@@ -6085,13 +6141,19 @@ export default function App() {
     setStage("loader");
   };
 
-  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary, tag }) => {
+  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary, tag, startDate }) => {
     if (!user?.id || !sb) return;
     try {
       // Archive existing main if replacing
       if (!isSecondary && challenges.main) {
         await sb.from("challenges").update({ archived: true }).eq("id", challenges.main.id);
       }
+
+      // Use startDate if provided, otherwise now
+      // Set to midnight local time so dayNum calc starts correctly
+      const createdAt = startDate
+        ? new Date(startDate + "T00:00:00").toISOString()
+        : new Date().toISOString();
 
       // Insert challenge row
       const { data: chRow, error: chErr } = await sb.from("challenges").insert({
@@ -6105,6 +6167,7 @@ export default function App() {
         mission:    m || null,
         is_main:    !isSecondary,
         archived:   false,
+        created_at: createdAt,
       }).select().single();
 
       if (chErr || !chRow) throw chErr;
