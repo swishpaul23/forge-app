@@ -3364,24 +3364,15 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
     if (!ctx) return;
     setLoading(true);
     try {
-      const toneVoices = {
-        "Stoic":          "Speak like Marcus Aurelius. Blunt, philosophical, no flattery. Identify the gap between what they say they want and what the data shows.",
-        "Coach":          "Speak like a sharp personal coach. Warm but direct. Identify patterns and give one clear tactical suggestion.",
-        "Drill Sergeant": "Speak like a no-nonsense sergeant. No softening. Call out exactly what's weak and demand better.",
-      };
-      const voice = toneVoices[ctx.tone] || toneVoices["Coach"];
-
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-insight`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 120,
-          messages: [{
-            role: "user",
-            content: `You are Forge Intelligence. ${voice}
-
-User data:
+          tone: ctx.tone,
+          prompt: `User data:
 - Challenge: ${ctx.challengeName}
 - Day ${ctx.dayNum} of ${ctx.totalDays}
 - Streak: ${ctx.streak} days
@@ -3391,14 +3382,11 @@ User data:
 - Today's tasks: ${ctx.todayTasks.map(t => `${t.done ? "✓" : "✗"} ${t.label}`).join(", ")}
 - Last 7 days scores: ${ctx.last7Days.length > 0 ? ctx.last7Days.map(d => `${d.date}: ${d.score}%`).join(", ") : "No data yet"}
 - Avg score last 7 days: ${ctx.avgScoreLast7 !== null ? ctx.avgScoreLast7 + "%" : "No history yet"}
-- Total days logged: ${ctx.daysLogged}
-
-Write ONE insight. 2-3 sentences max. No preamble. No "Here is your insight:". Speak directly to the user. Reference their actual data — don't be generic.`
-          }]
-        })
+- Total days logged: ${ctx.daysLogged}`,
+        }),
       });
       const data = await res.json();
-      const text = data.content?.[0]?.text?.trim() || "No insight generated.";
+      const text = data.text || data.error || "No insight generated.";
       setInsight(text);
       setLastUpdate(new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }));
     } catch(e) {
@@ -5279,8 +5267,16 @@ Rules:
         }
       );
       const data = await res.json();
+      console.log("[TALOS] Gemini raw:", JSON.stringify(data).slice(0, 300));
+
+      if (data.error) {
+        addMsg("talos", `⚠ Gemini error ${data.error.code}: ${data.error.message}`);
+        return;
+      }
+
       const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
       const parsed = JSON.parse(raw);
+      console.log("[TALOS] matched:", parsed.matched, "| available keys:", tasks.map(t=>t.key));
 
       const matchedKeys   = parsed.matched || [];
       const matchedTasks  = tasks.filter(t => matchedKeys.includes(t.key) && !kpis[t.key]);
@@ -5290,6 +5286,8 @@ Rules:
 
       if (matchedTasks.length > 0) {
         setPending({ tasks: matchedTasks, raw: userText });
+      } else if (matchedKeys.length > 0) {
+        addMsg("talos", `⚠ Debug: got keys [${matchedKeys.join(", ")}] but expected [${tasks.map(t=>t.key).join(", ")}]`);
       }
     } catch(e) {
       addMsg("talos", "Something went wrong reaching Gemini. Check your API key and connection.");
