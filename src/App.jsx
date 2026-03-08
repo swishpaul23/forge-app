@@ -5671,12 +5671,27 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                     Pick exactly when you want the reminder each day.
                   </div>
                   {timingMode==="manual" && (
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginTop:12}} onClick={e=>e.stopPropagation()}>
-                      <select className="field" value={manualHour} onChange={e=>setManualHour(Number(e.target.value))}
-                        style={{width:110,cursor:"pointer"}}>
-                        {Array.from({length:24},(_,i)=>i).map(h=>(
-                          <option key={h} value={h}>{fmtHour(h)}</option>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginTop:12,flexWrap:"wrap"}} onClick={e=>e.stopPropagation()}>
+                      <select className="field" value={manualHour % 12 === 0 ? 12 : manualHour % 12}
+                        onChange={e => {
+                          const h12 = Number(e.target.value);
+                          const ispm = manualHour >= 12;
+                          setManualHour(ispm ? (h12 === 12 ? 12 : h12 + 12) : (h12 === 12 ? 0 : h12));
+                        }}
+                        style={{width:68,cursor:"pointer"}}>
+                        {Array.from({length:12},(_,i)=>i+1).map(h=>(
+                          <option key={h} value={h}>{String(h).padStart(2,"0")}</option>
                         ))}
+                      </select>
+                      <select className="field" value={manualHour >= 12 ? "PM" : "AM"}
+                        onChange={e => {
+                          const isPM = e.target.value === "PM";
+                          const h12  = manualHour % 12 === 0 ? 12 : manualHour % 12;
+                          setManualHour(isPM ? (h12 === 12 ? 12 : h12 + 12) : (h12 === 12 ? 0 : h12));
+                        }}
+                        style={{width:72,cursor:"pointer"}}>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
                       </select>
                       <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)"}}>daily</span>
                     </div>
