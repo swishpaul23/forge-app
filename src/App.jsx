@@ -3236,7 +3236,10 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
           <div className="arena-main-crown">Main Challenge</div>
           <div className="arena-main-name">{main.name}</div>
           <div className="arena-main-meta">
-            DAY {main.dayNum} OF {main.totalDays} &nbsp;·&nbsp; {main.totalDays - main.dayNum} DAYS REMAINING
+            {main.dayNum < 1
+              ? <>STARTS {main.created_at ? new Date(main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase() : "SOON"}</>
+              : <>DAY {main.dayNum} OF {main.totalDays} &nbsp;·&nbsp; {main.totalDays - main.dayNum} DAYS REMAINING{main.created_at && <>&nbsp;·&nbsp; STARTED {new Date(main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase()}</>}</>
+            }
           </div>
 
           <div className="arena-main-stats">
@@ -6313,7 +6316,7 @@ export default function App() {
           id:         ch.id,
           name:       ch.name,
           tag:        ch.tag || "CUSTOM",
-          dayNum:     Math.min(dayNum, ch.total_days),
+          dayNum:     Math.min(Math.max(dayNum, 0), ch.total_days),
           totalDays:  ch.total_days,
           streak:     ch.streak || 0,
           consistency:ch.consistency || 0,
