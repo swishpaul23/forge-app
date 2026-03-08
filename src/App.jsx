@@ -6208,9 +6208,9 @@ export default function App() {
       if (el) { el.classList.remove("streak-ignite"); void el.offsetWidth; el.classList.add("streak-ignite"); }
     }
 
-    // Save to Supabase
     if (sb) {
       try {
+        // 1. Save checkin
         await sb.from("checkins").upsert({
           challenge_id: challenges.main.id,
           date: today,
@@ -6218,6 +6218,45 @@ export default function App() {
           completed_keys: completedKeys,
           updated_at: new Date().toISOString(),
         }, { onConflict: "challenge_id,date" });
+
+        // 2. Compute new streak — check if yesterday had a passing checkin
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+        const { data: yCheckin } = await sb
+          .from("checkins")
+          .select("score")
+          .eq("challenge_id", challenges.main.id)
+          .eq("date", yesterdayStr)
+          .maybeSingle();
+
+        // Streak increments if yesterday was logged (any score > 0), else reset to 1
+        const prevStreak = challenges.main.streak || 0;
+        const newStreak  = (yCheckin && yCheckin.score > 0) ? prevStreak + 1 : 1;
+
+        // 3. Compute consistency — (days with score > 0) / dayNum
+        const { data: allCheckins } = await sb
+          .from("checkins")
+          .select("score")
+          .eq("challenge_id", challenges.main.id);
+
+        const dayNum      = challenges.main.dayNum || 1;
+        const passingDays = (allCheckins || []).filter(c => c.score > 0).length;
+        const newConsistency = Math.round((passingDays / dayNum) * 100);
+
+        // 4. Write streak + consistency back to challenges table
+        await sb.from("challenges").update({
+          streak:      newStreak,
+          consistency: newConsistency,
+        }).eq("id", challenges.main.id);
+
+        // 5. Update local state so UI reflects immediately
+        setChallenges(prev => ({
+          ...prev,
+          main: { ...prev.main, streak: newStreak, consistency: newConsistency },
+        }));
+
       } catch(e) { console.warn("save checkin:", e); }
     }
   };
@@ -6230,8 +6269,21 @@ export default function App() {
       const next = new Date(now);
       next.setHours(24, 0, 0, 0); // next calendar midnight
       const ms = next - now;
+      // Capture the date string of the day that's about to end
+      const endingDayStr = now.toISOString().split("T")[0];
       return setTimeout(async () => {
-        // Reload challenges fresh — dayNum recomputes from created_at
+        // Check if the day that just ended was ever logged
+        if (sb && challenges.main) {
+          const { data: endingCheckin } = await sb
+            .from("checkins").select("score")
+            .eq("challenge_id", challenges.main.id)
+            .eq("date", endingDayStr).maybeSingle();
+          // Missed day — reset streak to 0 in DB
+          if (!endingCheckin || endingCheckin.score === 0) {
+            await sb.from("challenges").update({ streak: 0 }).eq("id", challenges.main.id);
+          }
+        }
+        // Reload challenges fresh — dayNum recomputes from created_at, streak from DB
         if (user?.id) await loadChallenges(user.id);
         // Reset today's kpi ticks for the new day
         setKpis(Object.fromEntries((challenges.main?.kpis || []).map(k => [k.key, false])));
