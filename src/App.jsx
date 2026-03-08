@@ -3390,8 +3390,9 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
       const time = new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
       setInsight(text);
       setLastUpdate(time);
-      // Cache for 1 hour
-      if (challenge?.id) {
+      // Only cache real insights, not quota errors
+      const isError = text.includes("quota") || text.includes("⚠") || text.includes("exceeded") || text.includes("error");
+      if (challenge?.id && !isError) {
         try {
           localStorage.setItem(`forge_insight_${challenge.id}`, JSON.stringify({ text, time, ts: Date.now() }));
         } catch(e) {}

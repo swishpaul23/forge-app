@@ -1,8 +1,4 @@
 // supabase/functions/talos/index.ts
-// Handles TALOS task matching server-side — keeps Gemini key out of the browser.
-// Deploy: supabase functions deploy talos
-// Secret is shared with ai-insight: supabase secrets set GEMINI_API_KEY=your-key-here
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const CORS = {
@@ -12,10 +8,21 @@ const CORS = {
 };
 
 const TONE_PROMPTS: Record<string, string> = {
-  "Stoic":          "You are TALOS — calm, minimal, precise. No hype. Acknowledge what was done, note what remains. Short sentences.",
-  "Coach":          "You are TALOS — warm, encouraging, direct. Celebrate wins, push for more. Sound like a great coach who believes in the user.",
-  "Drill Sergeant": "You are TALOS — intense, demanding, no excuses. Acknowledge completions quickly then immediately push for the next task. High energy.",
+  "Stoic":          "You are TALOS — calm, minimal, precise. No hype. Acknowledge what was done, note what remains.",
+  "Coach":          "You are TALOS — warm, encouraging, direct. Celebrate wins, push for more.",
+  "Drill Sergeant": "You are TALOS — intense, demanding. Acknowledge completions fast then push for the next task.",
 };
+
+function extractJSON(text: string): string {
+  // Strip markdown code fences if present
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  // Find first { ... } block
+  const start = text.indexOf("{");
+  const end   = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1) return text.slice(start, end + 1);
+  return "{}";
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -39,19 +46,17 @@ serve(async (req) => {
 
     const prompt = `${tonePersonality}
 
-The user has these tasks today. Keys are EXACT — copy them character-for-character:
+Tasks today (copy keys EXACTLY as shown):
 ${taskList}
 
-Return ONLY a JSON object, no other text:
+User says: "${userText}"
+
+Respond with a JSON object only:
 {"matched": ["exact_key"], "reply": "your response"}
 
-Rules:
-- matched must contain ONLY keys from the list above, copied exactly.
-- Skip tasks marked [already done].
-- If nothing clearly matches: {"matched": [], "reply": "..."}
-- reply is 1-2 sentences matching your personality.
-
-User says: "${userText}"`;
+- matched: only keys from the list above, verbatim
+- Skip [already done] tasks
+- If nothing matches: {"matched": [], "reply": "..."}`;
 
     const res = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + GEMINI_KEY,
@@ -60,7 +65,7 @@ User says: "${userText}"`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 300, responseMimeType: "application/json" },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 300 },
         }),
       }
     );
@@ -68,11 +73,13 @@ User says: "${userText}"`;
     const data = await res.json();
 
     if (data.error) {
-      return new Response(JSON.stringify({ matched: [], reply: `⚠ Gemini error: ${data.error.message}` }), { headers: CORS });
+      return new Response(JSON.stringify({ matched: [], reply: `⚠ Gemini: ${data.error.message}` }), { headers: CORS });
     }
 
     const raw    = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-    const parsed = JSON.parse(raw);
+    const clean  = extractJSON(raw);
+    let parsed: { matched?: string[]; reply?: string } = {};
+    try { parsed = JSON.parse(clean); } catch { parsed = { matched: [], reply: raw.slice(0, 200) }; }
 
     return new Response(JSON.stringify({
       matched: parsed.matched || [],
