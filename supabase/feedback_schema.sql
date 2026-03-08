@@ -19,3 +19,4 @@ create policy "insert feedback"
 create policy "view own feedback"
   on feedback for select
   using (auth.uid() = user_id);
+--
