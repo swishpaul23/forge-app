@@ -303,6 +303,7 @@ const makeCSS = () => `
     display:flex; align-items:center; justify-content:space-between;
     padding:0 28px; background:var(--bg-0);
     position:sticky; top:0; z-index:50;
+    width:100%; align-self:stretch;
   }
   .topbar-date { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-2); letter-spacing:.06em; }
   .topbar-r { display:flex; align-items:center; gap:10px; }
