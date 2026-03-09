@@ -329,6 +329,80 @@ const makeCSS = () => `
     .home-layout { flex-direction:column; }
     .home-left, .home-right { flex:none; width:100%; }
   }
+
+  /* ── MOBILE (≤768px) ─────────────────────────────────── */
+  @media (max-width:768px) {
+
+    /* Rail → bottom tab bar */
+    .rail {
+      width:100% !important;
+      min-height:unset !important;
+      height:58px;
+      flex-direction:row;
+      top:unset; left:0; bottom:0;
+      border-right:none;
+      border-top:1px solid var(--border-0);
+      padding:0 8px;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .rail-logo { writing-mode:horizontal-tb; transform:none; padding-bottom:0; border-bottom:none; margin-bottom:0; border-right:1px solid var(--border-0); padding-right:10px; margin-right:4px; }
+    .rail-logo img { width:30px !important; height:30px !important; }
+    .rail-nav { flex-direction:row; width:auto; flex:1; justify-content:center; gap:0; }
+    .rail-btn { width:44px; height:44px; }
+    .rtip { display:none !important; }
+    .rail-foot { flex-direction:row; gap:4px; align-items:center; border-top:none; padding:0; padding-left:10px; border-left:1px solid var(--border-0); }
+    .rail-streak-n { font-size:14px; }
+    .rail-streak-l { font-size:7px; }
+
+    /* Main area — no left margin, add bottom padding for tab bar */
+    .main { margin-left:0 !important; padding-bottom:58px; }
+
+    /* Topbar */
+    .topbar { padding:0 16px; }
+
+    /* Pages */
+    .page { padding:20px 16px 80px; }
+    .home-page { padding:20px 16px 80px; }
+
+    /* Home layout already stacks at 960px — just fix padding */
+    .home-left, .home-right { min-width:0; }
+
+    /* Task grid — single column on small screens */
+    .tasks-grid { grid-template-columns:1fr !important; }
+
+    /* Arena tiles */
+    .arena-side { flex-direction:column; }
+    .arena-sec { min-width:unset; width:100%; }
+
+    /* Library — stack columns */
+    .lib-grid { grid-template-columns:repeat(2,1fr) !important; }
+
+    /* Partners — stack sidebar above chat */
+    .partners-layout { flex-direction:column; }
+    .p-sidebar { width:100% !important; height:auto; border-right:none; border-bottom:1px solid var(--border-0); max-height:220px; }
+    .p-list { max-height:140px; }
+
+    /* TALOS — stack chat and context panel */
+    .talos-page > div > div:last-child { flex-direction:column !important; }
+    .talos-page > div > div:last-child > div:first-child { border-right:none !important; border-bottom:1px solid var(--border-0); }
+    .talos-page > div > div:last-child > div:last-child { width:100% !important; max-height:220px; overflow-y:auto; }
+
+    /* Modals — full screen on mobile */
+    .modal { width:calc(100vw - 24px) !important; max-width:unset !important; margin:12px; max-height:90vh; overflow-y:auto; }
+
+    /* Banner */
+    .banner { padding:18px 16px; }
+
+    /* Buttons — larger touch targets */
+    .btn { min-height:42px; }
+
+    /* Deep work — full screen */
+    .dw-overlay { padding:16px; }
+
+    /* Log day bar */
+    .logbar { left:0 !important; right:0 !important; bottom:58px !important; border-radius:0 !important; }
+  }
   .page.partners-page { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
   .page.talos-page    { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
 
@@ -3696,7 +3770,7 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
       )}
 
       {/* The bar */}
-      <div style={{
+      <div className="logbar" style={{
         position:"fixed", bottom:0, left:58, right:0,
         background:"var(--bg-1)", borderTop:"1px solid var(--border-0)",
         padding:"12px 28px", display:"flex", alignItems:"center",
