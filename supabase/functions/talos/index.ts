@@ -1,4 +1,8 @@
 // supabase/functions/talos/index.ts
+// Uses Cerebras (Llama 3.3 70B) — free tier, 1M tokens/day, OpenAI-compatible
+// Secret: supabase secrets set CEREBRAS_API_KEY=your-key-here
+// Get key: console.groq.com/keys
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const CORS = {
@@ -14,18 +18,14 @@ const TONE_PROMPTS: Record<string, string> = {
 };
 
 function extractJSON(text: string): { matched: string[]; reply: string } {
-  // Try direct parse first
   try { return JSON.parse(text); } catch {}
-  // Strip markdown fences
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch {} }
-  // Find first { ... } block
   const start = text.indexOf("{");
   const end   = text.lastIndexOf("}");
   if (start !== -1 && end > start) {
     try { return JSON.parse(text.slice(start, end + 1)); } catch {}
   }
-  // Nothing worked — return the raw text as the reply
   return { matched: [], reply: text.slice(0, 300).trim() || "Done." };
 }
 
@@ -42,8 +42,8 @@ serve(async (req) => {
       return respond({ matched: [], reply: "No tasks found for your active challenge." });
     }
 
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_KEY) return respond({ matched: [], reply: "⚠ GEMINI_API_KEY not set." }, 500);
+    const CEREBRAS_KEY = Deno.env.get("CEREBRAS_API_KEY");
+    if (!CEREBRAS_KEY) return respond({ matched: [], reply: "⚠ CEREBRAS_API_KEY not set in Supabase secrets." }, 500);
 
     const tonePersonality = TONE_PROMPTS[tone] || TONE_PROMPTS["Stoic"];
     const taskList = tasks
@@ -51,41 +51,31 @@ serve(async (req) => {
         `key="${t.key}" label="${t.label}"${kpis?.[t.key] ? " [already done]" : ""}`)
       .join("\n");
 
-    const prompt = `${tonePersonality}
-
-Tasks today (keys are EXACT — copy verbatim):
-${taskList}
-
-User says: "${userText}"
-
-You MUST respond with ONLY a raw JSON object — no markdown, no explanation, no preamble:
-{"matched": ["exact_key"], "reply": "your response"}
-
-- matched: only exact keys from the list above
-- Skip [already done] tasks
-- If nothing matches: {"matched": [], "reply": "..."}`;
-
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + GEMINI_KEY,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 300,
+    const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${CEREBRAS_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b",
+        temperature: 0.2,
+        max_tokens: 300,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: `${tonePersonality}\n\nYou match what the user says to their task list and return JSON only.\n\nTasks today (copy keys EXACTLY):\n${taskList}\n\nRespond ONLY with: {"matched": ["exact_key"], "reply": "your response"}\n- matched: only exact keys from the list, verbatim\n- Skip [already done] tasks\n- If nothing matches: {"matched": [], "reply": "..."}`,
           },
-          // Disable thinking for JSON tasks — faster + no preamble
-        }),
-      }
-    );
+          { role: "user", content: userText },
+        ],
+      }),
+    });
 
     const data = await res.json();
+    if (data.error) return respond({ matched: [], reply: `⚠ Groq: ${data.error.message}` });
 
-    if (data.error) return respond({ matched: [], reply: `⚠ Gemini: ${data.error.message}` });
-
-    const raw    = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+    const raw    = data.choices?.[0]?.message?.content?.trim() || "{}";
     const parsed = extractJSON(raw);
 
     return respond({ matched: parsed.matched || [], reply: parsed.reply || "Done." });

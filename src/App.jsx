@@ -2129,23 +2129,14 @@ const LoginLoader = ({ onDone, authReady }) => {
   );
 };
 
-// ── In-app loader (bar only) ──────────────────────────────
-const MIN_INAPP_MS = 700;
-
+// ── In-app loader (full FORGE sparks — same as landing) ──
 const InAppLoader = ({ onDone, authReady }) => {
   const [minElapsed, setMinElapsed] = useState(false);
-  const barRef = useRef(null);
+  const MIN_MS = Math.round((500 + 5*580 + 900 + 2200) * 0.75);
 
   useEffect(() => {
-    const start = performance.now();
-    function tick(now) {
-      const t = Math.min((now-start)/MIN_INAPP_MS,1);
-      const e = 1-Math.pow(1-t,2);
-      if (barRef.current) barRef.current.style.width=(e*100)+"%";
-      if (t<1) requestAnimationFrame(tick);
-      else setMinElapsed(true);
-    }
-    requestAnimationFrame(tick);
+    const t = setTimeout(() => setMinElapsed(true), MIN_MS);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -2153,12 +2144,22 @@ const InAppLoader = ({ onDone, authReady }) => {
   }, [minElapsed, authReady]);
 
   return (
-    <div style={{position:"fixed",inset:0,background:"#080807",zIndex:999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
-      <div style={{width:120,height:1,background:"#161614",overflow:"hidden"}}>
-        <div ref={barRef} style={{height:1,width:"0%",background:"#D4922A"}} />
+    <div style={{position:"fixed",inset:0,background:"#080807",zIndex:999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <WeldCanvas onDone={()=>{}} />
+      <div style={{position:"relative",zIndex:2,display:"flex",gap:2}}>
+        {["F","O","R","G","E"].map((l,i)=>(
+          <span key={i} id={`fsl${i}`} className="forge-stamp-letter" style={{
+            fontFamily:"'Bebas Neue',sans-serif", fontSize:100, color:"#080807",
+            letterSpacing:".06em", display:"inline-block", opacity:0,
+            willChange:"transform,color,opacity",
+          }}>{l}</span>
+        ))}
       </div>
-      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9.5,letterSpacing:".3em",textTransform:"uppercase",color:"#3A3835"}}>
-        loading
+      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
+        your discipline engine
+      </div>
+      <div style={{width:220,height:1,background:"#161614",marginTop:56,overflow:"hidden",position:"relative",zIndex:2}}>
+        <div id="forge-landing-bar" style={{height:1,width:"0%",background:"#D4922A"}} />
       </div>
     </div>
   );

@@ -1,4 +1,7 @@
 // supabase/functions/ai-insight/index.ts
+// Uses Cerebras (Llama 3.3 70B) — free tier, 1M tokens/day, OpenAI-compatible
+// Secret: supabase secrets set CEREBRAS_API_KEY=your-key-here
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const CORS = {
@@ -13,6 +16,13 @@ const TONE_VOICES: Record<string, string> = {
   "Drill Sergeant": "Speak like a no-nonsense drill sergeant. No softening. Call out what's weak and demand better.",
 };
 
+// Guarantee no mid-sentence cutoff — extract first 2 complete sentences
+function twoSentences(text: string): string {
+  const matches = text.match(/[^.!?]*[.!?]+/g);
+  if (!matches || matches.length === 0) return text.trim();
+  return matches.slice(0, 2).join(" ").trim();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
@@ -20,40 +30,37 @@ serve(async (req) => {
     const { prompt, tone } = await req.json();
     if (!prompt) return new Response(JSON.stringify({ error: "missing prompt" }), { status: 400, headers: CORS });
 
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "GEMINI_API_KEY not set" }), { status: 500, headers: CORS });
+    const CEREBRAS_KEY = Deno.env.get("CEREBRAS_API_KEY");
+    if (!CEREBRAS_KEY) return new Response(JSON.stringify({ error: "CEREBRAS_API_KEY not set" }), { status: 500, headers: CORS });
 
     const voice = TONE_VOICES[tone] || TONE_VOICES["Coach"];
 
-    const fullPrompt = `You are TALOS Insights, an embedded discipline coach in the Forge app. ${voice}
-
-Here is the user's current data:
-${prompt}
-
-Write EXACTLY 2 sentences. No more. Rules:
-- Speak directly to the user using "you"
-- Reference their specific numbers (streak, consistency %, tasks)
-- Do NOT mention the challenge name or mission statement
-- Do NOT start with "You declare" or reference what they said they would do
-- Focus only on what the data shows about their current momentum
-- Stop after the 2nd sentence. Do not write a 3rd.`;
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1200 },
-        }),
-      }
-    );
+    const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${CEREBRAS_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b",
+        temperature: 0.7,
+        max_tokens: 200,
+        messages: [
+          {
+            role: "system",
+            content: `You are TALOS Insights, an embedded discipline coach in the Forge app. ${voice}\n\nWrite exactly 2 sentences about the user's momentum based only on their stats. Speak directly using "you". Do not mention the challenge name or mission. Reference specific numbers. Stop after the 2nd sentence.`,
+          },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
 
     const data = await res.json();
     if (data.error) return new Response(JSON.stringify({ error: data.error.message }), { status: 500, headers: CORS });
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "No insight generated.";
+    const raw  = data.choices?.[0]?.message?.content?.trim() || "No insight generated.";
+    const text = twoSentences(raw);
+
     return new Response(JSON.stringify({ text }), { headers: { ...CORS, "Content-Type": "application/json" } });
 
   } catch (e) {
