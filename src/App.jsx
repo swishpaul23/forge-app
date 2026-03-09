@@ -3595,10 +3595,25 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
         />
 
         {/* Secondary challenge task sections */}
-        {(challenges?.secondary || []).filter(c => c.kpis?.length > 0).map(c => (
+        {(challenges?.secondary || []).filter(c => c.kpis?.length > 0).map(c => {
+          const secDone  = c.kpis.filter(k => kpis[k.key]).length;
+          const secTotal = c.kpis.length;
+          const secPct   = secTotal > 0 ? Math.round((secDone / secTotal) * 100) : 0;
+          return (
           <div key={c.id} style={{ marginTop:24 }}>
-            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:12, paddingBottom:8, borderBottom:"1px solid var(--border-0)", display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ color:"var(--accent)", opacity:.6 }}>◈</span> {c.name}
+            {/* Section header with inline progress */}
+            <div style={{ marginBottom:12, paddingBottom:10, borderBottom:"1px solid var(--border-0)" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ color:"var(--accent)", opacity:.6 }}>◈</span> {c.name}
+                </div>
+                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--text-3)", letterSpacing:".08em" }}>
+                  {secDone}/{secTotal}
+                </span>
+              </div>
+              <div style={{ height:2, background:"var(--bg-3)", borderRadius:2, overflow:"hidden" }}>
+                <div style={{ height:"100%", borderRadius:2, background: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--accent)", transition:"width .4s ease", width:`${secPct}%` }} />
+              </div>
             </div>
             {c.kpis.map(t => (
               <div key={t.key} className="task-row" onClick={() => toggle(t.key)} style={{
@@ -3613,7 +3628,8 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
               </div>
             ))}
           </div>
-        ))}
+          );
+        })}
       </div>
         </div>{/* end home-right */}
 
@@ -6391,14 +6407,30 @@ export default function App() {
           .eq("date", today)
           .maybeSingle();
 
+        // Build kpi state from main checkin
+        const kpiState = {};
+        main.kpis.forEach(k => { kpiState[k.key] = false; });
         if (todayCheckin?.completed_keys) {
-          const kpiState = {};
           main.kpis.forEach(k => { kpiState[k.key] = todayCheckin.completed_keys.includes(k.key); });
-          setKpis(kpiState);
           setLoggedToday(true);
-        } else {
-          setKpis(Object.fromEntries(main.kpis.map(k => [k.key, false])));
         }
+
+        // Also load today's completed keys for each secondary challenge
+        if (secondary.length > 0) {
+          const secIds = secondary.map(c => c.id);
+          const { data: secCheckins } = await sb
+            .from("checkins")
+            .select("challenge_id, completed_keys")
+            .in("challenge_id", secIds)
+            .eq("date", today);
+          (secCheckins || []).forEach(ci => {
+            const sec = secondary.find(c => c.id === ci.challenge_id);
+            if (sec && ci.completed_keys) {
+              sec.kpis.forEach(k => { kpiState[k.key] = ci.completed_keys.includes(k.key); });
+            }
+          });
+        }
+        setKpis(kpiState);
 
         // Load mission from main challenge
         if (main.mission) setMission(main.mission);
@@ -6509,19 +6541,39 @@ export default function App() {
   const toggle = (key) => {
     setKpis(p => {
       const next = { ...p, [key]: !p[key] };
-      // Persist in-progress kpi state to checkins as completed_keys
-      if (sb && user && challenges.main) {
+      if (sb && user) {
         const today = new Date().toISOString().split("T")[0];
-        const completed = Object.entries(next).filter(([,v])=>v).map(([k])=>k);
-        const total = (challenges.main.kpis || []).length;
-        const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
-        sb.from("checkins").upsert({
-          challenge_id:   challenges.main.id,
-          date:           today,
-          score,
-          completed_keys: completed,
-          updated_at:     new Date().toISOString(),
-        }, { onConflict: "challenge_id,date" }).then(() => {});
+
+        // Check if key belongs to a secondary challenge
+        const secChallenge = (challenges.secondary || []).find(c =>
+          c.kpis?.some(k => k.key === key)
+        );
+
+        if (secChallenge) {
+          // Persist secondary task ticks to that challenge's checkin
+          const secCompleted = (secChallenge.kpis || []).filter(k => next[k.key]).map(k => k.key);
+          const secTotal = secChallenge.kpis.length;
+          const secScore = secTotal > 0 ? Math.round((secCompleted.length / secTotal) * 100) : 0;
+          sb.from("checkins").upsert({
+            challenge_id:   secChallenge.id,
+            date:           today,
+            score:          secScore,
+            completed_keys: secCompleted,
+            updated_at:     new Date().toISOString(),
+          }, { onConflict: "challenge_id,date" }).then(() => {});
+        } else if (challenges.main) {
+          // Persist main challenge ticks
+          const completed = (challenges.main.kpis || []).filter(k => next[k.key]).map(k => k.key);
+          const total = (challenges.main.kpis || []).length;
+          const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+          sb.from("checkins").upsert({
+            challenge_id:   challenges.main.id,
+            date:           today,
+            score,
+            completed_keys: completed,
+            updated_at:     new Date().toISOString(),
+          }, { onConflict: "challenge_id,date" }).then(() => {});
+        }
       }
       return next;
     });
