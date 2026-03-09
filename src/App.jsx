@@ -3592,6 +3592,27 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
           toggle={toggle}
           isScaled={isScaled}
         />
+
+        {/* Secondary challenge task sections */}
+        {(challenges?.secondary || []).filter(c => c.kpis?.length > 0).map(c => (
+          <div key={c.id} style={{ marginTop:24 }}>
+            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:12, paddingBottom:8, borderBottom:"1px solid var(--border-0)", display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ color:"var(--accent)", opacity:.6 }}>◈</span> {c.name}
+            </div>
+            {c.kpis.map(t => (
+              <div key={t.key} className="task-row" onClick={() => toggle(t.key)} style={{
+                background: kpis[t.key] ? "var(--ok)12" : undefined,
+                borderColor: kpis[t.key] ? "var(--ok)40" : undefined,
+                cursor:"pointer",
+              }}>
+                <div style={{ width:14, height:14, borderRadius:"50%", border:`1.5px solid ${kpis[t.key] ? "var(--ok)" : "var(--border-1)"}`, background: kpis[t.key] ? "var(--ok)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:8, color:"#080807", transition:"all .2s" }}>
+                  {kpis[t.key] ? "✓" : ""}
+                </div>
+                <span style={{ fontSize:13, color: kpis[t.key] ? "var(--ok)" : "var(--text-1)", flex:1, transition:"color .2s" }}>{t.label}</span>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
         </div>{/* end home-right */}
 
@@ -5233,7 +5254,12 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
   const inputRef = useRef(null);
   const recogRef = useRef(null);
 
-  const tasks = challenge?.kpis || [];
+  const tasks        = challenge?.kpis || [];
+  const secChallenges = (challenges?.secondary || []).filter(c => c.kpis?.length > 0);
+  const allTasks     = [
+    ...tasks.map(t => ({ ...t, source: "main" })),
+    ...secChallenges.flatMap(c => c.kpis.map(t => ({ ...t, source: c.id, sourceLabel: c.name }))),
+  ];
   const doneTasks  = tasks.filter(t => kpis[t.key]);
   const totalTasks = tasks.length;
 
@@ -5261,7 +5287,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
           },
           body: JSON.stringify({
             userText,
-            tasks: tasks.map(t => ({ key: t.key, label: t.label })),
+            tasks: allTasks.map(t => ({ key: t.key, label: t.label })),
             kpis,
             tone,
           }),
@@ -5466,10 +5492,12 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
           <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:14 }}>
             Today's Tasks
           </div>
-          {tasks.length === 0 && (
+          {allTasks.length === 0 && (
             <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-3)", letterSpacing:".08em" }}>No active challenge</div>
           )}
-          {tasks.map(t => (
+
+          {/* Main challenge tasks */}
+          {tasks.length > 0 && tasks.map(t => (
             <div key={t.key} style={{
               display:"flex", alignItems:"center", gap:10, padding:"9px 12px",
               borderRadius:8, marginBottom:6, transition:"all .2s",
@@ -5479,6 +5507,26 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
               <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, transition:"all .2s", background: kpis[t.key] ? "var(--ok)" : "var(--border-1)" }} />
               <span style={{ fontSize:12, color: kpis[t.key] ? "var(--ok)" : "var(--text-1)", flex:1 }}>{t.label}</span>
               {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:6.5, color:"var(--warn)", letterSpacing:".08em" }}>◆</span>}
+            </div>
+          ))}
+
+          {/* Secondary challenge task sections */}
+          {secChallenges.map(c => (
+            <div key={c.id} style={{ marginTop:16 }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:7.5, letterSpacing:".18em", textTransform:"uppercase", color:"var(--text-3)", marginBottom:8, paddingBottom:6, borderBottom:"1px solid var(--border-0)" }}>
+                ◈ {c.name}
+              </div>
+              {c.kpis.map(t => (
+                <div key={t.key} style={{
+                  display:"flex", alignItems:"center", gap:10, padding:"9px 12px",
+                  borderRadius:8, marginBottom:6, transition:"all .2s",
+                  background: kpis[t.key] ? "var(--ok)12" : "var(--bg-2)",
+                  border:`1px solid ${kpis[t.key] ? "var(--ok)40" : "var(--border-1)"}`,
+                }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, transition:"all .2s", background: kpis[t.key] ? "var(--ok)" : "var(--border-1)" }} />
+                  <span style={{ fontSize:12, color: kpis[t.key] ? "var(--ok)" : "var(--text-1)", flex:1 }}>{t.label}</span>
+                </div>
+              ))}
             </div>
           ))}
 
@@ -6443,9 +6491,13 @@ export default function App() {
       setStage(s => s === "loader" ? s : "auth");
       return;
     }
-    // Only auto-route from loader or auth — never interrupt onboarding screens
+    // Already logged in — show inapp loader first, then route to app
     setStage(s => {
-      if (s === "loader" || s === "auth") {
+      if (s === "loader") {
+        setLoaderMode("inapp");
+        return "loader";
+      }
+      if (s === "auth") {
         if (profile && !profile.onboarded) return "ob_why";
         if (profile && profile.onboarded)  return "app";
       }
