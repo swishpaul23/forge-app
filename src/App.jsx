@@ -3284,7 +3284,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
               <div key={c.id} className="arena-sec" onClick={() => onViewChallenge(c, "secondary")}>
                 <div style={{ position:"absolute", top:6, right:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:7, letterSpacing:".12em", color:c.color, opacity:.7 }}>↗</div>
                 <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:c.color, borderRadius:"10px 10px 0 0" }} />
-                <div className="arena-sec-tag" style={{ color:c.color }}>{c.tag}</div>
+                <div className="arena-sec-tag" style={{ color:c.color }}>SECONDARY</div>
                 <div className="arena-sec-name">{c.name}</div>
                 <div className="arena-sec-meta">DAY {c.dayNum}/{c.totalDays} &nbsp;·&nbsp; {c.streak}🔥 &nbsp;·&nbsp; {c.consistency}%</div>
                 <div className="arena-sec-bar">
@@ -3603,15 +3603,15 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
           <div key={c.id} style={{ marginTop:24 }}>
             {/* Section header with inline progress */}
             <div style={{ marginBottom:12, paddingBottom:10, borderBottom:"1px solid var(--border-0)" }}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", display:"flex", alignItems:"center", gap:6 }}>
-                  <span style={{ color:"var(--accent)", opacity:.6 }}>◈</span> {c.name}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-1)", display:"flex", alignItems:"center", gap:8, fontWeight:500 }}>
+                  <span style={{ color:"var(--accent)", opacity:.7 }}>◈</span> {c.name}
                 </div>
-                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--text-3)", letterSpacing:".08em" }}>
+                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--text-2)", letterSpacing:".08em" }}>
                   {secDone}/{secTotal}
                 </span>
               </div>
-              <div style={{ height:2, background:"var(--bg-3)", borderRadius:2, overflow:"hidden" }}>
+              <div style={{ height:3, background:"var(--bg-3)", borderRadius:2, overflow:"hidden" }}>
                 <div style={{ height:"100%", borderRadius:2, background: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--accent)", transition:"width .4s ease", width:`${secPct}%` }} />
               </div>
             </div>
@@ -4054,8 +4054,8 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }) => {
 // ============================================================
 // LIBRARY
 // ============================================================
-const Library = ({ onPick, isSecondaryMode, onClose }) => {
-  const [mode,   setMode]   = useState(isSecondaryMode ? "secondary" : "main");
+const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
+  const [mode,   setMode]   = useState(isSecondaryMode || hasMain ? "secondary" : "main");
   const [active, setActive] = useState(null); // selected template for detail panel
 
   const selected = TEMPLATES.find(t => t.id === active);
@@ -4082,8 +4082,20 @@ const Library = ({ onPick, isSecondaryMode, onClose }) => {
 
       {!isSecondaryMode && (
         <div className="lib-mode-row" style={{ marginTop:24 }}>
-          <button className={`lib-mode-btn ${mode==="main"?"on":""}`}      onClick={() => setMode("main")}>Set as Main</button>
+          <button
+            className={`lib-mode-btn ${mode==="main"?"on":""}`}
+            onClick={() => !hasMain && setMode("main")}
+            style={{ opacity: hasMain ? .35 : 1, cursor: hasMain ? "not-allowed" : "pointer", position:"relative" }}
+            title={hasMain ? "You already have an active main challenge. Complete or abandon it first." : ""}
+          >
+            Set as Main {hasMain && <span style={{ fontSize:8, letterSpacing:".08em", marginLeft:4, color:"var(--warn)" }}>LOCKED</span>}
+          </button>
           <button className={`lib-mode-btn ${mode==="secondary"?"on":""}`} onClick={() => setMode("secondary")}>Add as Secondary</button>
+        </div>
+      )}
+      {!isSecondaryMode && hasMain && mode === "main" && (
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".1em", color:"var(--warn)", marginTop:10 }}>
+          ⚠ You have an active main challenge. Abandon it first to start a new one.
         </div>
       )}
 
@@ -6872,7 +6884,7 @@ export default function App() {
       return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} checkins={checkins} />;
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
-    if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} />;
+    if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
     if (page==="talos") return (
