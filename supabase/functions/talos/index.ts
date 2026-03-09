@@ -75,10 +75,8 @@ You MUST respond with ONLY a raw JSON object — no markdown, no explanation, no
           generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 300,
-            responseMimeType: "application/json",
           },
           // Disable thinking for JSON tasks — faster + no preamble
-          thinkingConfig: { thinkingBudget: 0 },
         }),
       }
     );
