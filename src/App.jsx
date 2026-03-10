@@ -228,7 +228,6 @@ const makeCSS = () => `
   @keyframes grow   { from{width:0%} to{width:100%} }
   @keyframes scalein{ from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
   @keyframes leftin { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
-  @keyframes tutglow { 0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,.78),0 0 0 3px var(--accent)} 50%{box-shadow:0 0 0 9999px rgba(0,0,0,.78),0 0 0 6px var(--accent),0 0 18px 4px var(--accent)} }
 
   .a0{animation:up .55s cubic-bezier(.16,1,.3,1) both}
   .a1{animation:up .55s .08s cubic-bezier(.16,1,.3,1) both}
@@ -5250,7 +5249,6 @@ const Tutorial = ({ onDone }) => {
 
   const next = () => { if (isLast) onDone(); else setStep(s => s + 1); };
 
-  const isMobile = window.innerWidth <= 768;
   const PAD = 12;
   const spotStyle = targetRect ? {
     position: "fixed",
@@ -5263,11 +5261,10 @@ const Tutorial = ({ onDone }) => {
     zIndex: 9998,
     pointerEvents: "none",
     border: "2px solid var(--accent)",
-    animation: isMobile ? "tutglow 1.8s ease infinite" : undefined,
     transition: "all .25s cubic-bezier(.4,0,.2,1)",
   } : null;
 
-  // On mobile: always centre the tooltip regardless of step
+  // Tooltip position relative to spotlight
   const tooltipStyle = () => {
     const base = {
       position: "fixed", zIndex: 9999,
@@ -5278,29 +5275,13 @@ const Tutorial = ({ onDone }) => {
       width: 276,
       boxShadow: "0 12px 40px rgba(0,0,0,.6)",
     };
-    if (!targetRect || current.position === "center" || isMobile) {
-      // On mobile with a spotlight: position tooltip above the tab bar with room to breathe
-      if (isMobile && targetRect) {
-        const tooltipHeight = 160; // approximate
-        const bottomNavH = 58;
-        const topPos = Math.min(
-          targetRect.top - PAD - tooltipHeight - 16,
-          window.innerHeight - bottomNavH - tooltipHeight - 16
-        );
-        return {
-          ...base,
-          top: Math.max(16, topPos),
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "calc(100vw - 48px)",
-          maxWidth: 360,
-        };
-      }
+    if (!targetRect || current.position === "center") {
       return { ...base, top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 322 };
     }
     const W = window.innerWidth;
     if (current.position === "right") {
       const idealLeft = targetRect.left + targetRect.width + PAD + 16;
+      // If it would overflow, flip to left of the target instead
       const fitsRight = idealLeft + base.width + 16 <= W;
       const left = fitsRight ? idealLeft : targetRect.left - base.width - PAD - 16;
       return { ...base, top: targetRect.top - PAD, left: Math.max(8, left) };
@@ -5329,15 +5310,9 @@ const Tutorial = ({ onDone }) => {
         <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:25.3, letterSpacing:".04em", lineHeight:1, marginBottom:8 }}>
           {current.title}
         </div>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12.65, color:"var(--text-1)", lineHeight:1.6, marginBottom: isMobile && targetRect ? 10 : 16 }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12.65, color:"var(--text-1)", lineHeight:1.6, marginBottom:16 }}>
           {current.body}
         </div>
-        {/* Mobile: arrow pointing down toward highlighted element */}
-        {isMobile && targetRect && (
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".1em", color:"var(--accent)", marginBottom:12, opacity:.8 }}>
-            ↓ highlighted below
-          </div>
-        )}
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           <button
             onClick={next}
@@ -6987,42 +6962,44 @@ export default function App() {
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
     if (page==="talos") return (
-      <div className="page talos-page">
-        <Talos
-          challenge={activeChallenge}
-          kpis={kpis}
-          loggedToday={loggedToday}
-          tone={tone}
-          sb={sb}
-          user={user}
-          challenges={challenges}
-          onTickTasks={(keys) => {
-            setKpis(prev => {
-              const updated = { ...prev };
-              keys.forEach(k => { updated[k] = true; });
-              // Persist to Supabase — same as toggle()
-              if (sb && user && challenges.main) {
-                const today = new Date().toISOString().split("T")[0];
-                const completed = Object.entries(updated).filter(([,v])=>v).map(([k])=>k);
-                const total = (challenges.main.kpis || []).length;
-                const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
-                sb.from("checkins").upsert({
-                  challenge_id:   challenges.main.id,
-                  date:           today,
-                  score,
-                  completed_keys: completed,
-                  updated_at:     new Date().toISOString(),
-                }, { onConflict: "challenge_id,date" }).then(() => {});
-              }
-              return updated;
-            });
-          }}
-          onLogDay={() => {
-            const safeTasks = activeChallenge.kpis || [];
-            const done = safeTasks.filter(t => kpis[t.key]).length;
-            handleLogDay(done, safeTasks.length);
-          }}
-        />
+      <div className="page talos-page" style={{ display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <div style={{ textAlign:"center", maxWidth:480, padding:"0 24px" }}>
+          {/* Animated icon */}
+          <div style={{
+            width:72, height:72, borderRadius:"50%",
+            background:"var(--accent-lo)", border:"1px solid var(--border-accent)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            margin:"0 auto 28px",
+            boxShadow:"0 0 40px var(--accent-lo)",
+            animation:"pulse 2.5s ease infinite",
+          }}>
+            <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"var(--accent)", letterSpacing:".06em" }}>T</span>
+          </div>
+
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:12 }}>
+            Autonomous Agent
+          </div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:52, letterSpacing:".04em", lineHeight:1, color:"var(--text-0)", marginBottom:16 }}>
+            TALOS
+          </div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, color:"var(--text-1)", lineHeight:1.7, marginBottom:32 }}>
+            Your AI accountability agent is being forged.<br />
+            It will track your progress, match your completions,<br />
+            and hold you to your standard.
+          </div>
+
+          {/* Coming soon badge */}
+          <div style={{
+            display:"inline-flex", alignItems:"center", gap:8,
+            background:"var(--bg-2)", border:"1px solid var(--border-accent)",
+            borderRadius:100, padding:"10px 22px",
+            fontFamily:"'IBM Plex Mono',monospace", fontSize:10,
+            letterSpacing:".2em", textTransform:"uppercase", color:"var(--accent)",
+          }}>
+            <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--accent)", animation:"pulse 1.8s ease infinite" }} />
+            Coming Soon
+          </div>
+        </div>
       </div>
     );
   };
