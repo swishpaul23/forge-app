@@ -372,7 +372,9 @@ const makeCSS = () => `
     .tasks-grid { grid-template-columns:1fr !important; }
 
     /* Arena tiles */
-    .arena-side { flex-direction:column; }
+    .arena { grid-template-columns:1fr !important; }
+    .arena-main { grid-column:1; grid-row:1; }
+    .arena-side { grid-column:1; grid-row:2; flex-direction:column; }
     .arena-sec { min-width:unset; width:100%; }
 
     /* Library — stack columns */
@@ -4126,6 +4128,52 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }) => {
 };
 
 // ============================================================
+// CHALLENGE DETAIL (shared between Library desktop panel + mobile sheet)
+// ============================================================
+const ChallengeDetail = ({ selected, isSecMode, onPick, onClose }) => {
+  const DIFF_COLOUR = { "Hard":"var(--err)", "Intense":"var(--warn)", "Moderate":"var(--ok)", "You decide":"var(--text-2)" };
+  return (
+    <div className="lib-detail">
+      <div className="lib-detail-tag">{selected.tag} · {selected.duration} days</div>
+      <div className="lib-detail-name">{selected.name}</div>
+      <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:16,
+        fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em",
+        textTransform:"uppercase", background:"var(--bg-2)", border:"1px solid var(--border-1)",
+        borderRadius:6, padding:"4px 10px" }}>
+        <div style={{ width:6, height:6, borderRadius:"50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink:0 }} />
+        <span style={{ color: DIFF_COLOUR[selected.difficulty] || "var(--accent)" }}>{selected.difficulty}</span>
+      </div>
+      <div className="lib-detail-about">{selected.about}</div>
+      <div className="lib-detail-section">Benefits</div>
+      {selected.benefits.map((b,i) => (
+        <div key={i} className="lib-detail-benefit">
+          <span style={{ color:"var(--accent)", marginTop:2, flexShrink:0 }}>◆</span>
+          <span>{b}</span>
+        </div>
+      ))}
+      <div className="lib-detail-section">Best For</div>
+      <div className="lib-detail-best">{selected.bestFor}</div>
+      {selected.kpis.length > 0 && (
+        <>
+          <div className="lib-detail-section">Daily Tasks</div>
+          {selected.kpis.map(k => (
+            <div key={k.key} style={{ fontSize:13, color:"var(--text-1)", padding:"5px 0",
+              borderBottom:"1px solid var(--border-0)", display:"flex", gap:8 }}>
+              <span style={{ color:"var(--text-3)" }}>—</span>{k.label}
+            </div>
+          ))}
+        </>
+      )}
+      <button className="btn btn-a w100"
+        style={{ justifyContent:"center", marginTop:22, fontSize:15, padding:"12px 0" }}
+        onClick={() => { onPick(selected, isSecMode); onClose(); }}>
+        {isSecMode ? `+ Start as Secondary` : `→ Start Challenge`}
+      </button>
+    </div>
+  );
+};
+
+// ============================================================
 // LIBRARY
 // ============================================================
 const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
@@ -4134,6 +4182,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
 
   const selected = TEMPLATES.find(t => t.id === active);
   const isSecMode = mode === "secondary" || isSecondaryMode;
+  const isMobile = window.innerWidth <= 768;
 
   const DIFF_COLOUR = { "Hard":"var(--err)", "Intense":"var(--warn)", "Moderate":"var(--ok)", "You decide":"var(--text-2)" };
 
@@ -4173,8 +4222,8 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
         </div>
       )}
 
-      {/* Two-column layout: cards left fixed width, detail fills right */}
-      <div style={{ display:"grid", gridTemplateColumns: isSecondaryMode ? "1fr" : "380px 1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"stretch" }}>
+      {/* Two-column layout: cards left, detail right — single col on mobile */}
+      <div style={{ display:"grid", gridTemplateColumns: (isSecondaryMode || isMobile) ? "1fr" : "380px 1fr", gap:24, marginTop: isSecondaryMode ? 0 : 20, alignItems:"stretch" }}>
 
         {/* Cards grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10 }}>
@@ -4183,8 +4232,8 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
               className={`tpl a${Math.min(i+1,5)} ${active===t.id?"active":""}`}
               onClick={() => isSecondaryMode ? onPick(t) : setActive(prev => prev === t.id ? null : t.id)}>
 
-              {/* Hover tooltip — only in full library */}
-              {!isSecondaryMode && (
+              {/* Hover tooltip — desktop only */}
+              {!isSecondaryMode && !isMobile && (
                 <div className="tpl-tooltip">
                   <div className="tpl-tooltip-diff" style={{ color: DIFF_COLOUR[t.difficulty] || "var(--accent)" }}>
                     {t.difficulty} · {t.duration} days
@@ -4209,70 +4258,45 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
           ))}
         </div>
 
-        {/* Right column — hidden in secondary mode */}
-        <div style={{ display: isSecondaryMode ? "none" : "flex", flexDirection:"column" }}>
-          {!selected ? (
-            <div style={{
-              height:"100%", minHeight:520, flex:1,
-              border:"1px dashed var(--border-1)", borderRadius:12,
-              display:"flex", flexDirection:"column",
-              alignItems:"center", justifyContent:"center", gap:10,
-            }}>
-              <div style={{ fontSize:28, color:"var(--text-3)", opacity:.4 }}>◆</div>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".22em",
-                textTransform:"uppercase", color:"var(--text-3)", opacity:.5 }}>
-                Select a challenge to preview
-              </div>
-            </div>
-          ) : (
-            <div className="lib-detail">
-              <div className="lib-detail-tag">{selected.tag} · {selected.duration} days</div>
-              <div className="lib-detail-name">{selected.name}</div>
-
-              {/* Difficulty badge */}
-              <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:16,
-                fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em",
-                textTransform:"uppercase", background:"var(--bg-2)", border:"1px solid var(--border-1)",
-                borderRadius:6, padding:"4px 10px" }}>
-                <div style={{ width:6, height:6, borderRadius:"50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink:0 }} />
-                <span style={{ color: DIFF_COLOUR[selected.difficulty] || "var(--accent)" }}>{selected.difficulty}</span>
-              </div>
-
-              <div className="lib-detail-about">{selected.about}</div>
-
-              <div className="lib-detail-section">Benefits</div>
-              {selected.benefits.map((b,i) => (
-                <div key={i} className="lib-detail-benefit">
-                  <span style={{ color:"var(--accent)", marginTop:2, flexShrink:0 }}>◆</span>
-                  <span>{b}</span>
+        {/* Right column — desktop only */}
+        {!isMobile && !isSecondaryMode && (
+          <div style={{ display:"flex", flexDirection:"column" }}>
+            {!selected ? (
+              <div style={{
+                height:"100%", minHeight:520, flex:1,
+                border:"1px dashed var(--border-1)", borderRadius:12,
+                display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", gap:10,
+              }}>
+                <div style={{ fontSize:28, color:"var(--text-3)", opacity:.4 }}>◆</div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".22em",
+                  textTransform:"uppercase", color:"var(--text-3)", opacity:.5 }}>
+                  Select a challenge to preview
                 </div>
-              ))}
-
-              <div className="lib-detail-section">Best For</div>
-              <div className="lib-detail-best">{selected.bestFor}</div>
-
-              {selected.kpis.length > 0 && (
-                <>
-                  <div className="lib-detail-section">Daily Tasks</div>
-                  {selected.kpis.map(k => (
-                    <div key={k.key} style={{ fontSize:13, color:"var(--text-1)", padding:"5px 0",
-                      borderBottom:"1px solid var(--border-0)", display:"flex", gap:8 }}>
-                      <span style={{ color:"var(--text-3)" }}>—</span>{k.label}
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {/* Second CTA at bottom */}
-              <button className="btn btn-a w100"
-                style={{ justifyContent:"center", marginTop:22, fontSize:15, padding:"12px 0" }}
-                onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
-                {isSecMode ? `+ Start as Secondary` : `→ Start Challenge`}
-              </button>
-            </div>
-          )}
-        </div>
+              </div>
+            ) : (
+              <ChallengeDetail selected={selected} isSecMode={isSecMode} onPick={onPick} onClose={() => setActive(null)} />
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Mobile bottom sheet — slides up when a card is tapped */}
+      {isMobile && selected && (
+        <div style={{
+          position:"fixed", bottom:58, left:0, right:0,
+          background:"var(--bg-1)", borderTop:"2px solid var(--accent)",
+          borderRadius:"16px 16px 0 0", padding:"20px 20px 32px",
+          zIndex:200, maxHeight:"72vh", overflowY:"auto",
+        }}>
+          <button onClick={() => setActive(null)} style={{
+            position:"absolute", top:14, right:16,
+            background:"none", border:"none", color:"var(--text-1)",
+            fontSize:22, cursor:"pointer", lineHeight:1,
+          }}>✕</button>
+          <ChallengeDetail selected={selected} isSecMode={isSecMode} onPick={onPick} onClose={() => setActive(null)} />
+        </div>
+      )}
     </div>
   );
 };
@@ -6054,7 +6078,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       )}
 
       {/* ── Two-column top section ── */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:24,alignItems:"start"}}>
+      <div style={{display:"grid",gridTemplateColumns:window.innerWidth<=768?"1fr":"1fr 1fr",gap:16,marginTop:24,alignItems:"start"}}>
 
         {/* LEFT — Account */}
         <div style={{display:"flex",flexDirection:"column",gap:16}}>
