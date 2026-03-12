@@ -2519,13 +2519,13 @@ const OnboardInduct = ({ onDone, userName }) => (
 const DIFF_COLOR = { Hard:"#BF5D5D", Intense:"#D4B22A", Moderate:"#5DBF8A", "You decide":"#4A8FD4" };
 
 const OnboardChallenge = ({ onStart, onSkip }) => {
-  const [selected,   setSelected]   = useState(null);
-  const [editTasks,  setEditTasks]  = useState(false);
-  const [tasks,      setTasks]      = useState([]);
-  const [customMode, setCustomMode] = useState(false);
-  const [customName, setCustomName] = useState("");
-  const [customDays, setCustomDays] = useState(30);
-  const [customTasks,setCustomTasks]= useState([{ id:0, label:"", cat:"other" }]);
+  const [selected,    setSelected]    = useState(null);
+  const [editTasks,   setEditTasks]   = useState(false);
+  const [tasks,       setTasks]       = useState([]);
+  const [customMode,  setCustomMode]  = useState(false);
+  const [customName,  setCustomName]  = useState("");
+  const [customDays,  setCustomDays]  = useState(30);
+  const [customTasks, setCustomTasks] = useState([{ id:0, label:"", cat:"other" }]);
   const templates = TEMPLATES.filter(t => t.id !== "custom");
   const t = selected || templates[0];
 
@@ -2545,6 +2545,9 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
   const removeTask = (id) => setTasks(ts => ts.filter(x => x.id !== id));
   const updateTask = (id, val) => setTasks(ts => ts.map(x => x.id===id ? {...x, label:val} : x));
   const validTasks = tasks.filter(t => t.label.trim());
+
+  const selectCustom = () => { setCustomMode(true); setSelected(null); setEditTasks(false); };
+  const validCustomTasks = customTasks.filter(t => t.label.trim());
 
   return (
     <div style={{
@@ -2580,7 +2583,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
         }}>
           {templates.map(tmpl => (
             <div key={tmpl.id}
-              onClick={()=>{ setCustomMode(false); selectTemplate(tmpl); }}
+              onClick={()=>{ selectTemplate(tmpl); setCustomMode(false); }}
               style={{
                 background: !customMode && selected?.id===tmpl.id ? "var(--accent-lo)" : "var(--bg-2)",
                 border: `1px solid ${!customMode && selected?.id===tmpl.id ? "var(--accent)" : "var(--border-1)"}`,
@@ -2603,34 +2606,27 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
               }}>{tmpl.difficulty}</div>
             </div>
           ))}
-          {/* Custom card */}
-          <div
-            onClick={()=>{ setCustomMode(true); setSelected(null); }}
-            style={{
-              background: customMode ? "var(--accent-lo)" : "var(--bg-2)",
-              border: `1px solid ${customMode ? "var(--accent)" : "var(--border-1)"}`,
-              borderRadius:8, padding:"14px 16px", cursor:"pointer",
-              transition:"border-color .15s, background .15s",
-            }}>
+
+          {/* Build Your Own card */}
+          <div onClick={selectCustom} style={{
+            background: customMode ? "var(--accent-lo)" : "transparent",
+            border: `1px dashed ${customMode ? "var(--accent)" : "var(--border-1)"}`,
+            borderRadius:8, padding:"14px 16px", cursor:"pointer",
+            transition:"border-color .15s, background .15s",
+          }}>
             <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--accent)",marginBottom:5}}>
-              CUSTOM
+              CUSTOM · YOUR RULES
             </div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em",color:"var(--text-0)",marginBottom:5}}>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em",color:"var(--text-0)"}}>
               Build Your Own
             </div>
-            <div style={{
-              display:"inline-block",
-              fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",
-              textTransform:"uppercase",padding:"2px 8px",borderRadius:3,
-              color:"var(--text-2)", background:"#88888818", border:"1px solid #88888830",
-            }}>YOUR RULES</div>
           </div>
         </div>
 
         {/* Right — detail panel */}
         <div style={{flex:1, overflowY:"auto", padding:"28px 36px"}}>
           {customMode ? (
-            // ── Custom challenge builder ──
+            /* ── Custom challenge builder ── */
             <div>
               <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:8}}>CUSTOM</div>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:44,letterSpacing:".04em",lineHeight:1,marginBottom:24,color:"var(--text-0)"}}>
@@ -2643,8 +2639,8 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
                 <input
                   value={customName}
                   onChange={e=>setCustomName(e.target.value)}
-                  placeholder="e.g. 30 Days of Focus"
-                  style={{width:"100%",boxSizing:"border-box",background:"var(--bg-3)",border:"1px solid var(--border-1)",borderRadius:6,padding:"10px 14px",color:"var(--text-0)",fontFamily:"'IBM Plex Mono',monospace",fontSize:12,outline:"none"}}
+                  placeholder="e.g. 30 Day Morning Routine"
+                  style={{width:"100%",background:"var(--bg-3)",border:"1px solid var(--border-1)",borderRadius:6,padding:"10px 14px",color:"var(--text-0)",fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:"none"}}
                 />
               </div>
 
@@ -2683,27 +2679,24 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
               </div>
 
               <button
-                disabled={!customName.trim() || customTasks.filter(t=>t.label.trim()).length === 0}
-                onClick={()=>{
-                  const validCustom = customTasks.filter(t=>t.label.trim());
-                  onStart(
-                    { name:customName.trim(), duration:customDays, tag:"CUSTOM", kpis:[] },
-                    validCustom.map((t,i)=>({ id:i, label:t.label, cat:"other" }))
-                  );
-                }}
+                disabled={!customName.trim() || validCustomTasks.length === 0}
+                onClick={()=>onStart({ name:customName.trim(), duration:customDays, tag:"CUSTOM", kpis:[] }, validCustomTasks)}
                 style={{
                   width:"100%", padding:"16px", borderRadius:8,
-                  background: (!customName.trim() || customTasks.filter(t=>t.label.trim()).length===0) ? "var(--bg-3)" : "var(--accent)",
-                  color: (!customName.trim() || customTasks.filter(t=>t.label.trim()).length===0) ? "var(--text-2)" : "#080807",
+                  background: customName.trim() && validCustomTasks.length > 0 ? "var(--accent)" : "var(--bg-3)",
+                  color: customName.trim() && validCustomTasks.length > 0 ? "#080807" : "var(--text-2)",
                   fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".1em",
-                  border:"none", cursor: (!customName.trim() || customTasks.filter(t=>t.label.trim()).length===0) ? "not-allowed" : "pointer",
-                  boxShadow:"0 4px 0 rgba(0,0,0,.4)", transition:"transform .1s, box-shadow .1s",
+                  border:"none", cursor: customName.trim() && validCustomTasks.length > 0 ? "pointer" : "not-allowed",
+                  boxShadow:"0 4px 0 rgba(0,0,0,.4)", transition:"all .1s",
                 }}
               >
-                Start {customName.trim() || "Your Challenge"} — Day 1 Begins Now →
+                {customName.trim() && validCustomTasks.length > 0
+                  ? `Start ${customName} — Day 1 Begins Now →`
+                  : "Fill in name + at least one task"}
               </button>
             </div>
           ) : (
+            /* ── Template detail panel ── */
             <>
           {/* Title + badge */}
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
@@ -6729,7 +6722,7 @@ export default function App() {
   }, [user, profile]);
 
   const toggle = (key) => {
-    // Capture challenge refs NOW before setKpis async closure
+    // Capture BEFORE setKpis — closures run async, challenges may shift
     const mainChallenge = challenges.main;
     const secChallenge  = (challenges.secondary || []).find(c => c.kpis?.some(k => k.key === key));
 
@@ -6737,10 +6730,11 @@ export default function App() {
       const next = { ...p, [key]: !p[key] };
       if (sb && user) {
         const today = new Date().toISOString().split("T")[0];
+
         if (secChallenge) {
           const secCompleted = (secChallenge.kpis || []).filter(k => next[k.key]).map(k => k.key);
-          const secTotal     = secChallenge.kpis.length;
-          const secScore     = secTotal > 0 ? Math.round((secCompleted.length / secTotal) * 100) : 0;
+          const secTotal = secChallenge.kpis.length;
+          const secScore = secTotal > 0 ? Math.round((secCompleted.length / secTotal) * 100) : 0;
           sb.from("checkins").upsert({
             challenge_id:   secChallenge.id,
             date:           today,
@@ -6751,8 +6745,8 @@ export default function App() {
             .then(({ error }) => { if (error) console.warn("[toggle] sec upsert failed:", error); });
         } else if (mainChallenge) {
           const completed = (mainChallenge.kpis || []).filter(k => next[k.key]).map(k => k.key);
-          const total     = (mainChallenge.kpis || []).length;
-          const score     = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+          const total = (mainChallenge.kpis || []).length;
+          const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
           sb.from("checkins").upsert({
             challenge_id:   mainChallenge.id,
             date:           today,
@@ -6761,8 +6755,6 @@ export default function App() {
             updated_at:     new Date().toISOString(),
           }, { onConflict: "challenge_id,date" })
             .then(({ error }) => { if (error) console.warn("[toggle] main upsert failed:", error); });
-        } else {
-          console.warn("[toggle] no challenge found for key:", key);
         }
       }
       return next;
@@ -7066,42 +7058,40 @@ export default function App() {
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
     if (page==="talos") return (
-      <div className="page talos-page">
-        <Talos
-          challenge={activeChallenge}
-          kpis={kpis}
-          loggedToday={loggedToday}
-          tone={tone}
-          sb={sb}
-          user={user}
-          challenges={challenges}
-          onTickTasks={(keys) => {
-            setKpis(prev => {
-              const updated = { ...prev };
-              keys.forEach(k => { updated[k] = true; });
-              // Persist to Supabase — same as toggle()
-              if (sb && user && challenges.main) {
-                const today = new Date().toISOString().split("T")[0];
-                const completed = Object.entries(updated).filter(([,v])=>v).map(([k])=>k);
-                const total = (challenges.main.kpis || []).length;
-                const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
-                sb.from("checkins").upsert({
-                  challenge_id:   challenges.main.id,
-                  date:           today,
-                  score,
-                  completed_keys: completed,
-                  updated_at:     new Date().toISOString(),
-                }, { onConflict: "challenge_id,date" }).then(() => {});
-              }
-              return updated;
-            });
-          }}
-          onLogDay={() => {
-            const safeTasks = activeChallenge.kpis || [];
-            const done = safeTasks.filter(t => kpis[t.key]).length;
-            handleLogDay(done, safeTasks.length);
-          }}
-        />
+      <div className="page talos-page" style={{ display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <div style={{ textAlign:"center", maxWidth:480, padding:"0 24px" }}>
+          <div style={{
+            width:72, height:72, borderRadius:"50%",
+            background:"var(--accent-lo)", border:"1px solid var(--border-accent)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            margin:"0 auto 28px",
+            boxShadow:"0 0 40px var(--accent-lo)",
+            animation:"pulse 2.5s ease infinite",
+          }}>
+            <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"var(--accent)", letterSpacing:".06em" }}>T</span>
+          </div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:12 }}>
+            Autonomous Agent
+          </div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:52, letterSpacing:".04em", lineHeight:1, color:"var(--text-0)", marginBottom:16 }}>
+            TALOS
+          </div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, color:"var(--text-1)", lineHeight:1.7, marginBottom:32 }}>
+            Your AI accountability agent is being forged.<br />
+            It will track your progress, match your completions,<br />
+            and hold you to your standard.
+          </div>
+          <div style={{
+            display:"inline-flex", alignItems:"center", gap:8,
+            background:"var(--bg-2)", border:"1px solid var(--border-accent)",
+            borderRadius:100, padding:"10px 22px",
+            fontFamily:"'IBM Plex Mono',monospace", fontSize:10,
+            letterSpacing:".2em", textTransform:"uppercase", color:"var(--accent)",
+          }}>
+            <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--accent)", animation:"pulse 1.8s ease infinite" }} />
+            Coming Soon
+          </div>
+        </div>
       </div>
     );
   };
