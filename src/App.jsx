@@ -2519,13 +2519,9 @@ const OnboardInduct = ({ onDone, userName }) => (
 const DIFF_COLOR = { Hard:"#BF5D5D", Intense:"#D4B22A", Moderate:"#5DBF8A", "You decide":"#4A8FD4" };
 
 const OnboardChallenge = ({ onStart, onSkip }) => {
-  const [selected,    setSelected]    = useState(null);
-  const [editTasks,   setEditTasks]   = useState(false);
-  const [tasks,       setTasks]       = useState([]);
-  const [customMode,  setCustomMode]  = useState(false);
-  const [customName,  setCustomName]  = useState("");
-  const [customDays,  setCustomDays]  = useState(30);
-  const [customTasks, setCustomTasks] = useState([{ id:0, label:"", cat:"other" }]);
+  const [selected,   setSelected]   = useState(null);
+  const [editTasks,  setEditTasks]  = useState(false);
+  const [tasks,      setTasks]      = useState([]);
   const templates = TEMPLATES.filter(t => t.id !== "custom");
   const t = selected || templates[0];
 
@@ -2545,9 +2541,6 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
   const removeTask = (id) => setTasks(ts => ts.filter(x => x.id !== id));
   const updateTask = (id, val) => setTasks(ts => ts.map(x => x.id===id ? {...x, label:val} : x));
   const validTasks = tasks.filter(t => t.label.trim());
-
-  const selectCustom = () => { setCustomMode(true); setSelected(null); setEditTasks(false); };
-  const validCustomTasks = customTasks.filter(t => t.label.trim());
 
   return (
     <div style={{
@@ -2583,10 +2576,10 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
         }}>
           {templates.map(tmpl => (
             <div key={tmpl.id}
-              onClick={()=>{ selectTemplate(tmpl); setCustomMode(false); }}
+              onClick={()=>selectTemplate(tmpl)}
               style={{
-                background: !customMode && selected?.id===tmpl.id ? "var(--accent-lo)" : "var(--bg-2)",
-                border: `1px solid ${!customMode && selected?.id===tmpl.id ? "var(--accent)" : "var(--border-1)"}`,
+                background: selected?.id===tmpl.id ? "var(--accent-lo)" : "var(--bg-2)",
+                border: `1px solid ${selected?.id===tmpl.id ? "var(--accent)" : "var(--border-1)"}`,
                 borderRadius:8, padding:"14px 16px", cursor:"pointer",
                 transition:"border-color .15s, background .15s",
               }}>
@@ -2606,98 +2599,10 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
               }}>{tmpl.difficulty}</div>
             </div>
           ))}
-
-          {/* Build Your Own card */}
-          <div onClick={selectCustom} style={{
-            background: customMode ? "var(--accent-lo)" : "transparent",
-            border: `1px dashed ${customMode ? "var(--accent)" : "var(--border-1)"}`,
-            borderRadius:8, padding:"14px 16px", cursor:"pointer",
-            transition:"border-color .15s, background .15s",
-          }}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--accent)",marginBottom:5}}>
-              CUSTOM · YOUR RULES
-            </div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em",color:"var(--text-0)"}}>
-              Build Your Own
-            </div>
-          </div>
         </div>
 
         {/* Right — detail panel */}
         <div style={{flex:1, overflowY:"auto", padding:"28px 36px"}}>
-          {customMode ? (
-            /* ── Custom challenge builder ── */
-            <div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:8}}>CUSTOM</div>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:44,letterSpacing:".04em",lineHeight:1,marginBottom:24,color:"var(--text-0)"}}>
-                Build Your Own
-              </div>
-
-              {/* Name */}
-              <div style={{marginBottom:20}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Challenge Name</div>
-                <input
-                  value={customName}
-                  onChange={e=>setCustomName(e.target.value)}
-                  placeholder="e.g. 30 Day Morning Routine"
-                  style={{width:"100%",background:"var(--bg-3)",border:"1px solid var(--border-1)",borderRadius:6,padding:"10px 14px",color:"var(--text-0)",fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:"none"}}
-                />
-              </div>
-
-              {/* Duration */}
-              <div style={{marginBottom:24}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Duration: {customDays} days</div>
-                <input type="range" min={7} max={365} value={customDays} onChange={e=>setCustomDays(Number(e.target.value))}
-                  style={{width:"100%",accentColor:"var(--accent)"}} />
-                <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",marginTop:4}}>
-                  <span>7d</span><span>365d</span>
-                </div>
-              </div>
-
-              {/* Tasks */}
-              <div style={{marginBottom:32}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:10}}>Daily Tasks</div>
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {customTasks.map((tk,i)=>(
-                    <div key={tk.id} style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <input
-                        value={tk.label}
-                        onChange={e=>setCustomTasks(ts=>ts.map(x=>x.id===tk.id?{...x,label:e.target.value}:x))}
-                        placeholder={`Task ${i+1}`}
-                        style={{flex:1,background:"var(--bg-3)",border:"1px solid var(--border-1)",borderRadius:6,padding:"9px 12px",color:"var(--text-0)",fontFamily:"'IBM Plex Mono',monospace",fontSize:11,outline:"none"}}
-                      />
-                      {customTasks.length > 1 && (
-                        <div onClick={()=>setCustomTasks(ts=>ts.filter(x=>x.id!==tk.id))} style={{color:"var(--text-2)",cursor:"pointer",fontSize:12,padding:"4px 6px"}}>✕</div>
-                      )}
-                    </div>
-                  ))}
-                  <button onClick={()=>setCustomTasks(ts=>[...ts,{id:Date.now(),label:"",cat:"other"}])}
-                    style={{background:"none",border:"1px dashed var(--border-1)",borderRadius:6,padding:"9px",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",color:"var(--text-2)",cursor:"pointer",textAlign:"center"}}>
-                    + Add task
-                  </button>
-                </div>
-              </div>
-
-              <button
-                disabled={!customName.trim() || validCustomTasks.length === 0}
-                onClick={()=>onStart({ name:customName.trim(), duration:customDays, tag:"CUSTOM", kpis:[] }, validCustomTasks)}
-                style={{
-                  width:"100%", padding:"16px", borderRadius:8,
-                  background: customName.trim() && validCustomTasks.length > 0 ? "var(--accent)" : "var(--bg-3)",
-                  color: customName.trim() && validCustomTasks.length > 0 ? "#080807" : "var(--text-2)",
-                  fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".1em",
-                  border:"none", cursor: customName.trim() && validCustomTasks.length > 0 ? "pointer" : "not-allowed",
-                  boxShadow:"0 4px 0 rgba(0,0,0,.4)", transition:"all .1s",
-                }}
-              >
-                {customName.trim() && validCustomTasks.length > 0
-                  ? `Start ${customName} — Day 1 Begins Now →`
-                  : "Fill in name + at least one task"}
-              </button>
-            </div>
-          ) : (
-            /* ── Template detail panel ── */
-            <>
           {/* Title + badge */}
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
             <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)"}}>
@@ -2816,8 +2721,6 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
           >
             Start {t.name} — Day 1 Begins Now →
           </button>
-            </>
-          )}
         </div>
       </div>
     </div>
@@ -5845,8 +5748,29 @@ const ALL_THEMES = {
     "--border-0":"#222222","--border-1":"#2E2E2E","--border-accent":"#F0F0F025",
     "--ok":"#70C070","--warn":"#C0A030","--err":"#C04040",
   }},
+  orbit:    { label:"Orbit Navy",           desc:"Deep space blue. Electric accent.", swatch:"#0066FF", vars: {
+    "--bg-0":"#0A1024","--bg-1":"#0D1530","--bg-2":"#121A38","--bg-3":"#182040","--bg-4":"#1E2850",
+    "--accent":"#0066FF","--accent-lo":"#0066FF18","--accent-mid":"#0066FF50",
+    "--text-0":"#E8EEFF","--text-1":"#7A9ACC","--text-2":"#3A5A88","--text-3":"#1A2A50",
+    "--border-0":"#182040","--border-1":"#1E2A50","--border-accent":"#0066FF35",
+    "--ok":"#3DD68C","--warn":"#F5C542","--err":"#FF4D4D",
+  }},
+  mars:     { label:"Mars Red",             desc:"Dark charcoal. Aggressive red accent.", swatch:"#FF3B3B", vars: {
+    "--bg-0":"#11131A","--bg-1":"#161820","--bg-2":"#1C1E28","--bg-3":"#222530","--bg-4":"#282C38",
+    "--accent":"#FF3B3B","--accent-lo":"#FF3B3B18","--accent-mid":"#FF3B3B50",
+    "--text-0":"#F0EAE8","--text-1":"#9A8A88","--text-2":"#504848","--text-3":"#2C2828",
+    "--border-0":"#1C1E28","--border-1":"#282A38","--border-accent":"#FF3B3B35",
+    "--ok":"#4AD48A","--warn":"#F0C040","--err":"#FF3B3B",
+  }},
+  plasma:   { label:"Plasma Orange",        desc:"Core black. High-voltage orange.", swatch:"#FF5E00", vars: {
+    "--bg-0":"#0E0E12","--bg-1":"#131318","--bg-2":"#18181F","--bg-3":"#1E1E26","--bg-4":"#24242E",
+    "--accent":"#FF5E00","--accent-lo":"#FF5E0018","--accent-mid":"#FF5E0050",
+    "--text-0":"#F2EDE8","--text-1":"#9A8878","--text-2":"#504438","--text-3":"#2C2620",
+    "--border-0":"#18181F","--border-1":"#242026","--border-accent":"#FF5E0035",
+    "--ok":"#4AD48A","--warn":"#F5C040","--err":"#FF4444",
+  }},
 };
-const THEME_ORDER = ["forge","slate","iron","neutrals","digital","dusk","pastel","mono"];
+const THEME_ORDER = ["forge","slate","iron","neutrals","digital","dusk","pastel","mono","orbit","mars","plasma"];
 
 function applyThemeVars(themeId) {
   const t = ALL_THEMES[themeId];
@@ -6195,7 +6119,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           {/* Themes */}
           <div className="srow a4">
             <div className="srow-title">Theme</div>
-            <div className="srow-desc">Eight environments. Pick your headspace.</div>
+            <div className="srow-desc">Eleven environments. Pick your headspace.</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
               {THEME_ORDER.map(id => {
                 const t = ALL_THEMES[id]; const on = theme===id;
@@ -6722,16 +6646,18 @@ export default function App() {
   }, [user, profile]);
 
   const toggle = (key) => {
-    // Capture BEFORE setKpis — closures run async, challenges may shift
-    const mainChallenge = challenges.main;
-    const secChallenge  = (challenges.secondary || []).find(c => c.kpis?.some(k => k.key === key));
-
     setKpis(p => {
       const next = { ...p, [key]: !p[key] };
       if (sb && user) {
         const today = new Date().toISOString().split("T")[0];
 
+        // Check if key belongs to a secondary challenge
+        const secChallenge = (challenges.secondary || []).find(c =>
+          c.kpis?.some(k => k.key === key)
+        );
+
         if (secChallenge) {
+          // Persist secondary task ticks to that challenge's checkin
           const secCompleted = (secChallenge.kpis || []).filter(k => next[k.key]).map(k => k.key);
           const secTotal = secChallenge.kpis.length;
           const secScore = secTotal > 0 ? Math.round((secCompleted.length / secTotal) * 100) : 0;
@@ -6741,20 +6667,19 @@ export default function App() {
             score:          secScore,
             completed_keys: secCompleted,
             updated_at:     new Date().toISOString(),
-          }, { onConflict: "challenge_id,date" })
-            .then(({ error }) => { if (error) console.warn("[toggle] sec upsert failed:", error); });
-        } else if (mainChallenge) {
-          const completed = (mainChallenge.kpis || []).filter(k => next[k.key]).map(k => k.key);
-          const total = (mainChallenge.kpis || []).length;
+          }, { onConflict: "challenge_id,date" }).then(() => {});
+        } else if (challenges.main) {
+          // Persist main challenge ticks
+          const completed = (challenges.main.kpis || []).filter(k => next[k.key]).map(k => k.key);
+          const total = (challenges.main.kpis || []).length;
           const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
           sb.from("checkins").upsert({
-            challenge_id:   mainChallenge.id,
+            challenge_id:   challenges.main.id,
             date:           today,
             score,
             completed_keys: completed,
             updated_at:     new Date().toISOString(),
-          }, { onConflict: "challenge_id,date" })
-            .then(({ error }) => { if (error) console.warn("[toggle] main upsert failed:", error); });
+          }, { onConflict: "challenge_id,date" }).then(() => {});
         }
       }
       return next;
@@ -7058,40 +6983,42 @@ export default function App() {
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
     if (page==="talos") return (
-      <div className="page talos-page" style={{ display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <div style={{ textAlign:"center", maxWidth:480, padding:"0 24px" }}>
-          <div style={{
-            width:72, height:72, borderRadius:"50%",
-            background:"var(--accent-lo)", border:"1px solid var(--border-accent)",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            margin:"0 auto 28px",
-            boxShadow:"0 0 40px var(--accent-lo)",
-            animation:"pulse 2.5s ease infinite",
-          }}>
-            <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"var(--accent)", letterSpacing:".06em" }}>T</span>
-          </div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:12 }}>
-            Autonomous Agent
-          </div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:52, letterSpacing:".04em", lineHeight:1, color:"var(--text-0)", marginBottom:16 }}>
-            TALOS
-          </div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, color:"var(--text-1)", lineHeight:1.7, marginBottom:32 }}>
-            Your AI accountability agent is being forged.<br />
-            It will track your progress, match your completions,<br />
-            and hold you to your standard.
-          </div>
-          <div style={{
-            display:"inline-flex", alignItems:"center", gap:8,
-            background:"var(--bg-2)", border:"1px solid var(--border-accent)",
-            borderRadius:100, padding:"10px 22px",
-            fontFamily:"'IBM Plex Mono',monospace", fontSize:10,
-            letterSpacing:".2em", textTransform:"uppercase", color:"var(--accent)",
-          }}>
-            <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--accent)", animation:"pulse 1.8s ease infinite" }} />
-            Coming Soon
-          </div>
-        </div>
+      <div className="page talos-page">
+        <Talos
+          challenge={activeChallenge}
+          kpis={kpis}
+          loggedToday={loggedToday}
+          tone={tone}
+          sb={sb}
+          user={user}
+          challenges={challenges}
+          onTickTasks={(keys) => {
+            setKpis(prev => {
+              const updated = { ...prev };
+              keys.forEach(k => { updated[k] = true; });
+              // Persist to Supabase — same as toggle()
+              if (sb && user && challenges.main) {
+                const today = new Date().toISOString().split("T")[0];
+                const completed = Object.entries(updated).filter(([,v])=>v).map(([k])=>k);
+                const total = (challenges.main.kpis || []).length;
+                const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+                sb.from("checkins").upsert({
+                  challenge_id:   challenges.main.id,
+                  date:           today,
+                  score,
+                  completed_keys: completed,
+                  updated_at:     new Date().toISOString(),
+                }, { onConflict: "challenge_id,date" }).then(() => {});
+              }
+              return updated;
+            });
+          }}
+          onLogDay={() => {
+            const safeTasks = activeChallenge.kpis || [];
+            const done = safeTasks.filter(t => kpis[t.key]).length;
+            handleLogDay(done, safeTasks.length);
+          }}
+        />
       </div>
     );
   };
