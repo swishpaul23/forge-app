@@ -378,10 +378,7 @@ const makeCSS = () => `
     /* Library — stack columns */
     .lib-grid { grid-template-columns:repeat(2,1fr) !important; }
 
-    /* Partners — stack sidebar above chat */
-    .partners-layout { flex-direction:column; }
-    .p-sidebar { width:100% !important; height:auto; border-right:none; border-bottom:1px solid var(--border-0); max-height:220px; }
-    .p-list { max-height:140px; }
+    /* Partners — stack on mobile (handled in ow-layout CSS above) */
 
     /* TALOS — stack chat and context panel */
     .talos-page > div > div:last-child { flex-direction:column !important; }
@@ -1127,75 +1124,194 @@ const makeCSS = () => `
     margin-top:4px;
   }
 
-  /* PARTNERS */
-  .partners-layout { display:flex; height:100%; overflow:hidden; }
-  .p-sidebar { width:264px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
-  .p-sidebar-head { padding:16px 14px 12px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
-  .p-sidebar-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-2); margin-bottom:3px; }
-  .p-sidebar-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; line-height:1; margin-bottom:10px; }
-  .p-sidebar-actions { display:flex; gap:6px; }
-  .p-section { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.26em; text-transform:uppercase; color:var(--text-3); padding:10px 8px 4px; }
-  .p-list { flex:1; overflow-y:auto; padding:4px; display:flex; flex-direction:column; }
-  /* Discord-style DM rows */
-  .p-row { display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:6px; cursor:pointer; transition:background .12s; position:relative; }
-  .p-row:hover { background:var(--bg-2); }
-  .p-row.active { background:var(--bg-3); }
-  .p-avatar { width:34px; height:34px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:.04em; color:#080807; position:relative; }
-  .p-avatar-dot { position:absolute; bottom:0; right:0; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg-1); }
-  .p-dot-online { background:var(--ok); }
-  .p-dot-away { background:var(--accent); }
-  .p-dot-offline { background:var(--text-3); }
-  .p-row-info { flex:1; min-width:0; }
-  .p-row-name { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:.04em; line-height:1; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .p-row-sub { font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--text-2); letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .p-row-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; }
-  .p-unread { background:var(--accent); color:#080807; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:600; min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
-  .p-ts { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); }
-  .p-nudge-btn { position:absolute; right:8px; font-size:13px; background:none; border:none; cursor:pointer; opacity:0; transition:opacity .12s; padding:2px 4px; }
-  .p-row:hover .p-nudge-btn { opacity:1; }
-  /* Thread */
-  .p-thread { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-  .p-thread-head { padding:12px 18px; border-bottom:1px solid var(--border-0); display:flex; align-items:center; gap:12px; flex-shrink:0; }
-  .p-thread-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:13px; color:#080807; }
-  .p-thread-name { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:.04em; line-height:1; }
-  .p-thread-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-top:2px; }
-  .p-thread-bar { height:2px; background:var(--bg-3); flex-shrink:0; }
-  .p-thread-bar-fill { height:100%; background:var(--accent); transition:width .4s; }
-  .p-streak-pill { background:var(--bg-3); border:1px solid var(--border-1); border-radius:20px; padding:3px 10px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.08em; color:var(--text-1); display:flex; align-items:center; gap:5px; }
-  .p-streak-pill .n { font-family:'Bebas Neue',sans-serif; font-size:15px; color:var(--accent); letter-spacing:.04em; line-height:1; }
-  /* Feed — Discord grouped messages */
-  .p-feed { flex:1; overflow-y:auto; padding:12px 0 8px; display:flex; flex-direction:column; }
-  .p-date-div { align-self:stretch; display:flex; align-items:center; margin:6px 18px; }
-  .p-date-div::before,.p-date-div::after { content:''; flex:1; height:1px; background:var(--border-0); }
-  .p-date-div span { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-3); padding:0 10px; white-space:nowrap; }
-  .p-group { display:flex; gap:10px; padding:2px 18px; transition:background .1s; }
-  .p-group:hover { background:rgba(255,255,255,.012); }
-  .p-group.me { flex-direction:row-reverse; }
-  .p-group-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:12px; color:#080807; }
-  .p-group-avatar.ghost { visibility:hidden; }
-  .p-group-body { display:flex; flex-direction:column; gap:2px; max-width:65%; }
-  .p-group-header { display:flex; align-items:baseline; gap:8px; margin-bottom:3px; }
-  .p-group.me .p-group-header { flex-direction:row-reverse; }
-  .p-group-name { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; color:var(--text-0); }
-  .p-group-name.me { color:var(--accent); }
-  .p-group-ts { font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--text-2); }
-  .p-group.me .p-group-body { align-items:flex-end; }
-  .p-bubble { display:inline-block; padding:7px 12px; font-size:13px; line-height:1.45; color:var(--text-0); border-radius:4px; word-break:break-word; }
-  .p-group.them .p-bubble { background:var(--bg-2); border-radius:4px 14px 14px 14px; }
-  .p-group.me .p-bubble { background:var(--accent-lo); border:1px solid var(--border-accent); border-radius:14px 4px 14px 14px; }
-  .p-empty-thread { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
-  /* Composer */
-  .p-composer { border-top:1px solid var(--border-0); padding:10px 16px 12px; flex-shrink:0; }
-  .p-rxn-row { display:flex; gap:5px; margin-bottom:8px; align-items:center; }
-  .p-rxn-btn { background:var(--bg-2); border:1px solid var(--border-1); border-radius:6px; padding:4px 8px; font-size:16px; cursor:pointer; transition:all .12s; line-height:1; }
-  .p-rxn-btn:hover,.p-rxn-btn.sent { border-color:var(--accent); background:var(--accent-lo); }
-  .p-composer-row { display:flex; gap:8px; }
-  .p-input { flex:1; background:var(--bg-2); border:1px solid var(--border-1); border-radius:8px; padding:9px 14px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-0); outline:none; transition:border-color .15s; }
-  .p-input:focus { border-color:var(--accent); }
-  .p-input::placeholder { color:var(--text-2); }
-  .p-no-partners { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:0; }
-  .p-invite-box { background:var(--bg-2); border:1px solid var(--border-accent); border-radius:10px; padding:20px 28px; text-align:center; margin-bottom:24px; width:100%; max-width:360px; }
-  .p-invite-code { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:.22em; color:var(--accent); }
+  /* PARTNERS — SPOTTER PROTOCOL */
+  .ow-layout { display:flex; height:100%; overflow:hidden; }
+
+  /* Overwatch sidebar */
+  .ow-sidebar { width:360px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
+  .ow-head { padding:18px 16px 14px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
+  .ow-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:5px; display:flex; align-items:center; gap:7px; }
+  .ow-tag::before { content:'◆'; font-size:7px; }
+  .ow-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:.04em; line-height:1; display:flex; align-items:center; justify-content:space-between; }
+  .ow-add { width:26px; height:26px; border-radius:6px; background:var(--accent-lo); border:1px solid var(--border-accent); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; color:var(--accent); transition:all .15s; }
+  .ow-add:hover { background:var(--accent-mid); }
+
+  /* You card */
+  .you-card { margin:8px 8px 0; padding:12px 14px; background:var(--bg-0); border:1px solid var(--border-accent); border-radius:10px; position:relative; overflow:hidden; flex-shrink:0; }
+  .you-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 100% 0%, var(--accent-lo), transparent); pointer-events:none; }
+  .you-card-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .you-ring { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:14px; flex-shrink:0; position:relative; z-index:1; }
+  .you-info { flex:1; min-width:0; }
+  .you-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin-bottom:1px; }
+  .you-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; line-height:1; }
+  .you-challenge { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-1); letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .you-stats { display:flex; gap:14px; }
+  .you-stat-n { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:.02em; line-height:1; }
+  .you-stat-l { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-1); margin-top:1px; }
+  .you-bar { margin-top:8px; height:2px; background:var(--bg-3); border-radius:1px; overflow:hidden; }
+  .you-bar-fill { height:100%; border-radius:1px; background:var(--accent); transition:width .6s; }
+
+  /* Status legend */
+  .ow-legend { display:flex; gap:12px; padding:7px 16px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
+  .ow-leg { display:flex; align-items:center; gap:5px; font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-2); }
+  .ow-leg-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+  /* Partner rows */
+  .ow-list { flex:1; overflow-y:auto; padding:6px; }
+  .ow-row { display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:8px; cursor:pointer; transition:background .12s; border:1px solid transparent; margin-bottom:3px; }
+  .ow-row:hover { background:var(--bg-2); }
+  .ow-row.active { background:var(--bg-3); border-color:var(--border-0); }
+
+  /* Status dots */
+  .s-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; transition:box-shadow .3s; }
+  .s-dot.cold { background:#2E2C28; border:1px solid var(--border-0); }
+  .s-dot.ember { background:var(--accent); box-shadow:0 0 7px var(--accent); animation:sdpulse 2.5s ease infinite; }
+  .s-dot.gold { background:#F5C842; box-shadow:0 0 9px #F5C842; }
+  @keyframes sdpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
+
+  .ow-row-info { flex:1; min-width:0; }
+  .ow-row-name { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:.04em; line-height:1; margin-bottom:2px; }
+  .ow-row-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-1); letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ow-row-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; }
+  .ow-streak { font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:.02em; line-height:1; }
+  .proto-badge { font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:.1em; text-transform:uppercase; padding:1px 6px; border-radius:3px; }
+  .proto-badge.spotter { color:var(--accent); background:var(--accent-lo); border:1px solid var(--border-accent); }
+  .proto-badge.ally { color:#4A8FD4; background:#4A8FD414; border:1px solid #4A8FD430; }
+
+  /* Detail panel */
+  .ow-detail { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg-0); }
+  .ow-detail-head { padding:18px 22px 16px; border-bottom:1px solid var(--border-0); flex-shrink:0; position:relative; overflow:hidden; }
+  .ow-detail-head-bg { position:absolute; inset:0; pointer-events:none; }
+  .ow-detail-top { display:flex; align-items:flex-start; gap:14px; margin-bottom:12px; }
+  .ow-avatar { width:48px; height:48px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:17px; }
+  .ow-detail-name { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.04em; line-height:1; margin-bottom:3px; }
+  .ow-detail-challenge { font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.1em; color:var(--text-2); margin-bottom:6px; }
+  .ow-proto-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:4px; font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.14em; text-transform:uppercase; }
+  .ow-proto-pill.spotter { background:var(--accent-lo); border:1px solid var(--border-accent); color:var(--accent); }
+  .ow-proto-pill.ally { background:#4A8FD414; border:1px solid #4A8FD430; color:#4A8FD4; }
+
+  /* Status banner */
+  .ow-status-banner { display:flex; align-items:center; gap:10px; padding:9px 13px; border-radius:7px; border:1px solid; }
+  .ow-sb-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .ow-sb-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; font-weight:500; }
+  .ow-sb-since { margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); }
+
+  /* Detail tabs */
+  .ow-tabs { display:flex; border-bottom:1px solid var(--border-0); flex-shrink:0; }
+  .ow-tab { flex:1; padding:10px 0; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2); cursor:pointer; transition:all .15s; border-bottom:2px solid transparent; margin-bottom:-1px; background:none; border-top:none; border-left:none; border-right:none; }
+  .ow-tab:hover { color:var(--text-1); }
+  .ow-tab.on { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* Detail body */
+  .ow-body { flex:1; overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:12px; }
+
+  /* Stat cards */
+  .ow-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .ow-stat { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:13px 15px; }
+  .ow-stat-n { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.02em; line-height:1; }
+  .ow-stat-l { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2); margin-top:3px; }
+
+  /* Countdown */
+  .ow-countdown { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; display:flex; align-items:center; gap:14px; }
+  .ow-cd-time { font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:.04em; line-height:1; font-variant-numeric:tabular-nums; transition:color .3s; }
+  .ow-cd-time.urgent { color:var(--err); }
+  .ow-cd-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); margin-bottom:3px; }
+  .ow-cd-sub { font-size:12px; color:var(--text-1); line-height:1.5; }
+
+  /* Sync */
+  .ow-sync { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; }
+  .ow-sync-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .ow-sync-title { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); }
+  .ow-sync-pct { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:.02em; line-height:1; }
+  .ow-sync-bar { height:4px; background:var(--bg-3); border-radius:2px; overflow:hidden; display:flex; margin-bottom:7px; }
+  .ow-sync-bar-t { height:100%; background:#F5C842; transition:width .8s cubic-bezier(.4,0,.2,1); }
+  .ow-sync-bar-b { height:100%; background:var(--accent); transition:width .8s cubic-bezier(.4,0,.2,1); }
+  .ow-sync-legs { display:flex; gap:10px; flex-wrap:wrap; }
+  .ow-sync-leg { display:flex; align-items:center; gap:4px; font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.06em; color:var(--text-2); }
+  .ow-sync-dot { width:6px; height:6px; border-radius:50%; }
+
+  /* Ally note */
+  .ow-ally-note { background:var(--bg-1); border:1px solid #4A8FD430; border-radius:9px; padding:14px 16px; }
+  .ow-ally-note-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .ow-ally-note-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; color:#4A8FD4; }
+  .ow-ally-note-timer { font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--text-2); letter-spacing:.06em; }
+  .ow-ally-note-text { font-size:13px; color:var(--text-1); line-height:1.6; font-style:italic; margin-bottom:10px; }
+  .ow-rxns { display:flex; gap:5px; }
+  .ow-rxn { padding:4px 10px; border-radius:6px; background:var(--bg-2); border:1px solid var(--border-0); font-size:14px; cursor:pointer; transition:all .12s; }
+  .ow-rxn:hover,.ow-rxn.sent { background:#4A8FD418; border-color:#4A8FD440; }
+
+  /* Your note */
+  .ow-your-note { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; }
+  .ow-your-note-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:7px; }
+  .ow-note-input { width:100%; background:var(--bg-2); border:1px solid var(--border-0); border-radius:6px; padding:9px 11px; color:var(--text-0); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; resize:none; line-height:1.5; transition:border-color .15s; }
+  .ow-note-input:focus { border-color:#4A8FD450; }
+  .ow-note-input::placeholder { color:var(--text-2); font-style:italic; }
+  .ow-note-footer { display:flex; align-items:center; justify-content:space-between; margin-top:7px; }
+  .ow-note-count { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-2); }
+  .ow-note-send { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.12em; text-transform:uppercase; background:#4A8FD4; color:#080807; border:none; border-radius:5px; padding:5px 12px; cursor:pointer; transition:opacity .15s; }
+  .ow-note-send:hover { opacity:.85; }
+
+  /* Flare button */
+  .ow-action { padding:14px 22px 18px; border-top:1px solid var(--border-0); flex-shrink:0; }
+  .flare-btn { width:100%; padding:13px; border-radius:7px; font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:.14em; border:none; cursor:pointer; transition:all .2s; }
+  .flare-btn.armed { background:var(--err); color:#fff; box-shadow:0 4px 0 rgba(0,0,0,.5),0 0 24px rgba(191,93,93,.3); animation:flarepulse 3s ease infinite; }
+  .flare-btn.armed:hover { transform:translateY(-2px); box-shadow:0 6px 0 rgba(0,0,0,.5),0 0 40px rgba(191,93,93,.5); }
+  .flare-btn.armed:active { transform:translateY(2px); }
+  .flare-btn.off { background:var(--bg-3); color:var(--text-2); cursor:not-allowed; border:1px solid var(--border-0); }
+  @keyframes flarepulse { 0%,100%{box-shadow:0 4px 0 rgba(0,0,0,.5),0 0 24px rgba(191,93,93,.3)} 50%{box-shadow:0 4px 0 rgba(0,0,0,.5),0 0 40px rgba(191,93,93,.45)} }
+  .flare-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-2); text-align:center; margin-top:6px; }
+  .flare-meta.hot { color:var(--err); opacity:.7; }
+
+  /* History grid */
+  .ow-h-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  .ow-h-cell { height:26px; border-radius:3px; cursor:default; transition:transform .1s; }
+  .ow-h-cell:hover { transform:scaleY(1.12); }
+
+  /* Empty right */
+  .ow-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; opacity:.3; }
+  .ow-empty-icon { font-size:28px; }
+  .ow-empty-text { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); }
+
+  /* Protocol overlay */
+  .proto-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.82); display:flex; align-items:center; justify-content:center; animation:fadein .2s ease; }
+  .proto-inner { background:var(--bg-1); border:1px solid var(--border-0); border-radius:14px; padding:32px 28px; max-width:460px; width:calc(100% - 40px); animation:scalein .3s cubic-bezier(.16,1,.3,1); }
+  .proto-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.28em; text-transform:uppercase; color:var(--text-2); margin-bottom:6px; }
+  .proto-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:.04em; margin-bottom:4px; }
+  .proto-sub { font-size:13px; color:var(--text-1); line-height:1.55; margin-bottom:16px; }
+  .proto-rec { background:var(--accent-lo); border:1px solid var(--border-accent); border-radius:7px; padding:9px 13px; margin-bottom:14px; font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.1em; color:var(--accent); display:flex; align-items:center; gap:7px; }
+  .proto-rec::before { content:'◆'; font-size:7px; }
+  .proto-opts { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+  .proto-opt { padding:14px 16px; border-radius:9px; border:1px solid var(--border-0); cursor:pointer; transition:all .15s; background:var(--bg-2); }
+  .proto-opt:hover { border-color:var(--border-accent); }
+  .proto-opt.sel { background:var(--accent-lo); border-color:var(--accent); }
+  .proto-opt.sel.ally-sel { background:#4A8FD414; border-color:#4A8FD4; }
+  .proto-opt-head { display:flex; align-items:center; gap:9px; margin-bottom:5px; }
+  .proto-opt-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.06em; }
+  .proto-opt-desc { font-size:12px; color:var(--text-1); line-height:1.55; }
+  .proto-confirm { width:100%; padding:12px; border-radius:7px; font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.1em; background:var(--accent); color:#080807; border:none; cursor:pointer; transition:all .18s; box-shadow:0 4px 0 rgba(0,0,0,.4); }
+  .proto-confirm:hover { opacity:.9; transform:translateY(-2px); }
+
+  /* Flare overlay */
+  .flare-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.85); display:flex; align-items:center; justify-content:center; animation:fadein .2s ease; }
+  .flare-overlay-inner { background:var(--bg-1); border:1px solid rgba(191,93,93,.35); border-radius:14px; padding:36px 32px; max-width:390px; width:calc(100% - 40px); text-align:center; animation:scalein .3s cubic-bezier(.16,1,.3,1); }
+  .flare-icon { font-size:40px; display:block; margin-bottom:12px; animation:shake .4s ease; }
+  @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+  .flare-title { font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:.04em; color:var(--err); margin-bottom:7px; }
+  .flare-msg { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--text-1); line-height:1.7; margin-bottom:16px; letter-spacing:.04em; }
+  .flare-sms { background:var(--bg-2); border:1px solid var(--border-0); border-left:3px solid var(--err); border-radius:7px; padding:11px 13px; text-align:left; margin-bottom:16px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-0); line-height:1.6; }
+  .flare-dismiss { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; background:transparent; border:1px solid var(--border-0); color:var(--text-2); padding:8px 20px; border-radius:6px; cursor:pointer; transition:all .15s; }
+  .flare-dismiss:hover { border-color:var(--text-1); color:var(--text-0); }
+
+  /* No partners */
+  .ow-no-partners { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:0; }
+  .ow-invite-box { background:var(--bg-2); border:1px solid var(--border-accent); border-radius:10px; padding:20px 28px; text-align:center; margin-bottom:24px; width:100%; max-width:360px; }
+  .ow-invite-code { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:.22em; color:var(--accent); }
+
+  /* Mobile partners */
+  @media(max-width:768px) {
+    .ow-sidebar { width:100% !important; border-right:none; border-bottom:1px solid var(--border-0); max-height:280px; }
+    .ow-layout { flex-direction:column; }
+  }
 
   /* SETTINGS */
   .srow { background:var(--bg-1); border:1px solid var(--border-0); border-radius:10px; padding:22px; }
@@ -4660,50 +4776,32 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
 // ============================================================
 // PARTNERS PAGE
 // ============================================================
-const REACTIONS = ["🔥","💪","✓","⚡","👊"];
-
 const Partners = ({ user, profile, challenges, sb }) => {
-  const [partners,        setPartners]        = useState([]);
-  const [activePartner,   setActivePartner]   = useState(null);
-  const [msgText,         setMsgText]         = useState("");
-  const [sending,         setSending]         = useState(false);
-  const [copied,          setCopied]          = useState(false);
-  const [joinCode,        setJoinCode]        = useState("");
-  const [joinError,       setJoinError]       = useState("");
-  const [joinLoading,     setJoinLoading]     = useState(false);
-  const [showAdd,         setShowAdd]         = useState(false);
-  const [unreadMap,       setUnreadMap]       = useState({});
+  const [partners,        setPartners]     = useState([]);
+  const [activePartner,   setActivePartner]= useState(null);
   const [partnersLoading, setPartnersLoading] = useState(true);
-  const [sentReaction,    setSentReaction]    = useState(null);
-  const [clearPref,       setClearPref]       = useState("never");
-  const [showClearMenu,   setShowClearMenu]   = useState(false);
-  // Per-partner message cache — keyed by partner ID, never wiped on switch
-  const msgCache = useRef({});
-  const [msgTick, setMsgTick] = useState(0); // increment to force re-render from cache
-  const feedRef = useRef(null);
-  const activePartnerRef = useRef(null);
-
-  // Derive messages for active partner from cache
-  const messages = activePartner ? (msgCache.current[activePartner.partnerProfile.id] || []) : [];
-  const setMessages = (pid, updater) => {
-    msgCache.current[pid] = typeof updater === "function" ? updater(msgCache.current[pid] || []) : updater;
-    setMsgTick(t => t + 1);
-  };
-
-  const CLEAR_OPTIONS = [
-    { value:"never",   label:"Never clear" },
-    { value:"session", label:"Clear on close" },
-    { value:"7d",      label:"After 7 days" },
-    { value:"30d",     label:"After 30 days" },
-  ];
+  const [copied,          setCopied]       = useState(false);
+  const [joinCode,        setJoinCode]     = useState("");
+  const [joinError,       setJoinError]    = useState("");
+  const [joinLoading,     setJoinLoading]  = useState(false);
+  const [showAdd,         setShowAdd]      = useState(false);
+  const [activeTab,       setActiveTab]    = useState("overview");
+  const [showProto,       setShowProto]    = useState(false);
+  const [selectedProto,   setSelectedProto]= useState("spotter");
+  const [showFlare,       setShowFlare]    = useState(false);
+  const [flareUsedMap,    setFlareUsedMap] = useState({});
+  const [rxnSent,         setRxnSent]      = useState({});
+  const [noteText,        setNoteText]     = useState("");
+  const cdIntervalRef = useRef(null);
+  const [cdStr,           setCdStr]        = useState("--:--:--");
+  const [cdUrgent,        setCdUrgent]     = useState(false);
 
   const myCode = profile?.invite_code || "";
 
-  // Deterministic avatar colour from name
+  // Helpers
   const avatarColor = (name) => {
-    const colors = ['#D4922A','#5DBF8A','#4A8FD4','#8B5CF6','#BF5D5D','#0DBEAA','#E07B4A','#D4B22A'];
-    if (!name) return colors[0];
-    return colors[name.charCodeAt(0) % colors.length];
+    const colors = ["#D4922A","#5DBF8A","#4A8FD4","#8B5CF6","#BF5D5D","#0DBEAA","#E07B4A","#D4B22A"];
+    return name ? colors[name.charCodeAt(0) % colors.length] : colors[0];
   };
   const initials = (name) => {
     if (!name) return "?";
@@ -4711,430 +4809,488 @@ const Partners = ({ user, profile, challenges, sb }) => {
     return parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
   };
 
+  // Countdown
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date(), mid = new Date(now);
+      mid.setHours(24,0,0,0);
+      const d = mid - now;
+      const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
+      setCdStr(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`);
+      setCdUrgent(h < 3);
+    };
+    tick();
+    cdIntervalRef.current = setInterval(tick, 1000);
+    return () => clearInterval(cdIntervalRef.current);
+  }, []);
+
+  // Load partners
   const loadPartners = async () => {
     if (!sb || !user) return;
     try {
-      const { data: asUser }    = await sb.from("partnerships").select("*").eq("user_id",    user.id).eq("status","active");
+      const { data: asUser    } = await sb.from("partnerships").select("*").eq("user_id",    user.id).eq("status","active");
       const { data: asPartner } = await sb.from("partnerships").select("*").eq("partner_id", user.id).eq("status","active");
       const rows = [...(asUser||[]), ...(asPartner||[])];
       if (!rows.length) { setPartners([]); setPartnersLoading(false); return; }
       const otherIds = [...new Set(rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id))];
       const { data: profileRows } = await sb.from("profiles").select("id,full_name,invite_code").in("id", otherIds);
       const profileMap = Object.fromEntries((profileRows||[]).map(p => [p.id, p]));
-      const { data: chalRows } = await sb.from("challenges")
-        .select("user_id,name,tag,day_num,total_days,streak,archived")
-        .in("user_id", otherIds).eq("is_main", true).eq("archived", false);
+      const { data: chalRows } = await sb.from("challenges").select("user_id,name,tag,day_num,total_days,streak,consistency,archived").in("user_id", otherIds).eq("is_main",true).eq("archived",false);
       const chalMap = Object.fromEntries((chalRows||[]).map(c => [c.user_id, c]));
-      const { data: unreadRows } = await sb.from("partner_messages")
-        .select("from_user_id").eq("to_user_id", user.id).eq("read", false);
-      const counts = {};
-      (unreadRows||[]).forEach(r => { counts[r.from_user_id] = (counts[r.from_user_id]||0) + 1; });
-      setUnreadMap(counts);
+      // Load today's checkins for status
+      const today = new Date().toISOString().split("T")[0];
+      const { data: checkinRows } = await sb.from("checkins").select("challenge_id,score,date").in("challenge_id", (chalRows||[]).map(c => c.user_id)).eq("date", today);
+      const checkinMap = {};
+      (checkinRows||[]).forEach(ci => { checkinMap[ci.challenge_id] = ci.score; });
       const all = rows.map(r => {
         const otherId = r.user_id === user.id ? r.partner_id : r.user_id;
-        return { ...r, partnerProfile: profileMap[otherId] || { id:otherId, full_name:"Partner" }, challenge: chalMap[otherId] || null };
+        const ch = chalMap[otherId] || null;
+        // Derive status from today's checkin score
+        const todayScore = ch ? (checkinMap[ch.user_id] ?? null) : null;
+        const status = todayScore === null ? "cold" : todayScore >= 75 ? "gold" : todayScore > 0 ? "ember" : "cold";
+        return {
+          ...r,
+          partnerProfile: profileMap[otherId] || { id: otherId, full_name: "Partner" },
+          challenge: ch,
+          status,
+          protocol: r.protocol || "spotter",
+          syncRate: Math.round((ch?.consistency || 0)),
+        };
       });
       setPartners(all);
       setPartnersLoading(false);
     } catch(e) { console.warn("loadPartners:", e); setPartnersLoading(false); }
   };
 
-  const loadMessages = async (partnerId) => {
-    if (!sb || !user) return;
-    try {
-      // 30 day window
-      const since = new Date(Date.now() - 30*24*3600*1000).toISOString();
-      const { data } = await sb.from("partner_messages")
-        .select("*")
-        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`)
-        .gte("created_at", since)
-        .order("created_at", { ascending: true })
-        .limit(200);
-      const confirmed = data || [];
-      // Drop optimistic messages that have been confirmed in DB
-      // Match by body + sender + within 30s window
-      setMessages(partnerId, prev => {
-        const optimistics = (prev||[]).filter(m => String(m.id).startsWith("opt-"));
-        const stillPending = optimistics.filter(opt => {
-          const optTime = new Date(opt.created_at).getTime();
-          return !confirmed.some(c =>
-            c.from_user_id === opt.from_user_id &&
-            c.body === opt.body &&
-            Math.abs(new Date(c.created_at).getTime() - optTime) < 30000
-          );
-        });
-        return [...confirmed, ...stillPending];
-      });
-      await sb.from("partner_messages").update({ read: true })
-        .eq("to_user_id", user.id).eq("from_user_id", partnerId);
-      setUnreadMap(m => ({ ...m, [partnerId]: 0 }));
-    } catch(e) { console.warn("loadMessages:", e); }
-  };
-
   useEffect(() => { loadPartners(); }, [user, profile]);
-  useEffect(() => {
-    if (!activePartner) return;
-    const pid = activePartner.partnerProfile.id;
-    activePartnerRef.current = pid;
-    // Load prefs
-    const savedPref = localStorage.getItem(`forge_clearpref_${pid}`) || "never";
-    setClearPref(savedPref);
-    // Only fetch if not already cached
-    if (!msgCache.current[pid]) {
-      loadMessages(pid);
-    }
-  }, [activePartner]);
-  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages]);
 
-  // Poll for incoming messages every 10s
-  useEffect(() => {
-    if (!activePartner) return;
-    const pid = activePartner.partnerProfile.id;
-    const interval = setInterval(() => loadMessages(pid), 10000);
-    return () => clearInterval(interval);
-  }, [activePartner]);
-
-  const copyCode = () => { navigator.clipboard.writeText(myCode); setCopied(true); setTimeout(()=>setCopied(false),2000); };
-
+  // Join partner
   const joinPartner = async () => {
     setJoinError(""); setJoinLoading(true);
     try {
       if (!joinCode.trim()) throw new Error("Enter an invite code.");
       if (joinCode.trim().toUpperCase() === myCode) throw new Error("That's your own code.");
-      const { data: tp, error: pErr } = await sb.from("profiles").select("id,full_name")
-        .eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
+      const { data: tp, error: pErr } = await sb.from("profiles").select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
       if (pErr) throw new Error(pErr.message);
       if (!tp) throw new Error("No user found with that code.");
-      const { data: ex } = await sb.from("partnerships").select("id,status")
-        .or(`and(user_id.eq.${user.id},partner_id.eq.${tp.id}),and(user_id.eq.${tp.id},partner_id.eq.${user.id})`).maybeSingle();
-      if (ex) throw new Error(ex.status === "active" ? "Already partners." : "Already sent.");
-      const { error: iErr } = await sb.from("partnerships").insert({
-        user_id: user.id, partner_id: tp.id,
-        invite_code: `${user.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status: "active",
-      });
+      const { data: ex } = await sb.from("partnerships").select("id,status").or(`and(user_id.eq.${user.id},partner_id.eq.${tp.id}),and(user_id.eq.${tp.id},partner_id.eq.${user.id})`).maybeSingle();
+      if (ex) throw new Error(ex.status === "active" ? "Already partners." : "Request already sent.");
+      const { error: iErr } = await sb.from("partnerships").insert({ user_id:user.id, partner_id:tp.id, invite_code:`${user.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status:"active", protocol:selectedProto });
       if (iErr) throw new Error(iErr.message);
-      setJoinCode(""); setShowAdd(false);
+      setJoinCode(""); setShowAdd(false); setShowProto(false);
       await loadPartners();
     } catch(e) { setJoinError(e.message); }
     finally { setJoinLoading(false); }
   };
 
-  const sendMessage = async () => {
-    if (!msgText.trim() || !activePartner || !sb) return;
-    const pid = activePartner.partnerProfile.id;
-    const body = msgText.trim();
-    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:pid, body, type:"text", read:false, created_at:new Date().toISOString() };
-    setMessages(pid, m => [...m, optimistic]);
-    setMsgText("");
-    setSending(true);
-    try {
-      await sb.from("partner_messages").insert({ from_user_id:user.id, to_user_id:pid, body, type:"text", read:false });
-    } catch(e) {
-      // Roll back optimistic message on failure
-      setMessages(pid, m => m.filter(x => x.id !== optimistic.id));
-      console.warn("sendMessage:", e);
-    }
-    finally { setSending(false); }
-  };
-
-  const sendReaction = async (emoji) => {
-    if (!activePartner || !sb) return;
-    const pid = activePartner.partnerProfile.id;
-    setSentReaction(emoji); setTimeout(()=>setSentReaction(null),1500);
-    const optimistic = { id:`opt-${Date.now()}`, from_user_id:user.id, to_user_id:pid, body:emoji, type:"text", read:false, created_at:new Date().toISOString() };
-    setMessages(pid, m => [...m, optimistic]);
-    try {
-      await sb.from("partner_messages").insert({ from_user_id:user.id, to_user_id:pid, body:emoji, type:"text", read:false });
-    } catch(e) { console.warn("sendReaction:", e); }
-  };
-
-  const nudge = async (partnerId, e) => {
-    e.stopPropagation();
-    if (!sb) return;
-    try {
-      await sb.from("partner_messages").insert({
-        from_user_id: user.id, to_user_id: partnerId,
-        body: "🔥", type: "text", read: false,
-      });
-    } catch(e) {}
-  };
-
   const removePartner = async (id) => {
-    if (!window.confirm("Remove this accountability partner?")) return;
+    if (!window.confirm("Remove this partner?")) return;
     await sb.from("partnerships").delete().eq("id", id);
     setActivePartner(null); await loadPartners();
   };
 
-  const clearMessagesForPartner = async (partnerId) => {
-    if (!sb || !user) return;
-    try {
-      await sb.from("partner_messages").delete()
-        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${user.id})`);
-      setMessages(partnerId, () => []);
-    } catch(e) { console.warn("clearMessages:", e); }
-  };
+  const copyCode = () => { navigator.clipboard.writeText(myCode); setCopied(true); setTimeout(()=>setCopied(false),2000); };
 
-  const saveClearPref = (pref) => {
-    const pid = activePartner?.partnerProfile?.id;
-    if (!pid) return;
-    setClearPref(pref);
-    localStorage.setItem(`forge_clearpref_${pid}`, pref);
-    if (pref === "session") localStorage.setItem(`forge_lastclear_${pid}`, Date.now().toString());
-    setShowClearMenu(false);
-  };
+  // My challenge data
+  const myChallenge = challenges?.main;
+  const myStatus = "gold"; // placeholder — real impl reads kpis from parent
 
-  const fmtTime = ts => new Date(ts).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
-  const fmtMsgDate = ts => {
-    const d = new Date(ts), now = new Date();
-    if (d.toDateString() === now.toDateString()) return "Today";
-    const y = new Date(now); y.setDate(now.getDate()-1);
-    if (d.toDateString() === y.toDateString()) return "Yesterday";
-    return d.toLocaleDateString([], { month:"short", day:"numeric" });
-  };
-  const lastActive = ts => {
-    if (!ts) return "";
-    const h = Math.floor((Date.now()-new Date(ts).getTime())/3600000);
-    if (h < 1) return "now"; if (h < 24) return `${h}h`; return `${Math.floor(h/24)}d`;
-  };
-
-  // Group consecutive messages by sender + date
-  const buildGroups = (msgs) => {
-    const groups = [];
-    msgs.forEach(m => {
-      const date = fmtMsgDate(m.created_at);
-      const isMe = m.from_user_id === user.id;
-      const last = groups[groups.length-1];
-      if (last && last.date === date && last.isMe === isMe) {
-        last.msgs.push(m);
-      } else {
-        groups.push({ date, isMe, msgs:[m] });
-      }
-    });
-    return groups;
-  };
-
-  // Inject date dividers between groups
-  const buildFeed = (msgs) => {
-    const groups = buildGroups(msgs);
-    const feed = [];
-    let lastDate = null;
-    groups.forEach((g,i) => {
-      if (g.date !== lastDate) { feed.push({ type:"date", date:g.date, key:`date-${i}` }); lastDate = g.date; }
-      feed.push({ type:"group", ...g, key:`group-${i}` });
-    });
-    return feed;
-  };
+  // Get partner status dot color
+  const statusColor = (s) => s==="gold" ? "#F5C842" : s==="ember" ? "var(--accent)" : "#2E2C28";
+  const statusLabel = (s) => s==="gold" ? "Target Met" : s==="ember" ? "Baseline Met" : "Awaiting Execution";
+  const statusSince = (s) => s==="gold" ? "Logged 45m ago" : s==="ember" ? "Logged 2h ago" : "Not logged yet today";
+  const statusBorder = (s) => s==="gold" ? "#F5C84230" : s==="ember" ? "var(--border-accent)" : "var(--border-0)";
+  const statusBg = (s) => s==="gold" ? "#F5C84210" : s==="ember" ? "var(--accent-lo)" : "var(--bg-2)";
 
   const ap = activePartner;
-  const pName = ap?.partnerProfile?.full_name?.split(" ")[0] || "Partner";
-  const pFullName = ap?.partnerProfile?.full_name || "Partner";
-  const chal = ap?.challenge;
-  const pct = chal ? Math.round((chal.day_num/chal.total_days)*100) : 0;
-  const feed = buildFeed(messages);
+  const pName = ap?.partnerProfile?.full_name || "Partner";
+  const pInitials = initials(pName);
+  const pColor = avatarColor(pName);
+  const pChal = ap?.challenge;
+  const pStatus = ap?.status || "cold";
+  const isSpotter = ap?.protocol === "spotter";
+  const canFlare = isSpotter && pStatus === "cold" && !flareUsedMap[ap?.id];
+  // Flare window: 8pm–11pm
+  const h = new Date().getHours();
+  const inFlareWindow = h >= 20 && h < 23;
+  const flareArmed = canFlare && inFlareWindow;
 
-  // ── No partners empty state ──
-  if (partnersLoading) return <div className="page partners-page" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)"}}>Loading…</div></div>;
+  const syncT = Math.round((ap?.syncRate || 0) * 0.57 / 10);
+  const syncB = Math.round((ap?.syncRate || 0) * 0.14 / 10);
+  const syncD = Math.max(0, 14 - syncT - syncB);
+  const syncTotal = syncT + syncB + syncD;
+  const tPct = syncTotal > 0 ? Math.round((syncT/syncTotal)*100) : 0;
+  const bPct = syncTotal > 0 ? Math.round((syncB/syncTotal)*100) : 0;
+
+  if (partnersLoading) return (
+    <div className="page partners-page" style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)"}}>Loading…</div>
+    </div>
+  );
+
   if (!partners.length && !showAdd) return (
     <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
-      <div className="p-no-partners">
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Accountability</div>
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",marginBottom:8}}>Find Your People.</div>
+      <div className="ow-no-partners">
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Spotter Protocol</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",marginBottom:8}}>Find Your Spotter.</div>
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",lineHeight:1.65,textAlign:"center",maxWidth:340,marginBottom:32}}>
-          Share your invite code with someone grinding alongside you.
+          Share your invite code. Choose your protocol. Hold each other accountable.
         </div>
-        <div className="p-invite-box">
+        <div className="ow-invite-box">
           <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Your invite code</div>
-          <div className="p-invite-code">{myCode||"Loading…"}</div>
+          <div className="ow-invite-code">{myCode||"Loading…"}</div>
           <button className="btn btn-g" style={{marginTop:10,width:"100%",justifyContent:"center"}} onClick={copyCode}>{copied?"✓ Copied":"Copy Code"}</button>
         </div>
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",marginBottom:14}}>— or enter their code —</div>
         <div style={{display:"flex",gap:8,width:"100%",maxWidth:360}}>
-          <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center"}}
+          <input className="field" style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center"}}
             value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
-            placeholder="Enter invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinPartner()} />
-          <button className="btn btn-a" onClick={joinPartner} disabled={joinLoading}>{joinLoading?"…":"Connect →"}</button>
+            placeholder="Enter invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&setShowProto(true)} />
+          <button className="btn btn-a" onClick={()=>setShowProto(true)} disabled={!joinCode.trim()}>Connect →</button>
         </div>
         {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:10}}>{joinError}</div>}
       </div>
+      {showProto && renderProtoOverlay()}
     </div>
   );
 
+  // Build history grid cells
+  const buildHistory = (partner) => {
+    const seed = (partner?.partnerProfile?.full_name||"x").charCodeAt(0);
+    const sr = partner?.syncRate || 50;
+    return Array.from({length:30},(_,i)=>{
+      const v = ((seed*(i+7)*13)%100);
+      if (v < sr*0.57) return "gold";
+      if (v < sr*0.71) return "ember";
+      if (v < 85) return "desync";
+      return "miss";
+    });
+  };
+
+  const hColors = { gold:"#F5C842", ember:"var(--accent)", desync:"#D4922A22", miss:"var(--bg-3)" };
+  const hOpacity = { gold:.9, ember:.75, desync:1, miss:1 };
+
+  function renderProtoOverlay() {
+    return (
+      <div className="proto-overlay" onClick={()=>{setShowProto(false);}}>
+        <div className="proto-inner" onClick={e=>e.stopPropagation()}>
+          <div className="proto-tag">New Partnership</div>
+          <div className="proto-title">Choose Your Protocol</div>
+          <div className="proto-sub">How do you want to hold each other accountable? Both partners see this choice.</div>
+          <div className="proto-rec">Recommended: Spotter Mode — execution-heavy challenge detected</div>
+          <div className="proto-opts">
+            <div className={`proto-opt ${selectedProto==="spotter"?"sel":""}`} onClick={()=>setSelectedProto("spotter")}>
+              <div className="proto-opt-head">
+                <span style={{fontSize:14}}>◆</span>
+                <span className="proto-opt-name" style={{color:"var(--accent)"}}>Spotter Mode</span>
+              </div>
+              <div className="proto-opt-desc">Binary status visible. Flare available 8–11PM if partner hasn't logged. Pressure is the mechanism.</div>
+            </div>
+            <div className={`proto-opt ally-sel ${selectedProto==="ally"?"sel":""}`} onClick={()=>setSelectedProto("ally")}>
+              <div className="proto-opt-head">
+                <span style={{fontSize:14}}>◈</span>
+                <span className="proto-opt-name" style={{color:"#4A8FD4"}}>Ally Mode</span>
+              </div>
+              <div className="proto-opt-desc">Daily 140-char check-in note. Reactions only. No public status pressure. Warmth is the mechanism.</div>
+            </div>
+          </div>
+          <button className="proto-confirm" onClick={joinPartner} disabled={joinLoading}>
+            {joinLoading ? "Connecting…" : "Confirm & Connect →"}
+          </button>
+          {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:10,textAlign:"center"}}>{joinError}</div>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
-      <div className="partners-layout" style={{flex:1,overflow:"hidden"}}>
+      <div className="ow-layout" style={{flex:1,overflow:"hidden"}}>
 
-        {/* ── Sidebar ── */}
-        <div className="p-sidebar">
-          <div className="p-sidebar-head">
-            <div className="p-sidebar-tag">Accountability</div>
-            <div className="p-sidebar-title">Partners</div>
-            <div className="p-sidebar-actions">
-              <button className="btn btn-a" style={{fontSize:9,padding:"4px 10px",letterSpacing:".12em"}}
-                onClick={()=>setShowAdd(v=>!v)}>{showAdd?"✕ Close":"+ Add"}</button>
-              <button className="btn btn-g" style={{fontSize:9,padding:"4px 10px",letterSpacing:".1em"}}
-                onClick={copyCode}>{copied?"✓ Copied":`Code: ${myCode}`}</button>
+        {/* ── OVERWATCH SIDEBAR ── */}
+        <div className="ow-sidebar">
+
+          {/* Head */}
+          <div className="ow-head">
+            <div className="ow-tag">Spotter Protocol</div>
+            <div className="ow-title">
+              Overwatch
+              <div className="ow-add" onClick={()=>{setShowAdd(v=>!v); setJoinError("");}} title="Add partner">+</div>
             </div>
             {showAdd && (
-              <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
-                <input className="p-input" style={{textTransform:"uppercase",letterSpacing:".1em",textAlign:"center",fontSize:11}}
+              <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
+                {/* Your code — shown first */}
+                <div style={{background:"var(--bg-0)",border:"1px solid var(--border-accent)",borderRadius:7,padding:"10px 12px",textAlign:"center"}}>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".24em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:4}}>Your Code</div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:".22em",color:"var(--accent)",lineHeight:1}}>{myCode||"…"}</div>
+                  <button className="btn btn-g" style={{width:"100%",justifyContent:"center",marginTop:8,fontSize:10,padding:"5px 0"}} onClick={copyCode}>
+                    {copied?"✓ Copied":"Copy Code"}
+                  </button>
+                </div>
+                {/* Divider */}
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)",textAlign:"center"}}>— or enter theirs —</div>
+                <input className="field" style={{textTransform:"uppercase",letterSpacing:".1em",textAlign:"center",fontSize:11}}
                   value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
-                  placeholder="Invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinPartner()} />
+                  placeholder="Their invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinCode.trim()&&setShowProto(true)} />
                 <button className="btn btn-a" style={{width:"100%",justifyContent:"center"}}
-                  onClick={joinPartner} disabled={joinLoading}>{joinLoading?"Connecting…":"Connect →"}</button>
+                  onClick={()=>joinCode.trim()&&setShowProto(true)} disabled={!joinCode.trim()}>Connect →</button>
                 {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,marginTop:2}}>{joinError}</div>}
               </div>
             )}
           </div>
 
-          <div className="p-list">
-            <div className="p-section">Direct Messages</div>
+          {/* You card */}
+          <div className="you-card">
+            <div className="you-card-top">
+              <div className="you-ring" style={{background:"#F5C84222",border:"2px solid #F5C842",color:"#F5C842"}}>
+                {initials(profile?.full_name || "Me")}
+              </div>
+              <div className="you-info">
+                <div className="you-label">You · Today</div>
+                <div className="you-name">{(profile?.full_name||"You").split(" ")[0]}</div>
+                <div className="you-challenge">{myChallenge ? `${myChallenge.name} · Day ${myChallenge.dayNum}/${myChallenge.totalDays}` : "No active challenge"}</div>
+              </div>
+              <div style={{textAlign:"right",flexShrink:0}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:".06em",color:"#F5C842"}}>★ TARGET</div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:1,letterSpacing:".08em"}}>MET</div>
+              </div>
+            </div>
+            {myChallenge && (
+              <div className="you-stats">
+                <div><div className="you-stat-n" style={{color:"var(--accent)"}}>{myChallenge.streak}</div><div className="you-stat-l">Streak</div></div>
+                <div><div className="you-stat-n" style={{color:"var(--ok)"}}>{myChallenge.consistency}%</div><div className="you-stat-l">Consist.</div></div>
+                <div><div className="you-stat-n" style={{color:"var(--text-1)"}}>{myChallenge.totalDays - myChallenge.dayNum}</div><div className="you-stat-l">Days Left</div></div>
+              </div>
+            )}
+            {myChallenge && (
+              <div className="you-bar">
+                <div className="you-bar-fill" style={{width:`${Math.round((myChallenge.dayNum/myChallenge.totalDays)*100)}%`}} />
+              </div>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="ow-legend">
+            <div className="ow-leg"><div className="ow-leg-dot s-dot cold" style={{width:6,height:6}}></div>Awaiting</div>
+            <div className="ow-leg"><div className="ow-leg-dot" style={{width:6,height:6,borderRadius:"50%",background:"var(--accent)",boxShadow:"0 0 5px var(--accent)"}}></div>Baseline</div>
+            <div className="ow-leg"><div className="ow-leg-dot" style={{width:6,height:6,borderRadius:"50%",background:"#F5C842",boxShadow:"0 0 5px #F5C842"}}></div>Target</div>
+          </div>
+
+          {/* Partner list */}
+          <div className="ow-list">
             {partners.map(p => {
-              const pId = p.partnerProfile.id;
-              const name = p.partnerProfile.full_name || "Partner";
-              const ch = p.challenge;
-              const unread = unreadMap[pId] || 0;
-              const isActive = ap?.id === p.id;
+              const pn = p.partnerProfile?.full_name || "Partner";
               return (
-                <div key={p.id} className={`p-row ${isActive?"active":""}`} onClick={()=>setActivePartner(p)}>
-                  <div className="p-avatar" style={{background:avatarColor(name)}}>
-                    {initials(name)}
-                    <div className="p-avatar-dot p-dot-offline" />
+                <div key={p.id} className={`ow-row ${ap?.id===p.id?"active":""}`} onClick={()=>{setActivePartner(p);setActiveTab("overview");}}>
+                  <div className={`s-dot ${p.status}`} />
+                  <div className="ow-row-info">
+                    <div className="ow-row-name">{pn.split(" ")[0]}</div>
+                    <div className="ow-row-sub">{p.challenge ? `${p.challenge.name} · Day ${p.challenge.day_num}/${p.challenge.total_days}` : "No challenge"}</div>
                   </div>
-                  <div className="p-row-info">
-                    <div className="p-row-name">{name.split(" ")[0]}</div>
-                    <div className="p-row-sub">{ch ? `${ch.name} · Day ${ch.day_num}` : "No active challenge"}</div>
+                  <div className="ow-row-right">
+                    <div className="ow-streak" style={{color: p.status==="gold"?"#F5C842":p.status==="ember"?"var(--accent)":"var(--text-2)"}}>{p.challenge?.streak||0}</div>
+                    <div className={`proto-badge ${p.protocol}`}>{p.protocol==="spotter"?"◆ Spotter":"◈ Ally"}</div>
                   </div>
-                  <div className="p-row-right">
-                    {unread > 0 && <div className="p-unread">{unread}</div>}
-                    <div className="p-ts">{lastActive(p.updated_at)}</div>
-                  </div>
-                  <button className="p-nudge-btn" onClick={e=>nudge(pId,e)} title="Nudge 🔥">🔥</button>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* ── Thread ── */}
-        <div className="p-thread">
+        {/* ── DETAIL PANEL ── */}
+        <div className="ow-detail">
           {!ap ? (
-            <div className="p-empty-thread">
-              <div style={{fontSize:28,opacity:.15}}>◆</div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",opacity:.5}}>Select a partner</div>
+            <div className="ow-empty">
+              <div className="ow-empty-icon">◆</div>
+              <div className="ow-empty-text">Select a partner</div>
             </div>
-          ) : (<>
-            {/* Header */}
-            <div className="p-thread-head">
-              <div className="p-thread-avatar" style={{background:avatarColor(pFullName)}}>{initials(pFullName)}</div>
-              <div>
-                <div className="p-thread-name">{pName}</div>
-                <div className="p-thread-meta">{chal ? `${chal.name} · Day ${chal.day_num} of ${chal.total_days}` : "No active challenge"}</div>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="ow-detail-head">
+                <div className="ow-detail-head-bg" style={{background:`radial-gradient(ellipse 70% 100% at 90% 50%, ${pColor}0C, transparent 60%)`}} />
+                <div className="ow-detail-top">
+                  <div className="ow-avatar" style={{background:`${pColor}18`,color:pColor,border:`1px solid ${pColor}44`}}>{pInitials}</div>
+                  <div>
+                    <div className="ow-detail-name">{pName.split(" ")[0]}</div>
+                    <div className="ow-detail-challenge">{pChal ? `${pChal.name} · Day ${pChal.day_num} of ${pChal.total_days}` : "No active challenge"}</div>
+                    <div className={`ow-proto-pill ${ap.protocol}`}>{ap.protocol==="spotter"?"◆ Spotter Mode":"◈ Ally Mode"}</div>
+                  </div>
+                  <button onClick={()=>removePartner(ap.id)} className="btn btn-g" style={{marginLeft:"auto",fontSize:10,padding:"4px 10px",borderColor:"var(--err)30",color:"var(--text-2)"}}>Remove</button>
+                </div>
+                <div className="ow-status-banner" style={{background:statusBg(pStatus),borderColor:statusBorder(pStatus)}}>
+                  <div className="ow-sb-dot" style={{background:statusColor(pStatus),boxShadow:pStatus!=="cold"?`0 0 8px ${statusColor(pStatus)}`:"none"}} />
+                  <div className="ow-sb-label" style={{color:pStatus==="gold"?"#F5C842":pStatus==="ember"?"var(--accent)":"var(--text-1)"}}>{statusLabel(pStatus)}</div>
+                  <div className="ow-sb-since">{statusSince(pStatus)}</div>
+                </div>
               </div>
-              <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
-                {chal && <div className="p-streak-pill"><span className="n">{chal.streak}</span> day streak</div>}
-                {/* Clear chat menu */}
-                <div style={{position:"relative"}}>
-                  <button className="btn btn-g" style={{fontSize:9,padding:"4px 10px",letterSpacing:".12em"}}
-                    onClick={()=>setShowClearMenu(v=>!v)}>
-                    ⚙ Chat
-                  </button>
-                  {showClearMenu && (
-                    <div style={{
-                      position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:100,
-                      background:"var(--bg-2)",border:"1px solid var(--border-1)",
-                      borderRadius:8,padding:6,minWidth:160,
-                      boxShadow:"0 8px 24px rgba(0,0,0,.4)",
-                    }} onClick={e=>e.stopPropagation()}>
-                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-2)",padding:"4px 8px 6px"}}>
-                        Auto-clear history
+
+              {/* Tabs */}
+              <div className="ow-tabs">
+                <button className={`ow-tab ${activeTab==="overview"?"on":""}`} onClick={()=>setActiveTab("overview")}>Overview</button>
+                <button className={`ow-tab ${activeTab==="history"?"on":""}`} onClick={()=>setActiveTab("history")}>History</button>
+              </div>
+
+              {/* OVERVIEW */}
+              {activeTab==="overview" && (
+                <>
+                <div className="ow-body">
+                  {/* Stats */}
+                  <div className="ow-stats">
+                    <div className="ow-stat">
+                      <div className="ow-stat-n" style={{color:"var(--accent)"}}>{pChal?.streak||0}</div>
+                      <div className="ow-stat-l">Day Streak</div>
+                    </div>
+                    <div className="ow-stat">
+                      <div className="ow-stat-n" style={{color:(pChal?.consistency||0)>=80?"var(--ok)":(pChal?.consistency||0)>=60?"var(--accent)":"var(--err)"}}>
+                        {pChal?.consistency||0}%
                       </div>
-                      {CLEAR_OPTIONS.map(o=>(
-                        <div key={o.value}
-                          onClick={()=>saveClearPref(o.value)}
-                          style={{
-                            display:"flex",alignItems:"center",gap:8,
-                            padding:"6px 8px",borderRadius:5,cursor:"pointer",
-                            background:clearPref===o.value?"var(--accent-lo)":"none",
-                            fontFamily:"'IBM Plex Mono',monospace",fontSize:10,
-                            color:clearPref===o.value?"var(--accent)":"var(--text-1)",
-                            letterSpacing:".06em",transition:"background .12s",
-                          }}>
-                          <span style={{width:6,height:6,borderRadius:"50%",background:clearPref===o.value?"var(--accent)":"var(--border-1)",flexShrink:0,display:"inline-block"}} />
-                          {o.label}
+                      <div className="ow-stat-l">Consistency</div>
+                    </div>
+                    <div className="ow-stat">
+                      <div className="ow-stat-n" style={{color:"var(--text-1)"}}>{pChal ? pChal.total_days - pChal.day_num : 0}</div>
+                      <div className="ow-stat-l">Days Left</div>
+                    </div>
+                  </div>
+
+                  {/* Countdown */}
+                  <div className="ow-countdown">
+                    <div>
+                      <div className="ow-cd-label">Until Tether Breaks</div>
+                      <div className={`ow-cd-time${cdUrgent?" urgent":""}`}>{cdStr}</div>
+                    </div>
+                    <div className="ow-cd-info">
+                      <div className="ow-cd-sub">Log before midnight or the streak ends.</div>
+                    </div>
+                  </div>
+
+                  {/* Sync */}
+                  <div className="ow-sync">
+                    <div className="ow-sync-top">
+                      <div className="ow-sync-title">Execution Sync · Last 14 Days</div>
+                      <div className="ow-sync-pct" style={{color:(ap?.syncRate||0)>=80?"var(--ok)":(ap?.syncRate||0)>=60?"var(--accent)":"var(--err)"}}>{ap?.syncRate||0}%</div>
+                    </div>
+                    <div className="ow-sync-bar">
+                      <div className="ow-sync-bar-t" style={{width:`${tPct}%`}} />
+                      <div className="ow-sync-bar-b" style={{width:`${bPct}%`}} />
+                    </div>
+                    <div className="ow-sync-legs">
+                      <div className="ow-sync-leg"><div className="ow-sync-dot" style={{background:"#F5C842"}}></div>Both target ({syncT}d)</div>
+                      <div className="ow-sync-leg"><div className="ow-sync-dot" style={{background:"var(--accent)"}}></div>Baseline ({syncB}d)</div>
+                      <div className="ow-sync-leg"><div className="ow-sync-dot" style={{background:"#2E2C28"}}></div>Desync ({syncD}d)</div>
+                    </div>
+                  </div>
+
+                  {/* Ally extras */}
+                  {!isSpotter && (
+                    <>
+                      <div className="ow-ally-note">
+                        <div className="ow-ally-note-head">
+                          <div className="ow-ally-note-label">◈ {pName.split(" ")[0]}'s Note</div>
+                          <div className="ow-ally-note-timer">Expires in 14h</div>
                         </div>
-                      ))}
-                      <div style={{borderTop:"1px solid var(--border-0)",marginTop:4,paddingTop:4}}>
-                        <div onClick={()=>{ if(window.confirm("Clear all messages with "+pName+"?")){ clearMessagesForPartner(ap.partnerProfile.id); setShowClearMenu(false); }}}
-                          style={{padding:"6px 8px",borderRadius:5,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--err)",letterSpacing:".06em"}}>
-                          Clear now
+                        <div className="ow-ally-note-text">"Rough day but got it done."</div>
+                        <div className="ow-rxns">
+                          {["🔥","💪","◆"].map(e => (
+                            <div key={e} className={`ow-rxn ${rxnSent[ap.id]===e?"sent":""}`}
+                              onClick={()=>setRxnSent(r=>({...r,[ap.id]:e}))}>{e}</div>
+                          ))}
                         </div>
                       </div>
+                      <div className="ow-your-note">
+                        <div className="ow-your-note-label">Your Note · Today</div>
+                        <textarea className="ow-note-input" rows={2} maxLength={140}
+                          value={noteText} onChange={e=>setNoteText(e.target.value)}
+                          placeholder="Optional · 140 chars · gone after 24hrs" />
+                        <div className="ow-note-footer">
+                          <div className="ow-note-count">{noteText.length} / 140</div>
+                          <button className="ow-note-send" onClick={()=>setNoteText("")}>Post →</button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Protocol change */}
+                  <div style={{background:"var(--bg-2)",border:"1px solid var(--border-0)",borderRadius:8,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{flex:1,fontSize:12,color:"var(--text-1)",lineHeight:1.5}}>Running the wrong protocol? Either partner can request a change.</div>
+                    <button className="btn btn-g" style={{fontSize:9,padding:"5px 10px",letterSpacing:".1em"}} onClick={()=>setShowProto(true)}>Change →</button>
+                  </div>
+                </div>
+
+                {/* Action */}
+                <div className="ow-action">
+                  {isSpotter ? (
+                    <>
+                      <button className={`flare-btn ${flareArmed?"armed":"off"}`}
+                        disabled={!flareArmed}
+                        onClick={()=>{ setFlareUsedMap(m=>({...m,[ap.id]:true})); setShowFlare(true); }}>
+                        ⚡ DEPLOY FLARE
+                      </button>
+                      <div className={`flare-meta${flareArmed?" hot":""}`}>
+                        {flareArmed
+                          ? "Flare window active · Partner has not executed"
+                          : flareUsedMap[ap.id]
+                          ? "Flare deployed today — one per day"
+                          : pStatus !== "cold"
+                          ? "Partner is executing — no flare needed"
+                          : "Flare window: 8:00 PM – 11:00 PM only"}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".14em",textTransform:"uppercase",color:"#4A8FD4",textAlign:"center",padding:"4px 0"}}>
+                      ◈ Ally Mode · Use the note above to check in
                     </div>
                   )}
                 </div>
-                <button className="btn btn-g" style={{borderColor:"var(--err)30",color:"var(--err)",fontSize:10,padding:"4px 10px"}}
-                  onClick={()=>removePartner(ap.id)}>Remove</button>
-              </div>
-            </div>
-            {chal && <div className="p-thread-bar"><div className="p-thread-bar-fill" style={{width:`${pct}%`}} /></div>}
+                </>
+              )}
 
-            {/* Close clear menu on feed click */}
-            {/* Feed */}
-            <div className="p-feed" ref={feedRef} onClick={()=>setShowClearMenu(false)}>
-              {messages.length === 0 && (
-                <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6}}>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",letterSpacing:".1em"}}>No messages yet.</div>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-3)",letterSpacing:".06em"}}>Say something.</div>
+              {/* HISTORY */}
+              {activeTab==="history" && (
+                <div style={{flex:1,overflowY:"auto",padding:"18px 22px"}}>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
+                    Shared Execution — Last 30 Days
+                  </div>
+                  <div className="ow-h-grid">
+                    {buildHistory(ap).map((c,i)=>(
+                      <div key={i} className="ow-h-cell" style={{background:hColors[c],opacity:hOpacity[c]}} title={`Day ${i+1}`} />
+                    ))}
+                  </div>
+                  <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:6}}>
+                    {[
+                      {color:"#F5C842",op:.9,label:"Both hit target"},
+                      {color:"var(--accent)",op:.75,label:"At least baseline"},
+                      {color:"#D4922A22",op:1,label:"Only one executed"},
+                      {color:"var(--bg-3)",op:1,label:"Neither executed"},
+                    ].map(l=>(
+                      <div key={l.label} style={{display:"flex",alignItems:"center",gap:8,fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-1)"}}>
+                        <div style={{width:16,height:16,borderRadius:3,background:l.color,opacity:l.op,flexShrink:0}}></div>
+                        {l.label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-              {feed.map(item => {
-                if (item.type === "date") return (
-                  <div key={item.key} className="p-date-div"><span>{item.date}</span></div>
-                );
-                const { isMe, msgs, key } = item;
-                const name = isMe ? "You" : pName;
-                const color = isMe ? "#4A8FD4" : avatarColor(pFullName);
-                const ini = isMe ? initials(profile?.full_name||"Me") : initials(pFullName);
-                return (
-                  <div key={key} className={`p-group ${isMe?"me":"them"}`}>
-                    <div className="p-group-avatar" style={{background:color}}>{ini}</div>
-                    <div className="p-group-body">
-                      <div className="p-group-header">
-                        <span className={`p-group-name ${isMe?"me":""}`}>{name}</span>
-                        <span className="p-group-ts">{fmtTime(msgs[0].created_at)}</span>
-                      </div>
-                      {msgs.map(m => (
-                        <div key={m.id} className="p-bubble">{m.body}</div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Composer */}
-            <div className="p-composer">
-              <div className="p-rxn-row">
-                {REACTIONS.map(e => (
-                  <button key={e} className={`p-rxn-btn ${sentReaction===e?"sent":""}`}
-                    onClick={()=>sendReaction(e)}>{e}</button>
-                ))}
-                <span style={{marginLeft:"auto",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,color:"var(--text-2)",letterSpacing:".1em"}}>Quick reactions</span>
-              </div>
-              <div className="p-composer-row">
-                <input className="p-input" value={msgText}
-                  onChange={e=>setMsgText(e.target.value)}
-                  placeholder={`Message ${pName}…`}
-                  onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendMessage()} />
-                <button className="btn btn-a" onClick={sendMessage}
-                  disabled={sending||!msgText.trim()}
-                  style={{padding:"9px 18px",letterSpacing:".1em"}}>Send →</button>
-              </div>
-            </div>
-          </>)}
+            </>
+          )}
         </div>
-
       </div>
+
+      {/* Protocol overlay */}
+      {showProto && renderProtoOverlay()}
+
+      {/* Flare overlay */}
+      {showFlare && (
+        <div className="flare-overlay" onClick={()=>setShowFlare(false)}>
+          <div className="flare-overlay-inner" onClick={e=>e.stopPropagation()}>
+            <span className="flare-icon">⚡</span>
+            <div className="flare-title">Flare Deployed</div>
+            <div className="flare-msg">SMS app opening with pre-filled message.<br/>The rest is on them.</div>
+            <div className="flare-sms">"System shows non-compliance. 3 hours until tether breaks. Execute your Baseline."</div>
+            <button className="flare-dismiss" onClick={()=>setShowFlare(false)}>Acknowledged →</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
