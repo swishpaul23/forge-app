@@ -15,8 +15,8 @@ const THEMES = {
     "--accent-lo": "#D4922A18",
     "--accent-mid": "#D4922A55",
     "--text-0": "#EDEAE3",
-    "--text-1": "#9A9690",
-    "--text-2": "#56524D",
+    "--text-1": "#B8B4AE",
+    "--text-2": "#8A857E",
     "--text-3": "#2E2C28",
     "--border-0": "#1E1E1A",
     "--border-1": "#2A2A25",
@@ -35,8 +35,8 @@ const THEMES = {
     "--accent-lo": "#2A4A3812",
     "--accent-mid": "#2A4A3850",
     "--text-0": "#0E0D0C",
-    "--text-1": "#2A2826",
-    "--text-2": "#4A4540",
+    "--text-1": "#3A3835",
+    "--text-2": "#6A6560",
     "--text-3": "#A8A49E",
     "--border-0": "#DDD9D2",
     "--border-1": "#CECAC2",
@@ -55,8 +55,8 @@ const THEMES = {
     "--accent-lo": "#4A8FD418",
     "--accent-mid": "#4A8FD455",
     "--text-0": "#E0E8F0",
-    "--text-1": "#7A8898",
-    "--text-2": "#404858",
+    "--text-1": "#A0A8B8",
+    "--text-2": "#6A7488",
     "--text-3": "#242C38",
     "--border-0": "#161A28",
     "--border-1": "#1E2438",
@@ -181,8 +181,16 @@ const urlBase64ToUint8Array = (base64String) => {
   const raw     = atob(base64);
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 };
-const wallColor = (score) => { if (score===null) return "var(--bg-3)"; if (score===0) return "var(--bg-2)"; if (score<50) return "var(--accent-lo)"; if (score<75) return "var(--accent-mid)"; return "var(--accent)"; };
+const getCellLevel = (score) => {
+  if (score === null) return "level-0";
+  if (score === 0) return "missed";
+  if (score < 25) return "level-1";
+  if (score < 50) return "level-2";
+  if (score < 75) return "level-3";
+  return "level-4";
+};
 const fmtCellDate = (dateStr) => { const d = new Date(dateStr + "T00:00:00"); return `${d.toLocaleString("en-US",{month:"short"}).toUpperCase()}/${String(d.getDate()).padStart(2,"0")}`; };
+const fmtFullDate = (dateStr) => { const d = new Date(dateStr + "T00:00:00"); return d.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" }); };
 
 // ============================================================
 // STYLES
@@ -195,7 +203,7 @@ const makeCSS = () => `
   :root {
     --bg-0:#080807; --bg-1:#0F0F0D; --bg-2:#161613; --bg-3:#1E1E1A; --bg-4:#252520;
     --accent:#D4922A; --accent-lo:#D4922A18; --accent-mid:#D4922A55;
-    --text-0:#EDEAE3; --text-1:#9A9690; --text-2:#56524D; --text-3:#2E2C28;
+    --text-0:#EDEAE3; --text-1:#B8B4AE; --text-2:#8A857E; --text-3:#2E2C28;
     --border-0:#1E1E1A; --border-1:#2A2A25; --border-accent:#D4922A30;
     --ok:#5DBF8A; --warn:#D4B22A; --err:#BF5D5D;
   }
@@ -455,8 +463,8 @@ const makeCSS = () => `
 
   /* SECTION LABEL */
   .slabel {
-    font-family:'IBM Plex Mono',monospace; font-size:10px;
-    letter-spacing:.18em; text-transform:uppercase; color:var(--text-2);
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--text-1);
     margin-bottom:12px;
   }
 
@@ -507,7 +515,7 @@ const makeCSS = () => `
   }
   .stat-l {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
+    font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-1);
     margin-top:3px;
   }
 
@@ -617,55 +625,57 @@ const makeCSS = () => `
   }
   .ring-cats { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
 
-  /* WALL */
-  .wall-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  /* WALL - GitHub style */
+  .wall-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
 
   .cell {
-    height:38px;
-    border-radius:4px;
+    aspect-ratio:1;
+    min-height:16px;
+    max-height:32px;
+    border-radius:3px;
     cursor:pointer; position:relative;
-    transition:transform .12s, filter .12s, border-color .12s;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
+    transition:transform .15s, box-shadow .15s;
     border:1px solid transparent;
     overflow:visible;
   }
-  .cell:hover { transform:scale(1.06); filter:brightness(1.25); z-index:10; border-color:rgba(255,255,255,0.08); }
-  .cell.today { border-color:var(--accent) !important; }
+  .cell:hover { 
+    transform:scale(1.15); 
+    z-index:10; 
+    box-shadow:0 0 8px rgba(0,0,0,0.3);
+  }
+  .cell.today { 
+    border-color:var(--accent) !important; 
+    box-shadow:0 0 0 2px var(--accent-lo);
+  }
 
-  .cell-date {
-    font-family:'IBM Plex Mono',monospace;
-    font-size:8px; line-height:1;
-    color:rgba(255,255,255,0.5);
-    letter-spacing:.02em;
-    pointer-events:none;
-    user-select:none;
-    text-align:center;
-    padding:0 2px;
-  }
-  .cell-score {
-    font-family:'IBM Plex Mono',monospace;
-    font-size:7px; line-height:1; margin-top:2px;
-    color:rgba(255,255,255,0.35);
-    pointer-events:none; user-select:none;
-  }
+  /* GitHub-style color levels */
+  .cell.level-0 { background:var(--bg-3); }
+  .cell.level-1 { background:var(--accent-lo); }
+  .cell.level-2 { background:var(--accent-mid); }
+  .cell.level-3 { background:var(--accent); opacity:0.8; }
+  .cell.level-4 { background:var(--accent); }
+  .cell.missed { background:var(--err); opacity:0.3; }
 
   .ctip {
     display:none; position:absolute;
-    bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
     background:var(--bg-4); border:1px solid var(--border-1);
-    border-radius:5px; padding:5px 9px;
-    font-size:10px; white-space:nowrap;
-    z-index:20; font-family:'IBM Plex Mono',monospace;
-    color:var(--text-1); pointer-events:none;
+    border-radius:6px; padding:8px 12px;
+    font-size:12px; white-space:nowrap;
+    z-index:50; font-family:'IBM Plex Mono',monospace;
+    color:var(--text-0); pointer-events:none;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
   }
+  .ctip-date { color:var(--text-0); font-weight:500; }
+  .ctip-score { color:var(--accent); margin-left:8px; }
+  .ctip-missed { color:var(--err); }
   .cell:hover .ctip { display:block; }
 
   /* MONTH LABEL */
   .month-label {
     font-family:'Bebas Neue',sans-serif;
-    font-size:13px; letter-spacing:.1em;
-    color:var(--text-2); margin-bottom:6px; margin-top:18px;
+    font-size:14px; letter-spacing:.1em;
+    color:var(--text-1); margin-bottom:8px; margin-top:20px;
   }
   .month-label:first-child { margin-top:0; }
 
@@ -705,7 +715,7 @@ const makeCSS = () => `
   }
   .ai-block-label {
     display:flex; align-items:center; gap:8px;
-    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
     letter-spacing:.2em; text-transform:uppercase; color:var(--accent);
   }
   .ai-dot {
@@ -719,7 +729,7 @@ const makeCSS = () => `
     font-style:italic; position:relative; z-index:1;
   }
   .ai-text-loading {
-    font-size:13px; color:var(--text-2); font-family:'IBM Plex Mono',monospace;
+    font-size:13px; color:var(--text-1); font-family:'IBM Plex Mono',monospace;
     letter-spacing:.04em;
   }
   .ai-footer {
@@ -727,7 +737,27 @@ const makeCSS = () => `
     margin-top:14px; padding-top:12px;
     border-top:1px solid var(--border-0);
   }
-  .ai-timestamp { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--text-2); letter-spacing:.06em; }
+  .ai-timestamp { font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-1); letter-spacing:.06em; }
+
+  /* Refresh button - shadcn outline style */
+  .ai-refresh-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 14px; border-radius:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; transition:all .18s;
+    border:1px solid var(--border-1);
+    background:transparent; color:var(--text-1);
+  }
+  .ai-refresh-btn:hover {
+    color:var(--accent);
+    border-color:var(--accent);
+    background:var(--accent-lo);
+    box-shadow:0 0 12px var(--accent-lo);
+  }
+  .ai-refresh-btn:disabled {
+    opacity:.5; cursor:not-allowed;
+  }
 
   /* MISSION ANCHOR (shown on checklist) */
   .mission-anchor {
@@ -993,22 +1023,44 @@ const makeCSS = () => `
   }
   .cin-label {
     font-family:'IBM Plex Mono',monospace;
-    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
-    color:var(--text-2); margin-right:4px; flex-shrink:0;
+    font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--text-1); margin-right:4px; flex-shrink:0;
   }
   .cin-btn {
     display:flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:5px;
-    font-family:'IBM Plex Mono',monospace; font-size:9.5px;
+    padding:8px 14px; border-radius:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
     letter-spacing:.1em; text-transform:uppercase;
-    cursor:pointer; transition:all .15s; border:1px solid transparent;
-    background:transparent; color:var(--text-2);
+    cursor:pointer; transition:all .18s; 
+    border:1px solid var(--border-1);
+    background:transparent; color:var(--text-1);
+    box-shadow:none;
   }
-  .cin-btn:hover { color:var(--text-0); background:var(--bg-2); }
-  .cin-btn.active-full     { background:var(--accent-lo);  color:var(--accent); border-color:var(--border-accent); }
-  .cin-btn.active-scaled   { background:#D4B22A18; color:#D4B22A; border-color:#D4B22A30; }
-  .cin-btn.active-recovery { background:#4A8FD418; color:#4A8FD4; border-color:#4A8FD430; }
-  .cin-btn.btn-disabled    { opacity:.35; cursor:not-allowed; pointer-events:none; }
+  .cin-btn:hover { 
+    color:var(--text-0); 
+    background:var(--bg-2); 
+    border-color:var(--accent-mid);
+    box-shadow:0 0 12px var(--accent-lo);
+  }
+  .cin-btn.active-full { 
+    background:var(--accent-lo); 
+    color:var(--accent); 
+    border-color:var(--accent);
+    box-shadow:0 0 16px var(--accent-lo), inset 0 0 8px var(--accent-lo);
+  }
+  .cin-btn.active-scaled { 
+    background:#D4B22A18; 
+    color:#D4B22A; 
+    border-color:#D4B22A;
+    box-shadow:0 0 16px #D4B22A20, inset 0 0 8px #D4B22A10;
+  }
+  .cin-btn.active-recovery { 
+    background:#4A8FD418; 
+    color:#4A8FD4; 
+    border-color:#4A8FD4;
+    box-shadow:0 0 16px #4A8FD420, inset 0 0 8px #4A8FD410;
+  }
+  .cin-btn.btn-disabled { opacity:.35; cursor:not-allowed; pointer-events:none; }
   .cin-sep { width:1px; height:18px; background:var(--border-0); margin:0 4px; flex-shrink:0; }
 
   /* SCALED DAY BANNER */
@@ -1460,7 +1512,7 @@ const makeCSS = () => `
   }
   .sb-card-l {
     font-family:'IBM Plex Mono',monospace;
-    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-2);
+    font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-1);
   }
   .sb-trophy-row {
     display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;
@@ -1896,6 +1948,125 @@ const makeCSS = () => `
     color:var(--text-2); cursor:pointer; transition:color .15s;
   }
   .ob-skip:hover { color:var(--text-1); }
+
+  /* FOCUS SESSIONS CARD */
+  .focus-card {
+    background:var(--bg-1); border:1px solid var(--border-0);
+    border-radius:12px; padding:20px 24px; margin-top:24px;
+  }
+  .focus-card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .focus-card-title {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent); display:flex; align-items:center; gap:8px;
+  }
+  .focus-card-title::before { content:'⚡'; font-size:12px; }
+  .focus-stats {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+    margin-bottom:20px;
+  }
+  .focus-stat {
+    background:var(--bg-2); border:1px solid var(--border-0);
+    border-radius:8px; padding:14px 16px; text-align:center;
+  }
+  .focus-stat-n {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:32px; line-height:1; color:var(--accent);
+  }
+  .focus-stat-l {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--text-1); margin-top:4px;
+  }
+  .focus-graph-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .focus-graph-title {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-1);
+  }
+  .focus-range-btns {
+    display:flex; gap:4px;
+  }
+  .focus-range-btn {
+    padding:4px 10px; border-radius:4px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    letter-spacing:.1em; text-transform:uppercase;
+    cursor:pointer; transition:all .15s;
+    border:1px solid var(--border-1);
+    background:transparent; color:var(--text-1);
+  }
+  .focus-range-btn:hover { border-color:var(--accent-mid); color:var(--text-0); }
+  .focus-range-btn.active { 
+    background:var(--accent-lo); color:var(--accent); 
+    border-color:var(--accent); 
+  }
+  .focus-sessions-list {
+    margin-top:16px; max-height:200px; overflow-y:auto;
+  }
+  .focus-session-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; border-radius:6px;
+    background:var(--bg-2); border:1px solid var(--border-0);
+    margin-bottom:6px; transition:border-color .15s;
+  }
+  .focus-session-row:hover { border-color:var(--border-1); }
+  .focus-session-date {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--text-1); letter-spacing:.06em;
+  }
+  .focus-session-dur {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:18px; color:var(--accent);
+  }
+  .focus-view-all {
+    display:flex; align-items:center; justify-content:center;
+    padding:10px; margin-top:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-1); cursor:pointer;
+    border:1px dashed var(--border-1); border-radius:6px;
+    transition:all .15s; background:transparent;
+    width:100%;
+  }
+  .focus-view-all:hover { border-color:var(--accent-mid); color:var(--accent); }
+
+  /* Partners refresh button */
+  .partners-refresh-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; transition:all .18s;
+    border:1px solid var(--border-1);
+    background:transparent; color:var(--text-1);
+  }
+  .partners-refresh-btn:hover {
+    color:var(--accent);
+    border-color:var(--accent);
+    background:var(--accent-lo);
+    box-shadow:0 0 12px var(--accent-lo);
+  }
+  .partners-refresh-btn.auto-on {
+    border-color:var(--ok);
+    color:var(--ok);
+    background:#5DBF8A18;
+  }
+  .partners-auto-label {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--text-1); margin-left:8px;
+  }
+
+  @media (max-width:768px) {
+    .focus-stats { grid-template-columns:1fr; }
+    .focus-graph { height:80px; }
+    .focus-stat-n { font-size:28px; }
+  }
 
   /* STREAK IGNITION */
   @keyframes streakIgnite {
@@ -2736,7 +2907,7 @@ const TIMER_PRESETS = [
 
 const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
-const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
+const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }) => {
   const safeKpis = (challenge && challenge.kpis) ? challenge.kpis : [];
   const doneTasks = safeKpis.filter(k => kpis && kpis[k.key]).length;
 
@@ -2751,10 +2922,32 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
   const [totalFocused,setTotalFocused]= useState(0);
   const [sessionTasks,setSessionTasks]= useState(doneTasks);
   const [showSummary, setShowSummary] = useState(false);
+  const [sessionSaved, setSessionSaved] = useState(false);
   const timerRef = useRef(null);
+  const sessionStartRef = useRef(null);
 
   const workSecs = () => preset === 3 ? customWork * 60 : TIMER_PRESETS[preset].work * 60;
   const brkSecs  = () => preset === 3 ? customBrk  * 60 : TIMER_PRESETS[preset].brk  * 60;
+
+  const saveSession = async (duration, cycles, tasks) => {
+    if (!sb || !user || sessionSaved) return;
+    if (duration < 30) {
+      // Don't save, but let user know why
+      return "min_time";
+    }
+    try {
+      await sb.from("focus_sessions").insert({
+        user_id: user.id,
+        challenge_id: challenge?.id || null,
+        duration_seconds: duration,
+        cycles: cycles,
+        tasks_completed: tasks,
+      });
+      setSessionSaved(true);
+      if (onSessionSaved) onSessionSaved();
+      return "saved";
+    } catch(e) { console.warn("save session:", e); return "error"; }
+  };
 
   const playBeep = () => {
     try {
@@ -2799,8 +2992,15 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
     setPausedPhase(null);
   };
 
-  const endSession = () => {
+  const [saveStatus, setSaveStatus] = useState(null); // null | "saved" | "min_time" | "error"
+
+  const endSession = async () => {
     clearInterval(timerRef.current);
+    // Calculate final focused time including current work phase if active
+    const finalFocused = totalFocused + (phase === "work" ? workSecs() - timeLeft : 0);
+    // Save session to Supabase
+    const result = await saveSession(finalFocused, cycle, sessionTasks);
+    setSaveStatus(result || null);
     setPhase("idle");
     setShowSummary(true);
   };
@@ -2857,6 +3057,30 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
             </div>
           ))}
         </div>
+        
+        {/* Save status message */}
+        {saveStatus === "min_time" && (
+          <div style={{background:"var(--warn)15",border:"1px solid var(--warn)40",borderRadius:8,padding:"12px 16px",marginBottom:20}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--warn)",letterSpacing:".06em"}}>
+              ⚠ Session not logged — focus for 30 seconds or more to save.
+            </div>
+          </div>
+        )}
+        {saveStatus === "saved" && (
+          <div style={{background:"var(--ok)15",border:"1px solid var(--ok)40",borderRadius:8,padding:"12px 16px",marginBottom:20}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--ok)",letterSpacing:".06em"}}>
+              ✓ Session logged to your focus history.
+            </div>
+          </div>
+        )}
+        {saveStatus === "error" && (
+          <div style={{background:"var(--err)15",border:"1px solid var(--err)40",borderRadius:8,padding:"12px 16px",marginBottom:20}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--err)",letterSpacing:".06em"}}>
+              ✕ Failed to save session. Check your connection.
+            </div>
+          </div>
+        )}
+        
         <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",letterSpacing:".1em",marginBottom:24}}>
           {sessionTasks === safeKpis.length && safeKpis.length > 0
             ? "✓ All tasks completed. That's a perfect session."
@@ -2865,7 +3089,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit }) => {
             : "No tasks ticked — but you still showed up."}
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-          <button className="btn btn-a" onClick={()=>{setShowSummary(false);setPhase("idle");setCycle(0);setTotalFocused(0);}}>
+          <button className="btn btn-a" onClick={()=>{setShowSummary(false);setPhase("idle");setCycle(0);setTotalFocused(0);setSaveStatus(null);setSessionSaved(false);}}>
             New Session
           </button>
           <button className="btn btn-g" onClick={onExit}>← Back to Dashboard</button>
@@ -3351,7 +3575,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
       </div>
 
       {secondary.length > 0 && (
-        <div className="f-mono c-2 mt8" style={{ fontSize:8, letterSpacing:".08em", textAlign:"right" }}>
+        <div className="f-mono c-2 mt8" style={{ fontSize:12, letterSpacing:".08em", textAlign:"right" }}>
           {secondary.length}/3 secondary · all must end within main challenge timeframe
         </div>
       )}
@@ -3474,7 +3698,7 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
           <div className="ai-dot" />
           TALOS Insights · {tone} Mode
         </div>
-        <button className="btn btn-g" style={{ padding:"4px 12px", fontSize:10 }} onClick={generate} disabled={loading}>
+        <button className="ai-refresh-btn" onClick={generate} disabled={loading}>
           {loading ? "Thinking..." : "↻ Refresh"}
         </button>
       </div>
@@ -3488,7 +3712,7 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }) => {
       <div className="ai-footer">
         <div className="ai-timestamp">Last updated: {lastUpdate}</div>
         {mission && (
-          <div className="f-mono c-2" style={{ fontSize:9, letterSpacing:".06em" }}>
+          <div className="f-mono" style={{ fontSize:12, letterSpacing:".06em", color:"var(--text-1)" }}>
             Mission on file ✓
           </div>
         )}
@@ -3562,7 +3786,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
       <div className="a2 mt24">
         <div className="flex between center mb12">
           <div className="slabel" style={{ marginBottom:0 }}>Active Challenges</div>
-          <div className="f-mono c-2" style={{ fontSize:8, letterSpacing:".08em" }}>
+          <div className="f-mono c-2" style={{ fontSize:10, letterSpacing:".08em" }}>
             1 MAIN · UP TO 3 SECONDARY
           </div>
         </div>
@@ -3794,6 +4018,264 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
 };
 
 // ============================================================
+// FOCUS SESSIONS COMPONENT
+// ============================================================
+const FocusSessions = ({ sessions = [], loading = false }) => {
+  const [range, setRange] = useState("1W"); // 1D, 1W, 1M
+  const [showAll, setShowAll] = useState(false);
+  const [hoveredBar, setHoveredBar] = useState(null);
+
+  // Format duration
+  const fmtDur = (secs) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+
+  // Format date for session list
+  const fmtSessionDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+  };
+
+  // Format date for chart tooltip
+  const fmtChartDate = (dateStr) => {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
+  };
+
+  // Calculate stats (no cycles)
+  const totalSessions = sessions.length;
+  const totalMinutes = Math.round(sessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / 60);
+  const avgMinutes = totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0;
+
+  // Build graph data based on range
+  const buildGraphData = () => {
+    const now = new Date();
+    let days = 7;
+    if (range === "1D") days = 1;
+    if (range === "1M") days = 30;
+
+    const data = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const daySessions = sessions.filter(s => s.created_at?.startsWith(dateStr));
+      const mins = Math.round(daySessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / 60);
+      data.push({
+        date: dateStr,
+        dayNum: d.getDate(),
+        minutes: mins,
+      });
+    }
+    return data;
+  };
+
+  const graphData = buildGraphData();
+  const maxMins = Math.max(...graphData.map(d => d.minutes), 10); // Min 10 for scale
+
+  // Calculate Y-axis ticks (auto-scale)
+  const getYTicks = (max) => {
+    if (max <= 15) return [0, 5, 10, 15];
+    if (max <= 30) return [0, 10, 20, 30];
+    if (max <= 60) return [0, 15, 30, 45, 60];
+    if (max <= 120) return [0, 30, 60, 90, 120];
+    if (max <= 180) return [0, 60, 120, 180];
+    const step = Math.ceil(max / 4 / 30) * 30;
+    return [0, step, step*2, step*3, Math.ceil(max / step) * step];
+  };
+  
+  const yTicks = getYTicks(maxMins);
+  const yMax = yTicks[yTicks.length - 1];
+
+  // Recent sessions (last 5 or 20)
+  const recentSessions = [...sessions]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, showAll ? 20 : 5);
+
+  if (loading) {
+    return (
+      <div className="focus-card">
+        <div className="focus-card-header">
+          <div className="focus-card-title">Focus Sessions</div>
+        </div>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--text-1)", padding:"20px 0", textAlign:"center" }}>
+          Loading sessions...
+        </div>
+      </div>
+    );
+  }
+
+  if (sessions.length === 0) {
+    return (
+      <div className="focus-card">
+        <div className="focus-card-header">
+          <div className="focus-card-title">Focus Sessions</div>
+        </div>
+        <div style={{ textAlign:"center", padding:"32px 16px" }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"var(--text-3)", marginBottom:8 }}>No Sessions Yet</div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--text-1)", letterSpacing:".08em" }}>
+            Use Deep Work mode to start tracking focus time
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="focus-card">
+      <div className="focus-card-header">
+        <div className="focus-card-title">Focus Sessions</div>
+      </div>
+
+      {/* Stats - 2 columns now, no cycles */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20 }}>
+        <div className="focus-stat">
+          <div className="focus-stat-n">{totalSessions}</div>
+          <div className="focus-stat-l">Sessions</div>
+        </div>
+        <div className="focus-stat">
+          <div className="focus-stat-n">{totalMinutes < 60 ? `${totalMinutes}m` : `${Math.floor(totalMinutes/60)}h ${totalMinutes%60}m`}</div>
+          <div className="focus-stat-l">Total Time</div>
+        </div>
+      </div>
+
+      {/* Graph Header */}
+      <div className="focus-graph-header">
+        <div className="focus-graph-title">Focus Minutes</div>
+        <div className="focus-range-btns">
+          {["1D", "1W", "1M"].map(r => (
+            <button
+              key={r}
+              className={`focus-range-btn ${range === r ? "active" : ""}`}
+              onClick={() => setRange(r)}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart with axes */}
+      <div style={{ display:"flex", gap:8 }}>
+        {/* Y-axis */}
+        <div style={{ 
+          display:"flex", flexDirection:"column", justifyContent:"space-between", 
+          height:140, paddingBottom:24, width:32, flexShrink:0 
+        }}>
+          {[...yTicks].reverse().map((tick, i) => (
+            <div key={i} style={{ 
+              fontFamily:"'IBM Plex Mono',monospace", fontSize:10, 
+              color:"var(--text-2)", textAlign:"right", lineHeight:1 
+            }}>
+              {tick}
+            </div>
+          ))}
+        </div>
+
+        {/* Chart area */}
+        <div style={{ flex:1, position:"relative" }}>
+          {/* Grid lines */}
+          <div style={{ position:"absolute", inset:0, bottom:24, display:"flex", flexDirection:"column", justifyContent:"space-between", pointerEvents:"none" }}>
+            {yTicks.map((_, i) => (
+              <div key={i} style={{ borderBottom:"1px dashed var(--border-1)", width:"100%" }} />
+            ))}
+          </div>
+
+          {/* Bars */}
+          <div style={{ 
+            display:"flex", alignItems:"flex-end", gap:2, 
+            height:140, paddingBottom:24, position:"relative" 
+          }}>
+            {graphData.map((d, i) => {
+              const barHeight = yMax > 0 ? (d.minutes / yMax) * 116 : 0; // 116 = 140 - 24 padding
+              return (
+                <div 
+                  key={i} 
+                  style={{ 
+                    flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+                    position:"relative"
+                  }}
+                  onMouseEnter={() => setHoveredBar(i)}
+                  onMouseLeave={() => setHoveredBar(null)}
+                >
+                  {/* Bar */}
+                  <div style={{
+                    width: range === "1M" ? 6 : range === "1W" ? 16 : 40,
+                    height: d.minutes > 0 ? Math.max(barHeight, 4) : 2,
+                    background: d.minutes > 0 ? "var(--accent)" : "var(--bg-3)",
+                    borderRadius: "3px 3px 0 0",
+                    transition: "height 0.3s ease, opacity 0.15s",
+                    opacity: hoveredBar === null || hoveredBar === i ? 1 : 0.5,
+                    cursor: "pointer",
+                  }} />
+
+                  {/* Tooltip */}
+                  {hoveredBar === i && d.minutes > 0 && (
+                    <div style={{
+                      position:"absolute", bottom:"calc(100% + 8px)",
+                      background:"var(--bg-4)", border:"1px solid var(--border-1)",
+                      borderRadius:6, padding:"6px 10px",
+                      fontFamily:"'IBM Plex Mono',monospace", fontSize:11,
+                      color:"var(--text-0)", whiteSpace:"nowrap", zIndex:20,
+                      boxShadow:"0 4px 12px rgba(0,0,0,0.3)",
+                    }}>
+                      <span style={{ color:"var(--text-1)" }}>{fmtChartDate(d.date)}:</span>{" "}
+                      <span style={{ color:"var(--accent)", fontWeight:500 }}>{d.minutes}m</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* X-axis labels */}
+          <div style={{ 
+            display:"flex", justifyContent:"space-between", 
+            position:"absolute", bottom:0, left:0, right:0, height:20 
+          }}>
+            {graphData.map((d, i) => {
+              // Show every 5th label for 1M, every label for 1W, single for 1D
+              const showLabel = range === "1D" || range === "1W" || (i % 5 === 0) || i === graphData.length - 1;
+              return (
+                <div key={i} style={{ 
+                  flex:1, textAlign:"center",
+                  fontFamily:"'IBM Plex Mono',monospace", fontSize:9, 
+                  color:"var(--text-2)", 
+                  opacity: showLabel ? 1 : 0,
+                }}>
+                  {d.dayNum}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Sessions - no cycles column */}
+      <div style={{ marginTop:24 }}>
+        <div className="focus-graph-title" style={{ marginBottom:12 }}>Recent Sessions</div>
+        <div className="focus-sessions-list">
+          {recentSessions.map((s, i) => (
+            <div key={s.id || i} className="focus-session-row">
+              <div className="focus-session-date">{fmtSessionDate(s.created_at)}</div>
+              <div className="focus-session-dur">{fmtDur(s.duration_seconds)}</div>
+            </div>
+          ))}
+        </div>
+        {sessions.length > 5 && (
+          <button className="focus-view-all" onClick={() => setShowAll(!showAll)}>
+            {showAll ? "Show Less" : `View All (${sessions.length})`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
 // WALL
 // ============================================================
 const groupByMonth = (wall) => {
@@ -3809,7 +4291,7 @@ const groupByMonth = (wall) => {
 
 const COMPLETED_CHALLENGES = []; // populated from DB in future
 
-const Wall = ({ challenge, challenges, checkins = {} }) => {
+const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusLoading = false }) => {
   // If user has no challenge yet, show empty state
   if (!challenges.main) return (
     <div className="page">
@@ -3819,7 +4301,7 @@ const Wall = ({ challenge, challenges, checkins = {} }) => {
       </div>
       <div style={{marginTop:64,textAlign:"center",padding:"48px 0"}}>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,color:"var(--text-3)",letterSpacing:".04em",marginBottom:12}}>Nothing Here Yet</div>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",letterSpacing:".12em",textTransform:"uppercase"}}>Come back when you've started a challenge</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:"var(--text-1)",letterSpacing:".12em",textTransform:"uppercase"}}>Come back when you've started a challenge</div>
       </div>
     </div>
   );
@@ -3925,12 +4407,14 @@ const Wall = ({ challenge, challenges, checkins = {} }) => {
         {/* Legend */}
         <div className="flex between center mb16">
           <div className="slabel" style={{ marginBottom:0 }}>Consistency Grid</div>
-          <div className="flex g8 center f-mono c-2" style={{ fontSize:9, letterSpacing:".06em" }}>
-            <span>LESS</span>
-            {[1,30,55,80,100].map(v => (
-              <div key={v} style={{ width:10, height:10, borderRadius:2, background:wallColor(v) }} />
-            ))}
-            <span>MORE</span>
+          <div className="flex g8 center f-mono" style={{ fontSize:12, letterSpacing:".06em", color:"var(--text-1)" }}>
+            <span>Less</span>
+            <div className="cell level-0" style={{ width:14, height:14 }} />
+            <div className="cell level-1" style={{ width:14, height:14 }} />
+            <div className="cell level-2" style={{ width:14, height:14 }} />
+            <div className="cell level-3" style={{ width:14, height:14 }} />
+            <div className="cell level-4" style={{ width:14, height:14 }} />
+            <span>More</span>
           </div>
         </div>
 
@@ -3938,7 +4422,7 @@ const Wall = ({ challenge, challenges, checkins = {} }) => {
           {/* Day-of-week header — shown once */}
           <div className="wall-grid mb8">
             {["SUN","MON","TUE","WED","THU","FRI","SAT"].map(d => (
-              <div key={d} className="f-mono c-2" style={{ fontSize:7, textAlign:"center", letterSpacing:".08em", paddingBottom:4 }}>{d}</div>
+              <div key={d} className="f-mono" style={{ fontSize:12, textAlign:"center", letterSpacing:".08em", paddingBottom:4, color:"var(--text-1)" }}>{d}</div>
             ))}
           </div>
 
@@ -3949,15 +4433,19 @@ const Wall = ({ challenge, challenges, checkins = {} }) => {
                 {month.days.map((d, i) => (
                   <div
                     key={i}
-                    className={`cell${d.isToday?" today":""}`}
-                    style={{ background: wallColor(d.score), opacity: d.score === null && !d.isToday ? 0.4 : 1 }}
+                    className={`cell ${getCellLevel(d.score)}${d.isToday?" today":""}`}
                   >
-                    <div className="cell-date">{fmtCellDate(d.date)}</div>
-                    {d.score !== null && d.score > 0 && (
-                      <div className="cell-score">{d.score}%</div>
-                    )}
                     <div className="ctip">
-                      {fmtCellDate(d.date)}{d.isToday?" · TODAY":""} &nbsp;·&nbsp; {d.score !== null ? `${d.score}% complete` : "Not logged"}
+                      <span className="ctip-date">{fmtFullDate(d.date)}</span>
+                      {d.isToday && <span style={{color:"var(--accent)", marginLeft:6}}>TODAY</span>}
+                      <br />
+                      {d.score !== null ? (
+                        <span className={d.score === 0 ? "ctip-missed" : "ctip-score"}>
+                          {d.score === 0 ? "Missed" : `${d.score}% complete`}
+                        </span>
+                      ) : (
+                        <span style={{color:"var(--text-2)"}}>Not logged</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -3979,6 +4467,11 @@ const Wall = ({ challenge, challenges, checkins = {} }) => {
             <div className="stat-l">{s.l}</div>
           </div>
         ))}
+      </div>
+
+      {/* Focus Sessions */}
+      <div className="a4 mt24">
+        <FocusSessions sessions={focusSessions} loading={focusLoading} />
       </div>
     </div>
   );
@@ -4644,7 +5137,15 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const [flareUsedMap,    setFlareUsedMap] = useState({});
   const [rxnSent,         setRxnSent]      = useState({});
   const [noteText,        setNoteText]     = useState("");
+  const [postedNote,      setPostedNote]   = useState(null); // { text, timestamp }
+  const [editingNote,     setEditingNote]  = useState(false);
+  const [showModeSwitch,  setShowModeSwitch] = useState(false);
+  const [switchCode,      setSwitchCode]   = useState("");
+  const [switchError,     setSwitchError]  = useState("");
+  const [autoRefresh,     setAutoRefresh]  = useState(false);
+  const [lastRefresh,     setLastRefresh]  = useState(null);
   const cdIntervalRef = useRef(null);
+  const autoRefreshRef = useRef(null);
   const [cdStr,           setCdStr]        = useState("--:--:--");
   const [cdUrgent,        setCdUrgent]     = useState(false);
 
@@ -4660,6 +5161,17 @@ const Partners = ({ user, profile, challenges, sb }) => {
     const parts = name.trim().split(" ");
     return parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
   };
+
+  // Auto-refresh effect
+  useEffect(() => {
+    if (autoRefresh) {
+      autoRefreshRef.current = setInterval(() => {
+        loadPartners();
+        setLastRefresh(new Date());
+      }, 30000); // 30 seconds
+    }
+    return () => { if (autoRefreshRef.current) clearInterval(autoRefreshRef.current); };
+  }, [autoRefresh]);
 
   // Countdown
   useEffect(() => {
@@ -4868,8 +5380,30 @@ const Partners = ({ user, profile, challenges, sb }) => {
             <div className="ow-tag">Spotter Protocol</div>
             <div className="ow-title">
               Overwatch
-              <div className="ow-add" onClick={()=>{setShowAdd(v=>!v); setJoinError("");}} title="Add partner">+</div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <button 
+                  className={`partners-refresh-btn ${autoRefresh ? "auto-on" : ""}`}
+                  onClick={() => { loadPartners(); setLastRefresh(new Date()); }}
+                  title="Refresh partners"
+                >
+                  ↻
+                </button>
+                <button
+                  className={`partners-refresh-btn ${autoRefresh ? "auto-on" : ""}`}
+                  onClick={() => setAutoRefresh(v => !v)}
+                  title={autoRefresh ? "Disable auto-refresh" : "Enable auto-refresh (30s)"}
+                  style={{fontSize:10}}
+                >
+                  {autoRefresh ? "AUTO ●" : "AUTO"}
+                </button>
+                <div className="ow-add" onClick={()=>{setShowAdd(v=>!v); setJoinError("");}} title="Add partner">+</div>
+              </div>
             </div>
+            {lastRefresh && (
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-1)",marginTop:4,letterSpacing:".06em"}}>
+                Last updated: {lastRefresh.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
+              </div>
+            )}
             {showAdd && (
               <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
                 {/* Your code — shown first */}
@@ -5054,23 +5588,54 @@ const Partners = ({ user, profile, challenges, sb }) => {
                           ))}
                         </div>
                       </div>
+                      
+                      {/* Your posted note or input */}
                       <div className="ow-your-note">
                         <div className="ow-your-note-label">Your Note · Today</div>
-                        <textarea className="ow-note-input" rows={2} maxLength={140}
-                          value={noteText} onChange={e=>setNoteText(e.target.value)}
-                          placeholder="Optional · 140 chars · gone after 24hrs" />
-                        <div className="ow-note-footer">
-                          <div className="ow-note-count">{noteText.length} / 140</div>
-                          <button className="ow-note-send" onClick={()=>setNoteText("")}>Post →</button>
-                        </div>
+                        {postedNote && !editingNote ? (
+                          <div style={{background:"var(--accent-lo)",border:"1px solid var(--border-accent)",borderRadius:8,padding:"12px 14px"}}>
+                            <div style={{fontSize:14,color:"var(--text-0)",fontStyle:"italic",marginBottom:8}}>"{postedNote.text}"</div>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)"}}>{postedNote.timestamp}</div>
+                              <button className="btn btn-g" style={{fontSize:10,padding:"4px 10px"}} onClick={()=>{setEditingNote(true);setNoteText(postedNote.text);}}>Edit</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <textarea className="ow-note-input" rows={2} maxLength={140}
+                              value={noteText} onChange={e=>setNoteText(e.target.value)}
+                              placeholder="Optional · 140 chars · gone after 24hrs" />
+                            <div className="ow-note-footer">
+                              <div className="ow-note-count">{noteText.length} / 140</div>
+                              <div style={{display:"flex",gap:6}}>
+                                {editingNote && <button className="btn btn-g" style={{fontSize:10,padding:"4px 10px"}} onClick={()=>{setEditingNote(false);setNoteText("");}}>Cancel</button>}
+                                <button className="ow-note-send" onClick={()=>{
+                                  if(noteText.trim()) {
+                                    setPostedNote({text:noteText.trim(),timestamp:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
+                                    setNoteText("");
+                                    setEditingNote(false);
+                                  }
+                                }}>{editingNote ? "Update →" : "Post →"}</button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </>
                   )}
 
-                  {/* Protocol change */}
-                  <div style={{background:"var(--bg-2)",border:"1px solid var(--border-0)",borderRadius:8,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{flex:1,fontSize:12,color:"var(--text-1)",lineHeight:1.5}}>Running the wrong protocol? Either partner can request a change.</div>
-                    <button className="btn btn-g" style={{fontSize:9,padding:"5px 10px",letterSpacing:".1em"}} onClick={()=>setShowProto(true)}>Change →</button>
+                  {/* Mode Switch Button */}
+                  <div style={{background:"var(--bg-2)",border:"1px solid var(--border-0)",borderRadius:8,padding:"14px 16px"}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:".14em",textTransform:"uppercase",color:"var(--text-1)"}}>Current Mode</div>
+                      <div className={`proto-badge ${ap.protocol}`} style={{fontSize:10,padding:"3px 10px"}}>{ap.protocol==="spotter"?"◆ Spotter":"◈ Ally"}</div>
+                    </div>
+                    <div style={{fontSize:13,color:"var(--text-2)",marginBottom:12,lineHeight:1.5}}>
+                      {isSpotter ? "Spotter mode: Minimal communication, flare system for accountability." : "Ally mode: Daily notes, reactions, deeper connection."}
+                    </div>
+                    <button className="btn btn-g" style={{width:"100%",justifyContent:"center",fontSize:12}} onClick={()=>setShowModeSwitch(true)}>
+                      Switch to {isSpotter ? "Ally" : "Spotter"} Mode →
+                    </button>
                   </div>
                 </div>
 
@@ -5145,6 +5710,72 @@ const Partners = ({ user, profile, challenges, sb }) => {
             <div className="flare-msg">SMS app opening with pre-filled message.<br/>The rest is on them.</div>
             <div className="flare-sms">"System shows non-compliance. 3 hours until tether breaks. Execute your Baseline."</div>
             <button className="flare-dismiss" onClick={()=>setShowFlare(false)}>Acknowledged →</button>
+          </div>
+        </div>
+      )}
+
+      {/* Mode Switch Modal */}
+      {showModeSwitch && ap && (
+        <div className="overlay" onClick={()=>{setShowModeSwitch(false);setSwitchCode("");setSwitchError("");}}>
+          <div className="modal" style={{maxWidth:420}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-tag">Protocol Change</div>
+            <div className="modal-title">Switch to {isSpotter ? "Ally" : "Spotter"} Mode</div>
+            <div className="modal-desc">
+              {isSpotter 
+                ? "Ally mode enables daily notes, reactions, and deeper accountability connection." 
+                : "Spotter mode uses minimal communication with the flare system for urgent accountability."}
+            </div>
+            
+            <div style={{background:"var(--bg-2)",border:"1px solid var(--border-0)",borderRadius:8,padding:"16px",marginBottom:20}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>
+                Enter {pName.split(" ")[0]}'s Invite Code to Confirm
+              </div>
+              <input 
+                className="field" 
+                style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center",fontSize:18,fontFamily:"'Bebas Neue',sans-serif"}}
+                value={switchCode} 
+                onChange={e=>setSwitchCode(e.target.value.toUpperCase())}
+                placeholder="XXXXXXXX" 
+                maxLength={8} 
+              />
+              {switchError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:11,marginTop:8}}>{switchError}</div>}
+            </div>
+            
+            <div style={{display:"flex",gap:10}}>
+              <button className="btn btn-g" style={{flex:1}} onClick={()=>{setShowModeSwitch(false);setSwitchCode("");setSwitchError("");}}>
+                Cancel
+              </button>
+              <button 
+                className="btn btn-a" 
+                style={{flex:1}}
+                disabled={switchCode.length < 6}
+                onClick={async () => {
+                  // Verify the code matches partner's invite code
+                  const partnerCode = ap.partnerProfile?.invite_code;
+                  if (!partnerCode) {
+                    setSwitchError("Could not verify partner code.");
+                    return;
+                  }
+                  if (switchCode.toUpperCase() !== partnerCode.toUpperCase()) {
+                    setSwitchError("Incorrect code. Ask your partner for their invite code.");
+                    return;
+                  }
+                  // Update protocol in DB
+                  const newProto = isSpotter ? "ally" : "spotter";
+                  try {
+                    await sb.from("partnerships").update({ protocol: newProto }).eq("id", ap.id);
+                    await loadPartners();
+                    setShowModeSwitch(false);
+                    setSwitchCode("");
+                    setSwitchError("");
+                  } catch(e) {
+                    setSwitchError("Failed to update. Try again.");
+                  }
+                }}
+              >
+                Confirm Switch →
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -6585,6 +7216,8 @@ export default function App() {
   const [sparkTrigger, setSparkTrigger] = useState(false);
   const [loggedToday,  setLoggedToday]  = useState(false);
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
+  const [focusSessions, setFocusSessions] = useState([]);
+  const [focusLoading,  setFocusLoading]  = useState(true);
   const [theme,       setThemeState]  = useState("forge");
   const [tone,        setTone]        = useState("Coach");
   const [modal,       setModal]       = useState(null);
@@ -6816,6 +7449,25 @@ export default function App() {
     load();
   }, [user, challenges.main?.id]);
 
+  // Load focus sessions from Supabase
+  const loadFocusSessions = useCallback(async () => {
+    if (!sb || !user) return;
+    setFocusLoading(true);
+    try {
+      const { data } = await sb.from("focus_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (data) setFocusSessions(data);
+    } catch(e) { console.warn("load focus sessions:", e); }
+    setFocusLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (user) loadFocusSessions();
+  }, [user, loadFocusSessions]);
+
 
   // ── Log a day ─────────────────────────────────────────────
   const handleLogDay = async (done, total) => {
@@ -6978,7 +7630,7 @@ export default function App() {
       );
       return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} checkins={checkins} />;
     }
-    if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} />;
+    if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} focusSessions={focusSessions} focusLoading={focusLoading} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
@@ -7032,7 +7684,7 @@ export default function App() {
   if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")}   onSkip={handleOnboardDone} />;
   if (stage==="ob_induct") return <OnboardInduct onDone={()=>setStage("ob_challenge")} userName={userName} />;
   if (stage==="ob_challenge") return <OnboardChallenge onStart={(t, customTasks)=>{ handleStartChallenge({ name:t.name, days:t.duration, mission:"", nonNeg:[], tasks:customTasks||t.kpis, isSecondary:false, tag:t.tag }); handleOnboardDone(); }} onSkip={handleOnboardDone} />;
-  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} /></DeepWorkBoundary>;
+  if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} sb={sb} user={user} onSessionSaved={loadFocusSessions} /></DeepWorkBoundary>;
 
   return (
     <div className="shell">
