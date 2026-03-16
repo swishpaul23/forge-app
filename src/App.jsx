@@ -2671,6 +2671,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
   const [selected,   setSelected]   = useState(null);
   const [editTasks,  setEditTasks]  = useState(false);
   const [tasks,      setTasks]      = useState([]);
+  const [nonNegs,    setNonNegs]    = useState([]); // task ids that are non-negotiable
   const templates = TEMPLATES.filter(t => t.id !== "custom");
   const t = selected || templates[0];
 
@@ -2678,6 +2679,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
   const selectTemplate = (tmpl) => {
     setSelected(tmpl);
     setTasks(tmpl.kpis.map((k,i) => ({ id:i, label:k.label, cat:k.cat })));
+    setNonNegs([]); // reset non-negs on template change
     setEditTasks(false);
   };
 
@@ -2687,8 +2689,9 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
   }, []);
 
   const addTask    = () => setTasks(ts => [...ts, { id:Date.now(), label:"", cat:"other" }]);
-  const removeTask = (id) => setTasks(ts => ts.filter(x => x.id !== id));
+  const removeTask = (id) => { setTasks(ts => ts.filter(x => x.id !== id)); setNonNegs(ns => ns.filter(n => n !== id)); };
   const updateTask = (id, val) => setTasks(ts => ts.map(x => x.id===id ? {...x, label:val} : x));
+  const toggleNonNeg = (id) => setNonNegs(ns => ns.includes(id) ? ns.filter(n => n !== id) : [...ns, id]);
   const validTasks = tasks.filter(t => t.label.trim());
 
   return (
@@ -2709,7 +2712,11 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
             What are you committing to?
           </div>
         </div>
-        <button onClick={onSkip} style={{background:"none",border:"none",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-2)",cursor:"pointer",paddingBottom:4}}>
+        <button 
+          className="btn btn-g"
+          onClick={onSkip} 
+          style={{fontSize:11,padding:"8px 16px",letterSpacing:".08em"}}
+        >
           Skip for now →
         </button>
       </div>
@@ -2780,27 +2787,55 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
               <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)"}}>
                 Daily tasks
               </div>
-              <button onClick={()=>setEditTasks(e=>!e)} style={{background:"none",border:"1px solid var(--border-1)",borderRadius:4,padding:"3px 10px",fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",textTransform:"uppercase",color:"var(--text-2)",cursor:"pointer"}}>
-                {editTasks ? "Done editing" : "Edit tasks"}
+              <button 
+                className="btn btn-g"
+                onClick={()=>setEditTasks(e=>!e)} 
+                style={{fontSize:10,padding:"5px 12px",letterSpacing:".08em"}}
+              >
+                {editTasks ? "Done" : "Edit Tasks"}
               </button>
             </div>
             {!editTasks ? (
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {tasks.map((k,i)=>(
-                  <div key={k.id||i} style={{
-                    display:"flex",alignItems:"center",gap:10,
-                    background:"var(--bg-2)",border:"1px solid var(--border-1)",
-                    borderRadius:6,padding:"10px 14px",
-                  }}>
-                    <div style={{
-                      width:6,height:6,borderRadius:"50%",flexShrink:0,
-                      background: k.cat==="body"?"#D4922A":k.cat==="diet"?"#5DBF8A":k.cat==="mind"?"#4A8FD4":k.cat==="build"?"#BF5DBF":"var(--text-2)",
-                    }} />
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-0)",letterSpacing:".06em"}}>
-                      {k.label}
-                    </div>
+                {/* Non-neg hint */}
+                {nonNegs.length > 0 && (
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--warn)", marginBottom:4 }}>
+                    ◆ {nonNegs.length} non-negotiable{nonNegs.length > 1 ? "s" : ""} — click to toggle
                   </div>
-                ))}
+                )}
+                {nonNegs.length === 0 && (
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-2)", marginBottom:4 }}>
+                    Click tasks to mark as non-negotiable
+                  </div>
+                )}
+                {tasks.map((k,i)=>{
+                  const isNonNeg = nonNegs.includes(k.id);
+                  return (
+                    <div key={k.id||i} 
+                      onClick={() => toggleNonNeg(k.id)}
+                      style={{
+                        display:"flex",alignItems:"center",gap:10,
+                        background: isNonNeg ? "var(--warn)10" : "var(--bg-2)",
+                        border: `1px solid ${isNonNeg ? "var(--warn)40" : "var(--border-1)"}`,
+                        borderRadius:6,padding:"10px 14px",
+                        cursor:"pointer",
+                        transition:"all 0.15s",
+                      }}>
+                      <div style={{
+                        width:6,height:6,borderRadius:"50%",flexShrink:0,
+                        background: isNonNeg ? "var(--warn)" : k.cat==="body"?"#D4922A":k.cat==="diet"?"#5DBF8A":k.cat==="mind"?"#4A8FD4":k.cat==="build"?"#BF5DBF":"var(--text-2)",
+                      }} />
+                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color: isNonNeg ? "var(--warn)" : "var(--text-0)",letterSpacing:".06em",flex:1}}>
+                        {k.label}
+                      </div>
+                      {isNonNeg && (
+                        <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".1em", color:"var(--warn)" }}>
+                          NON-NEG
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -2821,8 +2856,12 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
                     )}
                   </div>
                 ))}
-                <button onClick={addTask} style={{background:"none",border:"1px dashed var(--border-1)",borderRadius:6,padding:"9px",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",color:"var(--text-2)",cursor:"pointer",textAlign:"center"}}>
-                  + Add task
+                <button 
+                  className="btn btn-g"
+                  onClick={addTask} 
+                  style={{width:"100%",justifyContent:"center",fontSize:10,padding:"10px",letterSpacing:".1em",borderStyle:"dashed"}}
+                >
+                  + Add Task
                 </button>
               </div>
             )}
@@ -2856,7 +2895,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
 
           {/* CTA */}
           <button
-            onClick={()=>onStart(t, validTasks)}
+            onClick={()=>onStart(t, validTasks, nonNegs)}
             style={{
               width:"100%", padding:"16px", borderRadius:8,
               background:"var(--accent)", color:"#080807",
@@ -4592,9 +4631,23 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }) => {
 const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
   const [mode,   setMode]   = useState(isSecondaryMode || hasMain ? "secondary" : "main");
   const [active, setActive] = useState(null); // selected template for detail panel
+  const [selectedNonNegs, setSelectedNonNegs] = useState([]); // non-negotiable task keys
+  const [editingTasks, setEditingTasks] = useState(false);
 
   const selected = TEMPLATES.find(t => t.id === active);
   const isSecMode = mode === "secondary" || isSecondaryMode;
+
+  // Reset non-negs when template changes
+  const handleSelectTemplate = (id) => {
+    if (active !== id) setSelectedNonNegs([]);
+    setActive(prev => prev === id ? null : id);
+  };
+
+  const toggleNonNeg = (key) => {
+    setSelectedNonNegs(prev => 
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
 
   const DIFF_COLOUR = { "Hard":"var(--err)", "Intense":"var(--warn)", "Moderate":"var(--ok)", "You decide":"var(--text-2)" };
 
@@ -4639,35 +4692,46 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
 
         {/* Cards grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10 }}>
-          {TEMPLATES.map((t,i) => (
-            <div key={t.id}
-              className={`tpl a${Math.min(i+1,5)} ${active===t.id?"active":""}`}
-              onClick={() => isSecondaryMode ? onPick(t) : setActive(prev => prev === t.id ? null : t.id)}>
+          {TEMPLATES.map((t,i) => {
+            const isCustom = t.id === "custom";
+            return (
+              <div key={t.id}
+                className={`tpl a${Math.min(i+1,5)} ${active===t.id?"active":""}`}
+                style={isCustom ? { 
+                  background: "linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%)",
+                  borderStyle: "dashed",
+                  borderColor: active===t.id ? "var(--accent)" : "var(--border-1)",
+                } : undefined}
+                onClick={() => isSecondaryMode ? onPick(t) : handleSelectTemplate(t.id)}>
 
-              {/* Hover tooltip — only in full library */}
-              {!isSecondaryMode && (
-                <div className="tpl-tooltip">
-                  <div className="tpl-tooltip-diff" style={{ color: DIFF_COLOUR[t.difficulty] || "var(--accent)" }}>
-                    {t.difficulty} · {t.duration} days
+                {/* Hover tooltip — only in full library */}
+                {!isSecondaryMode && (
+                  <div className="tpl-tooltip">
+                    <div className="tpl-tooltip-diff" style={{ color: DIFF_COLOUR[t.difficulty] || "var(--accent)" }}>
+                      {t.difficulty} · {t.duration} days
+                    </div>
+                    <div className="tpl-tooltip-text">{t.blurb}</div>
                   </div>
-                  <div className="tpl-tooltip-text">{t.blurb}</div>
-                </div>
-              )}
+                )}
 
-              <div className="tpl-tag">{t.tag} · {t.duration}D</div>
-              <div className="tpl-name">{t.name}</div>
-              <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
-              {isSecondaryMode ? (
-                <div style={{ marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:9.5, color:"var(--text-2)", lineHeight:1.55 }}>
-                  {t.blurb}
+                <div className="tpl-tag">{t.tag} · {isCustom ? "∞" : t.duration}D</div>
+                <div className="tpl-name" style={isCustom ? { display:"flex", alignItems:"center", gap:8 } : undefined}>
+                  {isCustom && <span style={{ fontSize:16 }}>+</span>}
+                  {t.name}
                 </div>
-              ) : (
-                <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
-                  {active === t.id ? "↑ Close" : "→ Learn more"}
-                </div>
-              )}
-            </div>
-          ))}
+                <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
+                {isSecondaryMode ? (
+                  <div style={{ marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:9.5, color:"var(--text-2)", lineHeight:1.55 }}>
+                    {t.blurb}
+                  </div>
+                ) : (
+                  <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
+                    {active === t.id ? "↑ Close" : isCustom ? "→ Create yours" : "→ Learn more"}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Right column — hidden in secondary mode */}
@@ -4714,20 +4778,69 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
 
               {selected.kpis.length > 0 && (
                 <>
-                  <div className="lib-detail-section">Daily Tasks</div>
-                  {selected.kpis.map(k => (
-                    <div key={k.key} style={{ fontSize:13, color:"var(--text-1)", padding:"5px 0",
-                      borderBottom:"1px solid var(--border-0)", display:"flex", gap:8 }}>
-                      <span style={{ color:"var(--text-3)" }}>—</span>{k.label}
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:20 }}>
+                    <div className="lib-detail-section" style={{ margin:0 }}>Daily Tasks</div>
+                    <button 
+                      className="btn btn-g" 
+                      style={{ fontSize:10, padding:"5px 12px", letterSpacing:".08em" }}
+                      onClick={() => setEditingTasks(!editingTasks)}
+                    >
+                      {editingTasks ? "Done" : "Edit Tasks"}
+                    </button>
+                  </div>
+                  
+                  {/* Non-neg hint */}
+                  {!editingTasks && selectedNonNegs.length > 0 && (
+                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--warn)", marginTop:8, marginBottom:4 }}>
+                      ◆ {selectedNonNegs.length} non-negotiable{selectedNonNegs.length > 1 ? "s" : ""} selected
                     </div>
-                  ))}
+                  )}
+                  {editingTasks && (
+                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-2)", marginTop:8, marginBottom:8 }}>
+                      Click tasks to mark as non-negotiable. Missing a non-neg = 0% day.
+                    </div>
+                  )}
+                  
+                  {selected.kpis.map(k => {
+                    const isNonNeg = selectedNonNegs.includes(k.key);
+                    return (
+                      <div 
+                        key={k.key} 
+                        onClick={() => editingTasks && toggleNonNeg(k.key)}
+                        style={{ 
+                          fontSize:13, 
+                          color: isNonNeg ? "var(--warn)" : "var(--text-1)", 
+                          padding:"10px 12px",
+                          marginTop:4,
+                          borderRadius:8,
+                          background: isNonNeg ? "var(--warn)10" : "var(--bg-2)",
+                          border: `1px solid ${isNonNeg ? "var(--warn)40" : "var(--border-0)"}`,
+                          display:"flex", 
+                          alignItems:"center",
+                          gap:10,
+                          cursor: editingTasks ? "pointer" : "default",
+                          transition:"all 0.15s",
+                        }}
+                      >
+                        <span style={{ color: isNonNeg ? "var(--warn)" : "var(--accent)", fontSize:10 }}>
+                          {isNonNeg ? "◆" : "●"}
+                        </span>
+                        <span style={{ flex:1 }}>{k.label}</span>
+                        {isNonNeg && (
+                          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".1em", color:"var(--warn)" }}>
+                            NON-NEG
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </>
               )}
 
               {/* Second CTA at bottom */}
               <button className="btn btn-a w100"
                 style={{ justifyContent:"center", marginTop:22, fontSize:15, padding:"12px 0" }}
-                onClick={() => { onPick(selected, isSecMode); setActive(null); }}>
+                onClick={() => { onPick(selected, isSecMode, selectedNonNegs); setActive(null); setSelectedNonNegs([]); }}>
                 {isSecMode ? `+ Start as Secondary` : `→ Start Challenge`}
               </button>
             </div>
@@ -5144,6 +5257,8 @@ const Partners = ({ user, profile, challenges, sb }) => {
   const [switchError,     setSwitchError]  = useState("");
   const [autoRefresh,     setAutoRefresh]  = useState(false);
   const [lastRefresh,     setLastRefresh]  = useState(null);
+  const [showTutorial,    setShowTutorial] = useState(false);
+  const [tutorialStep,    setTutorialStep] = useState(0);
   const cdIntervalRef = useRef(null);
   const autoRefreshRef = useRef(null);
   const [cdStr,           setCdStr]        = useState("--:--:--");
@@ -5199,26 +5314,88 @@ const Partners = ({ user, profile, challenges, sb }) => {
       const otherIds = [...new Set(rows.map(r => r.user_id === user.id ? r.partner_id : r.user_id))];
       const { data: profileRows } = await sb.from("profiles").select("id,full_name,invite_code").in("id", otherIds);
       const profileMap = Object.fromEntries((profileRows||[]).map(p => [p.id, p]));
-      const { data: chalRows } = await sb.from("challenges").select("user_id,name,tag,day_num,total_days,streak,consistency,archived").in("user_id", otherIds).eq("is_main",true).eq("archived",false);
+      const { data: chalRows } = await sb.from("challenges").select("id,user_id,name,tag,day_num,total_days,streak,consistency,archived").in("user_id", otherIds).eq("is_main",true).eq("archived",false);
       const chalMap = Object.fromEntries((chalRows||[]).map(c => [c.user_id, c]));
+      
+      // Build last 30 days date array
+      const last30Dates = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        last30Dates.push(d.toISOString().split("T")[0]);
+      }
+      
+      // Get my main challenge ID
+      const myMainChallengeId = challenges?.main?.id;
+      
+      // Fetch MY checkins for last 30 days
+      let myCheckinsMap = {};
+      if (myMainChallengeId) {
+        const { data: myCheckins } = await sb
+          .from("checkins")
+          .select("date,score")
+          .eq("challenge_id", myMainChallengeId)
+          .in("date", last30Dates);
+        (myCheckins || []).forEach(c => { myCheckinsMap[c.date] = c.score; });
+      }
+      
+      // Fetch ALL partner checkins for last 30 days (for all partner challenges)
+      const partnerChallengeIds = (chalRows || []).map(c => c.id);
+      let partnerCheckinsMap = {}; // { visibleId: { date: score } }
+      if (partnerChallengeIds.length > 0) {
+        const { data: partnerCheckins } = await sb
+          .from("checkins")
+          .select("challenge_id,date,score")
+          .in("challenge_id", partnerChallengeIds)
+          .in("date", last30Dates);
+        (partnerCheckins || []).forEach(c => {
+          if (!partnerCheckinsMap[c.challenge_id]) partnerCheckinsMap[c.challenge_id] = {};
+          partnerCheckinsMap[c.challenge_id][c.date] = c.score;
+        });
+      }
+      
       // Load today's checkins for status
       const today = new Date().toISOString().split("T")[0];
-      const { data: checkinRows } = await sb.from("checkins").select("challenge_id,score,date").in("challenge_id", (chalRows||[]).map(c => c.user_id)).eq("date", today);
-      const checkinMap = {};
-      (checkinRows||[]).forEach(ci => { checkinMap[ci.challenge_id] = ci.score; });
+      
       const all = rows.map(r => {
         const otherId = r.user_id === user.id ? r.partner_id : r.user_id;
         const ch = chalMap[otherId] || null;
-        // Derive status from today's checkin score
-        const todayScore = ch ? (checkinMap[ch.user_id] ?? null) : null;
-        const status = todayScore === null ? "cold" : todayScore >= 75 ? "gold" : todayScore > 0 ? "ember" : "cold";
+        const partnerChalId = ch?.id;
+        
+        // Today's status
+        const theirTodayScore = partnerChalId ? (partnerCheckinsMap[partnerChalId]?.[today] ?? null) : null;
+        const status = theirTodayScore === null ? "cold" : theirTodayScore >= 75 ? "gold" : theirTodayScore > 0 ? "ember" : "cold";
+        
+        // Build sync history for last 30 days
+        const syncHistory = last30Dates.map(date => {
+          const myScore = myCheckinsMap[date] ?? null;
+          const theirScore = partnerChalId ? (partnerCheckinsMap[partnerChalId]?.[date] ?? null) : null;
+          
+          // Both hit target (75%+)
+          if (myScore !== null && myScore >= 75 && theirScore !== null && theirScore >= 75) return "gold";
+          
+          // Both executed (>0)
+          if (myScore !== null && myScore > 0 && theirScore !== null && theirScore > 0) return "ember";
+          
+          // Only one executed
+          if ((myScore !== null && myScore > 0) !== (theirScore !== null && theirScore > 0)) return "desync";
+          
+          // Neither executed
+          return "miss";
+        });
+        
+        // Calculate actual sync rate from history
+        const syncDays = syncHistory.filter(s => s === "gold" || s === "ember").length;
+        const actualSyncRate = Math.round((syncDays / 30) * 100);
+        
         return {
           ...r,
           partnerProfile: profileMap[otherId] || { id: otherId, full_name: "Partner" },
           challenge: ch,
           status,
           protocol: r.protocol || "spotter",
-          syncRate: Math.round((ch?.consistency || 0)),
+          syncRate: actualSyncRate,
+          syncHistory,
         };
       });
       setPartners(all);
@@ -5241,8 +5418,14 @@ const Partners = ({ user, profile, challenges, sb }) => {
       if (ex) throw new Error(ex.status === "active" ? "Already partners." : "Request already sent.");
       const { error: iErr } = await sb.from("partnerships").insert({ user_id:user.id, partner_id:tp.id, invite_code:`${user.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status:"active", protocol:selectedProto });
       if (iErr) throw new Error(iErr.message);
+      const isFirstPartner = partners.length === 0;
       setJoinCode(""); setShowAdd(false); setShowProto(false);
       await loadPartners();
+      // Show tutorial on first partner add
+      if (isFirstPartner) {
+        setTutorialStep(0);
+        setShowTutorial(true);
+      }
     } catch(e) { setJoinError(e.message); }
     finally { setJoinLoading(false); }
   };
@@ -5318,19 +5501,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
     </div>
   );
 
-  // Build history grid cells
-  const buildHistory = (partner) => {
-    const seed = (partner?.partnerProfile?.full_name||"x").charCodeAt(0);
-    const sr = partner?.syncRate || 50;
-    return Array.from({length:30},(_,i)=>{
-      const v = ((seed*(i+7)*13)%100);
-      if (v < sr*0.57) return "gold";
-      if (v < sr*0.71) return "ember";
-      if (v < 85) return "desync";
-      return "miss";
-    });
-  };
-
+  // Build history grid cells - now uses real data from ap.syncHistory
   const hColors = { gold:"#F5C842", ember:"var(--accent)", desync:"#D4922A22", miss:"var(--bg-3)" };
   const hOpacity = { gold:.9, ember:.75, desync:1, miss:1 };
 
@@ -5674,14 +5845,31 @@ const Partners = ({ user, profile, challenges, sb }) => {
                     Shared Execution — Last 30 Days
                   </div>
                   <div className="ow-h-grid">
-                    {buildHistory(ap).map((c,i)=>(
-                      <div key={i} className="ow-h-cell" style={{background:hColors[c],opacity:hOpacity[c]}} title={`Day ${i+1}`} />
-                    ))}
+                    {(ap.syncHistory || []).map((c,i)=>{
+                      // Calculate date for this cell (30 days ago + i)
+                      const cellDate = new Date();
+                      cellDate.setDate(cellDate.getDate() - 29 + i);
+                      const dateStr = cellDate.toLocaleDateString("en-US", { month:"short", day:"numeric" });
+                      const statusLabel = c === "gold" ? "Both hit target" : c === "ember" ? "Both executed" : c === "desync" ? "Only one executed" : "Neither executed";
+                      return (
+                        <div 
+                          key={i} 
+                          className="ow-h-cell" 
+                          style={{background:hColors[c],opacity:hOpacity[c],position:"relative",cursor:"pointer"}} 
+                          title={`${dateStr}: ${statusLabel}`}
+                        />
+                      );
+                    })}
                   </div>
+                  {(!ap.syncHistory || ap.syncHistory.length === 0) && (
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",textAlign:"center",padding:"20px 0"}}>
+                      No shared history yet
+                    </div>
+                  )}
                   <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:6}}>
                     {[
-                      {color:"#F5C842",op:.9,label:"Both hit target"},
-                      {color:"var(--accent)",op:.75,label:"At least baseline"},
+                      {color:"#F5C842",op:.9,label:"Both hit target (75%+)"},
+                      {color:"var(--accent)",op:.75,label:"Both executed (>0%)"},
                       {color:"#D4922A22",op:1,label:"Only one executed"},
                       {color:"var(--bg-3)",op:1,label:"Neither executed"},
                     ].map(l=>(
@@ -5775,6 +5963,104 @@ const Partners = ({ user, profile, challenges, sb }) => {
               >
                 Confirm Switch →
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Partner Tutorial Modal */}
+      {showTutorial && (
+        <div className="overlay" onClick={() => setShowTutorial(false)}>
+          <div className="modal" style={{ maxWidth:480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-tag">Partner Guide</div>
+            
+            {tutorialStep === 0 && (
+              <>
+                <div className="modal-title" style={{ fontSize:26 }}>Welcome to Partners</div>
+                <div className="modal-desc">You've connected with your first accountability partner. Here's how the system works.</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:16, margin:"20px 0" }}>
+                  <div style={{ background:"var(--bg-2)", border:"1px solid var(--border-0)", borderRadius:10, padding:"16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <span style={{ fontSize:20 }}>⚡</span>
+                      <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".06em" }}>Deploy Flare</span>
+                    </div>
+                    <div style={{ fontSize:13, color:"var(--text-1)", lineHeight:1.6 }}>
+                      In <strong>Spotter Mode</strong>, if your partner hasn't logged by 8PM, you can deploy a flare — an SMS nudge reminding them to execute. Use it sparingly. It's the nuclear option.
+                    </div>
+                  </div>
+                  <div style={{ background:"var(--bg-2)", border:"1px solid var(--border-0)", borderRadius:10, padding:"16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <span style={{ fontSize:20 }}>◈</span>
+                      <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".06em" }}>Daily Notes</span>
+                    </div>
+                    <div style={{ fontSize:13, color:"var(--text-1)", lineHeight:1.6 }}>
+                      In <strong>Ally Mode</strong>, you and your partner share short daily notes (140 chars). A quick check-in about how the day went. React with 🔥 💪 or ◆ to acknowledge.
+                    </div>
+                  </div>
+                  <div style={{ background:"var(--bg-2)", border:"1px solid var(--border-0)", borderRadius:10, padding:"16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <span style={{ fontSize:20 }}>◆</span>
+                      <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".06em" }}>Overwatch</span>
+                    </div>
+                    <div style={{ fontSize:13, color:"var(--text-1)", lineHeight:1.6 }}>
+                      See your partner's execution status in real-time. Track sync rate — how often you both hit your targets together. The History tab shows your shared 30-day execution grid.
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {tutorialStep === 1 && (
+              <>
+                <div className="modal-title" style={{ fontSize:26 }}>Modes Explained</div>
+                <div className="modal-desc">Choose based on what kind of accountability works for you.</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:16, margin:"20px 0" }}>
+                  <div style={{ background:"var(--accent-lo)", border:"1px solid var(--accent)", borderRadius:10, padding:"16px" }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".06em", color:"var(--accent)", marginBottom:8 }}>◆ Spotter Mode</div>
+                    <div style={{ fontSize:13, color:"var(--text-1)", lineHeight:1.6 }}>
+                      <strong>Pressure is the mechanism.</strong> Binary status visible. Flare available 8–11PM if partner hasn't logged. Best for people who respond to external pressure.
+                    </div>
+                  </div>
+                  <div style={{ background:"#4A8FD415", border:"1px solid #4A8FD4", borderRadius:10, padding:"16px" }}>
+                    <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:".06em", color:"#4A8FD4", marginBottom:8 }}>◈ Ally Mode</div>
+                    <div style={{ fontSize:13, color:"var(--text-1)", lineHeight:1.6 }}>
+                      <strong>Warmth is the mechanism.</strong> Daily notes and reactions. No public status pressure. Best for people who need encouragement over pressure.
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-2)", textAlign:"center", marginTop:8 }}>
+                  You can switch modes anytime from the partner detail view.
+                </div>
+              </>
+            )}
+
+            {/* Navigation */}
+            <div style={{ display:"flex", gap:10, marginTop:20 }}>
+              {tutorialStep > 0 && (
+                <button className="btn btn-g" style={{ flex:1 }} onClick={() => setTutorialStep(s => s - 1)}>
+                  ← Back
+                </button>
+              )}
+              {tutorialStep < 1 ? (
+                <button className="btn btn-a" style={{ flex:1 }} onClick={() => setTutorialStep(1)}>
+                  Next →
+                </button>
+              ) : (
+                <button className="btn btn-a" style={{ flex:1 }} onClick={() => setShowTutorial(false)}>
+                  Got It →
+                </button>
+              )}
+            </div>
+            
+            {/* Progress dots */}
+            <div style={{ display:"flex", justifyContent:"center", gap:8, marginTop:16 }}>
+              {[0, 1].map(i => (
+                <div key={i} style={{
+                  width:8, height:8, borderRadius:"50%",
+                  background: tutorialStep === i ? "var(--accent)" : "var(--bg-3)",
+                  transition:"background 0.2s"
+                }} />
+              ))}
             </div>
           </div>
         </div>
