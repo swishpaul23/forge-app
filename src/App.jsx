@@ -1596,6 +1596,23 @@ const makeCSS = () => `
     animation:fadein .4s ease both;
     overflow:hidden;
   }
+  .auth-right {
+  flex:1; display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  padding:60px 56px;
+  overflow-y:auto;}
+  @media (max-width:768px) {
+  .auth-screen { flex-direction:column; }
+  .auth-left { display:none; }
+  .auth-right { 
+    width:100%; padding:40px 24px 60px;
+    justify-content:flex-start;
+    min-height:100vh;
+  }
+  .auth-form { max-width:100%; }
+  .auth-form-title { font-size:36px; }
+  .auth-tab { padding:13px 0; font-size:11px; }
+}
   .auth-left {
     width:52%; position:relative;
     background:var(--bg-1);
@@ -6044,7 +6061,7 @@ const AuthScreen = ({ onAuthed }) => {
           <div className="auth-form-title">{mode==="login"?"Welcome Back.":"Begin Here."}</div>
           <div className="auth-form-sub">{mode==="login"?"Your streak is waiting.":"One standard. No compromises."}</div>
           {err && <div className="auth-error">{err}</div>}
-          <button className="btn btn-g w100 mb16" style={{justifyContent:"center",gap:10,padding:"11px",marginTop:16}}
+          <button className="btn btn-g w100 mb16" style={{justifyContent:"center",gap:10,padding:"14px",marginTop:16}}
             onClick={handleGoogle} disabled={loading}>
             <svg width="16" height="16" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
