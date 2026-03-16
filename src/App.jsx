@@ -1603,89 +1603,18 @@ const makeCSS = () => `
   .auth-screen {
     position:fixed; inset:0;
     background:var(--bg-0);
-    display:flex; align-items:stretch;
+    display:flex; align-items:center; justify-content:center;
     animation:fadein .4s ease both;
-    overflow:hidden;
-  }
-  .auth-right {
-  flex:1; display:flex; flex-direction:column;
-  justify-content:center; align-items:center;
-  padding:60px 56px;
-  overflow-y:auto;
-  min-height:100vh;
-}
-  @media (max-width:768px) {
-  .auth-screen { flex-direction:column; }
-  .auth-left { display:none; }
-  .auth-right { 
-    width:100%; padding:40px 24px 60px;
-    justify-content:flex-start;
-    min-height:100vh;
-  }
-  .auth-form { max-width:100%; }
-  .auth-form-title { font-size:36px; }
-  .auth-tab { padding:13px 0; font-size:11px; }
-}
-  .auth-left {
-  display:none;
-}
-  .auth-left-bg {
-    position:absolute; inset:0;
-    background:radial-gradient(ellipse at 30% 40%, var(--accent-lo) 0%, transparent 60%);
-    pointer-events:none;
-  }
-  .auth-left-quote {
-    position:relative; z-index:1;
-    max-width:400px;
-  }
-  .auth-quote-mark {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:120px; line-height:.7;
-    color:var(--accent-mid);
-    pointer-events:none; user-select:none;
-    margin-bottom:-8px;
-  }
-  .auth-quote-text {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:clamp(28px,3.5vw,42px);
-    letter-spacing:.02em; line-height:1.05;
-    color:var(--text-0);
-    margin-bottom:20px;
-  }
-  .auth-quote-attr {
-    font-family:'IBM Plex Mono',monospace;
-    font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
-    color:var(--text-2);
-  }
-  .auth-left-logo {
-    position:absolute; top:36px; left:40px;
-    font-family:'Bebas Neue',sans-serif;
-    font-size:22px; letter-spacing:.14em;
-    color:var(--accent);
-  }
-  .auth-left-stats {
-    position:absolute; bottom:40px; left:40px; right:40px;
-    display:flex; gap:28px;
-  }
-  .auth-stat-item {}
-  .auth-stat-n {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:32px; color:var(--text-0); letter-spacing:.02em; line-height:1;
-  }
-  .auth-stat-l {
-    font-family:'IBM Plex Mono',monospace;
-    font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--text-2); margin-top:2px;
-  }
-
-  .auth-right {
-    flex:1; display:flex; flex-direction:column;
-    justify-content:center; align-items:center;
-    padding:60px 56px;
     overflow-y:auto;
+    padding:40px 24px;
+  }
+  .auth-right {
+    width:100%; max-width:420px;
+    display:flex; flex-direction:column;
+    align-items:center;
   }
   .auth-form {
-    width:100%; max-width:360px;
+    width:100%; max-width:420px;
   }
   .auth-form-tag {
     font-family:'IBM Plex Mono',monospace;
@@ -1714,9 +1643,7 @@ const makeCSS = () => `
     color:var(--text-2); background:transparent; border:none;
   }
   .auth-tab:hover:not(.on) { color:var(--text-1); background:var(--bg-2); }
-  .auth-tab.on {
-    background:var(--accent); color:#080807; font-weight:700;
-  }
+  .auth-tab.on { background:var(--accent); color:#080807; font-weight:700; }
   .auth-divider {
     text-align:center; margin:20px 0;
     font-family:'IBM Plex Mono',monospace;
@@ -2422,117 +2349,6 @@ const Entry = ({ onDone, authReady, mode }) => {
 };
 
 // ============================================================
-// AUTH SCREEN (Login / Create Account)
-// ============================================================
-
-const Auth = ({ onLogin, onSignup }) => {
-  const [mode,     setMode]     = useState("login"); // "login" | "signup"
-  const [name,     setName]     = useState("");
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-
-  const validate = () => {
-    if (mode === "signup" && !name.trim())        return "Name is required.";
-    if (!email.includes("@"))                     return "Enter a valid email.";
-    if (password.length < 6)                      return "Password must be 6+ characters.";
-    return "";
-  };
-
-  const handleSubmit = () => {
-    const err = validate();
-    if (err) { setError(err); return; }
-    setError("");
-    if (mode === "login") onLogin(email, name || email.split("@")[0]);
-    else                  onSignup(name.trim(), email);
-  };
-
-  return (
-    <div className="auth-screen">
-      {/* LEFT PANEL */}
-      <div className="auth-left">
-        <div className="auth-left-bg" />
-
-        <div className="auth-left-stats">
-          {[
-            { n:"75", l:"Day hard reset" },
-            { n:"0",  l:"Excuses allowed" },
-            { n:"1",  l:"Standard: yours" },
-          ].map(s => (
-            <div key={s.l} className="auth-stat-item">
-              <div className="auth-stat-n">{s.n}</div>
-              <div className="auth-stat-l">{s.l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* RIGHT PANEL */}
-      <div className="auth-right">
-        {/* Logo centred above the form island */}
-        <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
-          <img src="/forge_wordmark_dark.png" style={{height:166,objectFit:"contain"}} />
-        </div>
-        <div className="auth-form">
-          {/* Tab toggle */}
-          <div className="auth-tab-row">
-            <button className={`auth-tab ${mode==="login"?"on":""}`}  onClick={() => { setMode("login");  setError(""); }}>Log In</button>
-            <button className={`auth-tab ${mode==="signup"?"on":""}`} onClick={() => { setMode("signup"); setError(""); }}>Create Account</button>
-          </div>
-
-          <div className="auth-form-tag">Forge · Discipline Tracker</div>
-          <div className="auth-form-title">{mode === "login" ? "Welcome Back." : "Begin Here."}</div>
-          <div className="auth-form-sub">
-            {mode === "login"
-              ? "Your streak is waiting. Pick up where you left off."
-              : "One account. One standard. No compromises."}
-          </div>
-
-          {error && <div className="auth-error">{error}</div>}
-
-          {mode === "signup" && (
-            <div className="auth-field-wrap">
-              <div className="field-l">Your Name</div>
-              <input className="field" value={name} onChange={e => setName(e.target.value)} placeholder="First name" />
-            </div>
-          )}
-          <div className="auth-field-wrap">
-            <div className="field-l">Email</div>
-            <input className="field" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-          </div>
-          <div className="auth-field-wrap">
-            <div className="field-l">Password</div>
-            <input className="field" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-              onKeyDown={e => e.key === "Enter" && handleSubmit()} />
-          </div>
-
-          <button
-            className="btn btn-a w100 mt16"
-            style={{
-              justifyContent:"center", padding:"14px", fontSize:15,
-              letterSpacing:".04em", borderRadius:8,
-              boxShadow:"0 4px 0 rgba(0,0,0,.4)",
-              transition:"all .18s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 6px 20px var(--accent-mid), 0 5px 0 rgba(0,0,0,.4)"; }}
-            onMouseLeave={e => { e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow="0 4px 0 rgba(0,0,0,.4)"; }}
-            onMouseDown={e  => { e.currentTarget.style.transform="translateY(2px)"; e.currentTarget.style.boxShadow="0 1px 0 rgba(0,0,0,.4)"; }}
-            onMouseUp={e    => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 6px 20px var(--accent-mid), 0 5px 0 rgba(0,0,0,.4)"; }}
-            onClick={handleSubmit}
-          >
-            {mode === "login" ? "Enter the Forge →" : "Create My Account →"}
-          </button>
-
-          <div className="auth-switch">
-            {mode === "login"
-              ? <>No account? <span onClick={() => { setMode("signup"); setError(""); }}>Create one</span></>
-              : <>Already have one? <span onClick={() => { setMode("login"); setError(""); }}>Log in</span></>}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ============================================================
 // ONBOARDING — Screen 1: Why You're Here
@@ -5989,8 +5805,6 @@ const AuthScreen = ({ onAuthed }) => {
   const [pw,       setPw]       = useState("");
   const [err,      setErr]      = useState("");
   const [loading,  setLoading]  = useState(false);
-  const quote = QUOTES[0];
-
   const handleEmail = async () => {
     setErr("");
     if (mode === "signup" && !name.trim()) return setErr("Name is required.");
@@ -6020,26 +5834,10 @@ const AuthScreen = ({ onAuthed }) => {
 
   return (
     <div className="auth-screen">
-      <div className="auth-left">
-        <div className="auth-left-bg" />
-        <div className="auth-left-quote">
-          <div className="auth-quote-mark">"</div>
-          <div className="auth-quote-text">{quote.text}</div>
-          <div className="auth-quote-attr">— {quote.attr}</div>
-        </div>
-        <div className="auth-left-stats">
-          {[{n:"75",l:"Day hard reset"},{n:"0",l:"Excuses allowed"},{n:"1",l:"Standard: yours"}].map(s=>(
-            <div key={s.l} className="auth-stat-item">
-              <div className="auth-stat-n">{s.n}</div>
-              <div className="auth-stat-l">{s.l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
       <div className="auth-right">
-        {/* Logo centred above the form island */}
+        {/* Logo */}
         <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
-          <img src="/forge_wordmark_dark.png" style={{height:166,objectFit:"contain"}} />
+          <img src="/forge_wordmark_dark.png" style={{height:120,objectFit:"contain"}} />
         </div>
         <div className="auth-form">
           <div className="auth-tab-row">
