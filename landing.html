@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — Your Discipline Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #080807;
+  --bg-1:    #0F0F0D;
+  --bg-2:    #161613;
+  --bg-3:    #1E1E1A;
+  --accent:  #D4922A;
+  --acc-lo:  #D4922A14;
+  --acc-mid: #D4922A44;
+  --text-0:  #EDEAE3;
+  --text-1:  #9A9690;
+  --text-2:  #56524D;
+  --border:  #2A2A25;
+  --ok:      #5DBF8A;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text-0);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 19px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Grain */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 9999;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px;
+  height: 62px;
+  background: rgba(8,8,7,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(42,42,37,0.6);
+}
+
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: .14em;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex; gap: 32px; list-style: none;
+}
+
+.nav-links a {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-2); text-decoration: none;
+  transition: color .2s;
+  position: relative; padding-bottom: 2px;
+}
+.nav-links a:hover { color: var(--text-0); }
+.nav-links a.active { color: var(--accent); }
+.nav-links a.active::after {
+  content: '';
+  position: absolute; bottom: -4px; left: 0; right: 0;
+  height: 1px; background: var(--accent);
+}
+
+.nav-cta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  background: var(--accent); color: #080807; font-weight: 600;
+  padding: 9px 20px; border-radius: 5px;
+  text-decoration: none;
+  transition: opacity .2s, transform .2s;
+  white-space: nowrap;
+}
+.nav-cta:hover { opacity: .85; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 20%, #D4922A0D 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, #D4922A07 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Horizontal rule lines */
+.hero-lines {
+  position: absolute; inset: 0; pointer-events: none;
+  overflow: hidden;
+}
+.hero-lines::before, .hero-lines::after {
+  content: '';
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border) 20%, var(--border) 80%, transparent 100%);
+}
+.hero-lines::before { top: 30%; }
+.hero-lines::after  { top: 70%; }
+
+.hero-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: .36em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  opacity: 0; animation: up .6s .1s ease forwards;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: '';
+  width: 32px; height: 1px;
+  background: var(--accent); opacity: .5;
+}
+
+.hero-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 12vw, 148px);
+  letter-spacing: .02em; line-height: .92;
+  color: var(--text-0);
+  margin-bottom: 10px;
+  opacity: 0; animation: up .7s .2s ease forwards;
+}
+
+.hero-headline span { color: var(--accent); }
+
+.hero-sub-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(28px, 4vw, 52px);
+  letter-spacing: .04em; line-height: 1;
+  color: var(--text-2);
+  margin-bottom: 32px;
+  opacity: 0; animation: up .7s .3s ease forwards;
+}
+
+.hero-body {
+  font-size: 20px; color: var(--text-1);
+  max-width: 540px; line-height: 1.7;
+  margin: 0 auto 44px;
+  opacity: 0; animation: up .7s .4s ease forwards;
+}
+
+.hero-actions {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  opacity: 0; animation: up .7s .5s ease forwards;
+  margin-bottom: 64px;
+}
+
+.btn-primary {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: .1em;
+  background: var(--accent); color: #080807;
+  padding: 16px 44px; border-radius: 7px;
+  text-decoration: none; border: none;
+  box-shadow: 0 4px 0 rgba(0,0,0,.5), 0 0 40px var(--acc-mid);
+  transition: all .18s;
+  display: inline-block;
+}
+.btn-primary:hover { opacity: .9; transform: translateY(-3px); box-shadow: 0 7px 0 rgba(0,0,0,.5), 0 0 60px var(--acc-mid); }
+.btn-primary:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.5); }
+
+.btn-secondary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-1);
+  padding: 16px 28px; border-radius: 7px;
+  border: 1px solid var(--border);
+  text-decoration: none; background: transparent;
+  transition: all .18s;
+  display: inline-block;
+}
+.btn-secondary:hover { color: var(--text-0); border-color: var(--acc-mid); }
+
+.hero-stats {
+  display: flex; gap: 48px; justify-content: center; flex-wrap: wrap;
+  opacity: 0; animation: up .7s .65s ease forwards;
+  padding-top: 48px;
+  border-top: 1px solid var(--border);
+  width: 100%; max-width: 600px; margin: 0 auto;
+}
+
+.hero-stat-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; letter-spacing: .02em; line-height: 1;
+  color: var(--accent);
+}
+.hero-stat-l {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-2); margin-top: 4px;
+}
+
+/* ── SECTION SHARED ── */
+section { padding: 100px 24px; }
+
+.section-inner {
+  max-width: 1080px; margin: 0 auto;
+}
+
+.section-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-tag::before { content: '◆'; font-size: 10px; }
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(44px, 6vw, 76px);
+  letter-spacing: .02em; line-height: .95;
+  margin-bottom: 16px;
+}
+
+.section-body {
+  font-size: 19px; color: var(--text-1);
+  max-width: 560px; line-height: 1.7;
+}
+
+/* ── MARQUEE ── */
+.marquee-wrap {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+  background: var(--bg-1);
+}
+
+.marquee-track {
+  display: flex; gap: 0;
+  animation: marquee 28s linear infinite;
+  white-space: nowrap;
+}
+
+.marquee-item {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px; letter-spacing: .14em;
+  color: var(--text-2); padding: 0 28px;
+  display: flex; align-items: center; gap: 14px;
+  flex-shrink: 0;
+}
+.marquee-item span { color: var(--accent); font-size: 9px; }
+
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── HOW IT WORKS ── */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-top: 56px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.how-card {
+  background: var(--bg-1);
+  padding: 36px 32px;
+  position: relative;
+  transition: background .2s;
+}
+.how-card:hover { background: var(--bg-2); }
+
+.how-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 80px; line-height: 1; letter-spacing: .02em;
+  color: var(--bg-3);
+  position: absolute; top: 20px; right: 20px;
+  transition: color .2s;
+}
+.how-card:hover .how-num { color: var(--acc-lo); }
+
+.how-icon {
+  font-size: 28px; margin-bottom: 18px;
+  display: block;
+}
+
+.how-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px; letter-spacing: .04em;
+  margin-bottom: 10px; position: relative; z-index: 1;
+}
+
+.how-desc {
+  font-size: 16px; color: var(--text-1); line-height: 1.65;
+  position: relative; z-index: 1;
+}
+
+/* ── FEATURES ── */
+.features-section { background: var(--bg-1); }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  margin-top: 56px;
+}
+
+.feature-card {
+  background: var(--bg);
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color .2s, transform .2s;
+  position: relative; overflow: hidden;
+}
+.feature-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
+  opacity: 0; transition: opacity .2s;
+}
+.feature-card:hover { border-color: var(--acc-mid); transform: translateY(-2px); }
+.feature-card:hover::before { opacity: 1; }
+
+.feature-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+
+.feature-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px; letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+
+.feature-desc {
+  font-size: 16px; color: var(--text-1); line-height: 1.65;
+}
+
+.feature-card.wide {
+  grid-column: span 2;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 40px; align-items: center;
+}
+
+.feature-visual {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+}
+
+.fv-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bg-3);
+  color: var(--text-1);
+}
+.fv-row:last-child { border-bottom: none; }
+
+.fv-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.fv-bar-wrap { flex: 1; height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
+.fv-bar      { height: 100%; border-radius: 2px; background: var(--accent); }
+.fv-pct      { font-size: 10px; color: var(--text-2); width: 32px; text-align: right; }
+.fv-check    { font-size: 11px; color: var(--ok); }
+
+/* ── PROOF / WALL PREVIEW ── */
+.wall-preview {
+  margin-top: 56px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.wp-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--text-2); margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.wp-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 4px;
+}
+
+.wp-cell {
+  height: 28px; border-radius: 3px;
+}
+
+/* ── SOCIAL PROOF ── */
+.proof-section { background: var(--bg); }
+
+.proof-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 48px; gap: 24px; flex-wrap: wrap;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.proof-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px;
+  transition: border-color .2s;
+  position: relative;
+}
+.proof-card:hover { border-color: var(--acc-mid); }
+
+.proof-quote-mark {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px; line-height: .7;
+  color: var(--acc-mid);
+  margin-bottom: 4px;
+}
+
+.proof-text {
+  font-size: 17px; color: var(--text-0);
+  line-height: 1.65; margin-bottom: 20px;
+  font-style: italic;
+}
+
+.proof-attr {
+  display: flex; align-items: center; gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.proof-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg-3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 14px;
+  color: var(--accent); flex-shrink: 0;
+}
+
+.proof-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px; letter-spacing: .04em;
+}
+
+.proof-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); margin-top: 2px;
+}
+
+.proof-streak {
+  margin-left: auto;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; color: #D4B22A;
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+.proof-streak span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 7px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-2); margin-top: -4px;
+}
+
+/* ── PRICING ── */
+.pricing-section { background: var(--bg-1); }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 56px;
+}
+
+.price-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 28px;
+  position: relative;
+  transition: border-color .2s, transform .2s;
+}
+.price-card:hover { transform: translateY(-3px); border-color: var(--acc-mid); }
+
+.price-card.featured {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+.price-card.featured::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), #FFB830);
+  border-radius: 12px 12px 0 0;
+}
+
+.price-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #080807;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+  padding: 4px 14px; border-radius: 20px; font-weight: 600;
+  white-space: nowrap;
+}
+
+.price-tier {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 12px;
+}
+
+.price-amount {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 62px; letter-spacing: .02em; line-height: 1;
+  margin-bottom: 4px;
+}
+.price-amount sup {
+  font-size: 28px; vertical-align: super; margin-right: 2px;
+  color: var(--text-1);
+}
+
+.price-period {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: .12em;
+  color: var(--text-2); margin-bottom: 24px;
+}
+
+.price-desc {
+  font-size: 16px; color: var(--text-1);
+  line-height: 1.6; margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.price-features { list-style: none; margin-bottom: 32px; }
+.price-features li {
+  font-size: 15.5px; color: var(--text-1);
+  padding: 7px 0; display: flex; gap: 10px; align-items: flex-start;
+  border-bottom: 1px solid rgba(42,42,37,.5);
+}
+.price-features li:last-child { border-bottom: none; }
+.price-features li::before { content: '◆'; color: var(--accent); font-size: 8px; margin-top: 6px; flex-shrink: 0; }
+.price-features li.muted { color: var(--text-2); }
+.price-features li.muted::before { color: var(--text-2); }
+
+.price-cta {
+  display: block; width: 100%; text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: .1em;
+  padding: 13px; border-radius: 7px;
+  text-decoration: none;
+  transition: all .18s;
+}
+.price-cta.primary {
+  background: var(--accent); color: #080807;
+  box-shadow: 0 4px 0 rgba(0,0,0,.4);
+}
+.price-cta.primary:hover { opacity: .9; transform: translateY(-2px); }
+.price-cta.ghost {
+  background: transparent; color: var(--text-1);
+  border: 1px solid var(--border);
+}
+.price-cta.ghost:hover { border-color: var(--acc-mid); color: var(--text-0); }
+
+/* ── FAQ ── */
+.faq-section { background: var(--bg); }
+
+.faq-list {
+  display: flex; flex-direction: column;
+  max-width: 780px; margin: 56px auto 0;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.faq-item {
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+  position: relative;
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-item::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent);
+  opacity: 0; transition: opacity .2s;
+}
+.faq-item.open { background: var(--bg-2); }
+.faq-item.open::before { opacity: 1; }
+
+.faq-q {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 28px; cursor: pointer;
+  gap: 24px; user-select: none;
+}
+.faq-q:hover { background: rgba(212,146,42,0.03); }
+
+.faq-q-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: .04em; line-height: 1.2;
+  color: var(--text-0);
+  transition: color .2s;
+}
+.faq-item.open .faq-q-text { color: var(--accent); }
+
+.faq-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--accent);
+  transition: transform .25s, background .2s, border-color .2s;
+  flex-shrink: 0; font-family: 'IBM Plex Mono', monospace;
+  line-height: 1;
+}
+.faq-item.open .faq-icon {
+  transform: rotate(45deg);
+  background: var(--acc-lo);
+  border-color: var(--acc-mid);
+}
+
+.faq-a {
+  max-height: 0; overflow: hidden;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.faq-item.open .faq-a { max-height: 300px; }
+
+.faq-a-inner {
+  padding: 0 28px 24px 28px;
+  font-size: 16px; color: var(--text-1);
+  line-height: 1.75;
+}
+
+/* ── CTA FINAL ── */
+.cta-section {
+  background: var(--bg-1);
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+
+.cta-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 50%, #D4922A0E 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.cta-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(64px, 10vw, 120px);
+  letter-spacing: .02em; line-height: .92;
+  position: relative; z-index: 1;
+  margin-bottom: 8px;
+}
+
+.cta-big span { color: var(--accent); }
+
+.cta-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--text-2); margin-bottom: 40px;
+  position: relative; z-index: 1;
+}
+
+.cta-actions {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  position: relative; z-index: 1; margin-bottom: 40px;
+}
+
+.cta-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-2);
+  position: relative; z-index: 1;
+  display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+}
+.cta-note span { display: flex; align-items: center; gap: 6px; }
+.cta-note span::before { content: '✓'; color: var(--ok); }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 32px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+
+.footer-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: .14em; color: var(--accent);
+}
+
+.footer-links {
+  display: flex; gap: 24px; list-style: none; flex-wrap: wrap;
+}
+.footer-links a {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-2); text-decoration: none; transition: color .2s;
+}
+.footer-links a:hover { color: var(--text-1); }
+
+.footer-copy {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── ANIMATIONS ── */
+@keyframes up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .how-grid { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-card.wide { grid-column: span 1; grid-template-columns: 1fr; }
+  .proof-grid { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .wp-grid { grid-template-columns: repeat(7, 1fr); }
+  footer { flex-direction: column; text-align: center; padding: 24px; }
+  .footer-links { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Forge</a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#proof">Stories</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <a href="/app" class="nav-cta">Enter the Forge →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-lines"></div>
+
+  <div class="hero-eyebrow">Discipline Engine · Built for the Serious</div>
+
+  <h1 class="hero-headline">
+    Don't<br/><span>Break.</span>
+  </h1>
+
+  <div class="hero-sub-headline">Build the habit of showing up.</div>
+
+  <p class="hero-body">
+    Forge is a challenge tracker built around one principle — you either did the work today or you didn't. No gamification. No streaks that lie. Just an honest record of who you're becoming.
+  </p>
+
+  <div class="hero-actions">
+    <a href="/app" class="btn-primary">Enter the Forge →</a>
+    <a href="#how" class="btn-secondary">See how it works</a>
+  </div>
+
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-n">75</div>
+      <div class="hero-stat-l">Day Hard Reset</div>
+    </div>
+    <div>
+      <div class="hero-stat-n">0</div>
+      <div class="hero-stat-l">Excuses Allowed</div>
+    </div>
+    <div>
+      <div class="hero-stat-n">1</div>
+      <div class="hero-stat-l">Standard: Yours</div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <div class="marquee-item">75 Hard <span>◆</span></div>
+    <div class="marquee-item">30 Day Reset <span>◆</span></div>
+    <div class="marquee-item">No Excuses <span>◆</span></div>
+    <div class="marquee-item">30 Days No AI <span>◆</span></div>
+    <div class="marquee-item">10 Apps in 10 Days <span>◆</span></div>
+    <div class="marquee-item">Daily Discipline <span>◆</span></div>
+    <div class="marquee-item">Accountability Partners <span>◆</span></div>
+    <div class="marquee-item">Deep Work Mode <span>◆</span></div>
+    <div class="marquee-item">Proof of Work <span>◆</span></div>
+    <!-- duplicate for seamless loop -->
+    <div class="marquee-item">75 Hard <span>◆</span></div>
+    <div class="marquee-item">30 Day Reset <span>◆</span></div>
+    <div class="marquee-item">No Excuses <span>◆</span></div>
+    <div class="marquee-item">30 Days No AI <span>◆</span></div>
+    <div class="marquee-item">10 Apps in 10 Days <span>◆</span></div>
+    <div class="marquee-item">Daily Discipline <span>◆</span></div>
+    <div class="marquee-item">Accountability Partners <span>◆</span></div>
+    <div class="marquee-item">Deep Work Mode <span>◆</span></div>
+    <div class="marquee-item">Proof of Work <span>◆</span></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">How it works</div>
+      <h2 class="section-title">Simple.<br/>Uncompromising.</h2>
+      <p class="section-body">Three steps. No fluff. The work either happened or it didn't.</p>
+    </div>
+
+    <div class="how-grid reveal">
+      <div class="how-card">
+        <div class="how-num">01</div>
+        <span class="how-icon">🎯</span>
+        <div class="how-title">Pick Your Challenge</div>
+        <div class="how-desc">Choose from pre-built programs like 75 Hard, 30 Day Reset, or build your own with custom tasks and duration. Set your mission statement. Lock in.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-num">02</div>
+        <span class="how-icon">✓</span>
+        <div class="how-title">Check In Daily</div>
+        <div class="how-desc">Tick off each task as you complete it. Log your day. The Wall records it permanently — a growing proof-of-work grid that doesn't lie.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-num">03</div>
+        <span class="how-icon">🔥</span>
+        <div class="how-title">Don't Break the Chain</div>
+        <div class="how-desc">Streak. Consistency %. An AI debrief that reads your last 7 days and tells you the truth. Accountability partners who can see your status in real time.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="features-section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">Features</div>
+      <h2 class="section-title">Everything you<br/>need. Nothing<br/>you don't.</h2>
+    </div>
+
+    <div class="features-grid">
+
+      <!-- Wide card — Wall -->
+      <div class="feature-card wide reveal">
+        <div>
+          <div class="feature-tag">Proof of Work</div>
+          <div class="feature-title">The Wall</div>
+          <p class="feature-desc">Every day you check in, a block gets forged on your wall. Green for strong days. Dark for misses. The pattern never lies — and you can't hide from it.</p>
+          <p class="feature-desc" style="margin-top:12px; font-size:13px; color: var(--text-2);">Grouped by month. Colour-coded by completion percentage. Hover any cell to see exactly what happened that day.</p>
+        </div>
+        <div>
+          <div class="wall-preview">
+            <div class="wp-label">
+              <span>Consistency Grid · Last 42 Days</span>
+              <span style="color:var(--accent)">87% avg</span>
+            </div>
+            <div class="wp-grid" id="wallGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Challenge Arena -->
+      <div class="feature-card reveal">
+        <div class="feature-tag">Challenge System</div>
+        <div class="feature-title">Main + Secondary Challenges</div>
+        <p class="feature-desc">Run one main challenge with up to 3 secondaries in parallel. Each has its own tasks, streak, and consistency tracking. Stack your disciplines.</p>
+      </div>
+
+      <!-- Daily Tasks -->
+      <div class="feature-card reveal">
+        <div class="feature-tag">Daily Check-In</div>
+        <div class="feature-title">Task Grid + Completion Ring</div>
+        <p class="feature-desc">Your daily tasks laid out cleanly. A completion ring tracks your percentage in real time. One-tap to check off. The moment you hit 100%, the forge ignites.</p>
+        <div class="feature-visual" style="margin-top:20px;">
+          <div class="fv-row">
+            <div class="fv-dot" style="background:#D4922A;"></div>
+            <span style="flex:1;font-size:11px;">Workout 1 — 45min</span>
+            <div class="fv-check">✓</div>
+          </div>
+          <div class="fv-row">
+            <div class="fv-dot" style="background:#D4922A;"></div>
+            <span style="flex:1;font-size:11px;">Workout 2 — 45min</span>
+            <div class="fv-check">✓</div>
+          </div>
+          <div class="fv-row">
+            <div class="fv-dot" style="background:#5DBF8A;"></div>
+            <span style="flex:1;font-size:11px;">Stick to diet</span>
+            <div class="fv-check">✓</div>
+          </div>
+          <div class="fv-row">
+            <div class="fv-dot" style="background:#5DBF8A;"></div>
+            <span style="flex:1;font-size:11px;">1 gallon water</span>
+            <span style="color:var(--text-2);font-size:10px;">—</span>
+          </div>
+          <div class="fv-row">
+            <div class="fv-dot" style="background:#4A8FD4;"></div>
+            <span style="flex:1;font-size:11px;">Read 10 pages</span>
+            <span style="color:var(--text-2);font-size:10px;">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deep Work -->
+      <div class="feature-card reveal">
+        <div class="feature-tag">Focus Mode</div>
+        <div class="feature-title">Deep Work Timer</div>
+        <p class="feature-desc">Pomodoro, long focus, sprint — or custom intervals. A full-screen focus mode with your tasks visible alongside the timer. Lock in, get it done.</p>
+      </div>
+
+      <!-- Partners -->
+      <div class="feature-card reveal">
+        <div class="feature-tag">Accountability</div>
+        <div class="feature-title">Partners</div>
+        <p class="feature-desc">Invite someone grinding alongside you. Real-time messaging, one-tap nudges, and live challenge progress. Someone is always watching — in the best way.</p>
+      </div>
+
+      <!-- TALOS -->
+      <div class="feature-card reveal">
+        <div class="feature-tag">AI Intelligence · Coming Soon</div>
+        <div class="feature-title">TALOS Agent</div>
+        <p class="feature-desc">An autonomous AI agent that reads your last 7 days, identifies your weak points, and tells you exactly what needs to change. No cheerleading. Just signal.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section id="proof" class="proof-section">
+  <div class="section-inner">
+    <div class="proof-header reveal">
+      <div>
+        <div class="section-tag">Real People. Real Streaks.</div>
+        <h2 class="section-title">The ones who<br/>showed up.</h2>
+      </div>
+      <p class="section-body" style="max-width:320px;">Beta testers. Early adopters. People who committed and didn't quit.</p>
+    </div>
+
+    <div class="proof-grid">
+
+      <div class="proof-card reveal">
+        <div class="proof-quote-mark">"</div>
+        <p class="proof-text">I've tried every habit app. The Wall is the only thing that's ever made me feel genuine shame about missing a day — in the right way. You can't hide from it.</p>
+        <div class="proof-attr">
+          <div class="proof-avatar">MK</div>
+          <div>
+            <div class="proof-name">Marcus K.</div>
+            <div class="proof-meta">75 Hard · Day 47</div>
+          </div>
+          <div class="proof-streak">47<span>day streak</span></div>
+        </div>
+      </div>
+
+      <div class="proof-card reveal">
+        <div class="proof-quote-mark">"</div>
+        <p class="proof-text">The partner nudge at 10pm is brutal. My guy saw I hadn't logged, sent me a fire emoji, and I went and did my workout at 10:30pm. That's the product working.</p>
+        <div class="proof-attr">
+          <div class="proof-avatar">JR</div>
+          <div>
+            <div class="proof-name">Jordan R.</div>
+            <div class="proof-meta">30 Day Reset · Day 28</div>
+          </div>
+          <div class="proof-streak">28<span>day streak</span></div>
+        </div>
+      </div>
+
+      <div class="proof-card reveal">
+        <div class="proof-quote-mark">"</div>
+        <p class="proof-text">Ran the 10 Apps in 10 Days challenge. Shipped 9 of them. That's more than I shipped in the previous 6 months combined. The constraint is the point.</p>
+        <div class="proof-attr">
+          <div class="proof-avatar">AT</div>
+          <div>
+            <div class="proof-name">Ama T.</div>
+            <div class="proof-meta">10 Apps · Completed</div>
+          </div>
+          <div class="proof-streak" style="color:var(--ok);">✓<span>finished</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="pricing-section">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center; max-width:600px; margin:0 auto 0;">
+      <div class="section-tag" style="justify-content:center;">Pricing</div>
+      <h2 class="section-title">No tricks.<br/>No paywalls<br/>on discipline.</h2>
+      <p class="section-body" style="margin:0 auto;">The core product is free. Pay only if you want the advanced layer.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Free -->
+      <div class="price-card reveal">
+        <div class="price-tier">Initiate</div>
+        <div class="price-amount"><sup></sup>Free</div>
+        <div class="price-period">Forever. No card required.</div>
+        <div class="price-desc">The raw, lonely baseline. Everything you need to build the habit — solo. No hand-holding. No social net.</div>
+        <ul class="price-features">
+          <li>Dual-Input Tracker (Target vs. Baseline)</li>
+          <li>Deep Work Timer</li>
+          <li>Solo consistency tracking</li>
+          <li>The Wall — full history</li>
+          <li>Streak tracking</li>
+          <li>Custom challenges</li>
+          <li class="muted">Accountability partners</li>
+          <li class="muted">TALOS AI insights</li>
+          <li class="muted">Automated Proof of Work</li>
+        </ul>
+        <a href="/app" class="price-cta ghost">Start Free →</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="price-card featured reveal">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-tier">Forged</div>
+        <div class="price-amount"><sup>$</sup>7<span style="font-size:32px;color:var(--text-1)">.89</span></div>
+        <div class="price-period">per month · cancel anytime</div>
+        <div class="price-desc">The resilient, automated system. For the ones who are serious enough to want the machine working for them.</div>
+        <ul class="price-features">
+          <li>Everything in Initiate</li>
+          <li>TALOS AI daily insights</li>
+          <li>Automated Proof of Work hooks</li>
+          <li>Tactical Overrides — context-aware 3-min prompts</li>
+          <li>Up to 3 secondary challenges</li>
+          <li>Accountability partners</li>
+          <li>11 themes</li>
+          <li>Push notification reminders</li>
+        </ul>
+        <a href="/app" class="price-cta primary">Start Forging →</a>
+      </div>
+
+      <!-- Annual -->
+      <div class="price-card reveal">
+        <div class="price-tier">Ironclad</div>
+        <div class="price-amount"><sup>$</sup>80</div>
+        <div class="price-period">per year · save 15%</div>
+        <div class="price-desc">The unbreakable contract. Priced to lock you in for the long game — bypassing month-to-month emotional churn.</div>
+        <ul class="price-features">
+          <li>Everything in Forged</li>
+          <li>The Spotter Protocol (Mutually Assured Destruction)</li>
+          <li>Overwatch Dashboard</li>
+          <li>SMS Flare system</li>
+          <li>Annual Wall PDF export</li>
+          <li>Early access to new features</li>
+          <li>Direct line to the builder</li>
+        </ul>
+        <a href="/app" class="price-cta ghost">Go Ironclad →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq-section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">FAQ</div>
+      <h2 class="section-title">Straight<br/>answers.</h2>
+    </div>
+
+    <div class="faq-list reveal">
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-text">What happens if I miss a day?</div>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Your streak resets and the Wall records it honestly. You can invoke a one-time Recovery per challenge — your streak pauses instead of resetting, and the miss is marked ◈ on the Wall. Visible, not erased. Use it once, use it wisely.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-text">Can I build my own challenge?</div>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Yes. You define the name, duration (7 to 365 days), and every daily task. No template needed. The custom challenge is fully supported everywhere in the app — Wall, AI insights, partners, all of it.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-text">Is my data private?</div>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Your data is stored securely in Supabase. It's yours. Partners only see your challenge name, streak, and whether you've logged today. Nothing else is shared unless you explicitly message them.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-text">What is a Scaled Day?</div>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">A scaled day lets you complete a reduced set of tasks (your Non-Negotiables) when life genuinely gets in the way. Your streak stays intact but counts at 50% consistency. Max 2 scaled days per week — it's a lifeline, not a loophole.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-text">What is TALOS?</div>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">TALOS is Forge's autonomous AI agent — currently in development. It will read your last 7 days of data and tell you exactly what's slipping and what to focus on. No cheerleading. Just honest signal. Available soon on the Forged plan.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-text">Can I run multiple challenges at once?</div>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Yes — one main challenge plus up to three secondaries (Forged plan). Secondaries must end within the main challenge's timeframe. All tasks from all challenges appear in your daily check-in. Stack disciplines, not excuses.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <div class="section-inner" style="position:relative;z-index:1;">
+    <div class="reveal">
+      <div class="cta-big">The work<br/>starts <span>today.</span></div>
+      <div class="cta-sub">Not tomorrow. Not Monday. Today.</div>
+      <div class="cta-actions">
+        <a href="/app" class="btn-primary" style="font-size:22px; padding:18px 56px;">Enter the Forge →</a>
+      </div>
+      <div class="cta-note">
+        <span>Free to start</span>
+        <span>No credit card</span>
+        <span>Your streak starts today</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Forge</div>
+  <ul class="footer-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="/app">Enter App</a></li>
+  </ul>
+  <div class="footer-copy">© 2026 Forge. All rights reserved.</div>
+</footer>
+
+<script>
+// ── Wall grid generator ──
+const grid = document.getElementById('wallGrid');
+if (grid) {
+  const scores = [
+    0,85,92,78,100,0,88,
+    95,100,72,0,84,91,100,
+    88,76,100,0,95,100,82,
+    0,100,90,85,78,100,92,
+    88,100,0,95,84,100,76,
+    100,92,88,0,100,95,100,
+  ];
+  const wallColor = s => {
+    if (s === null || s === undefined) return '#1E1E1A';
+    if (s === 0)  return '#161613';
+    if (s < 50)  return '#D4922A18';
+    if (s < 75)  return '#D4922A55';
+    return '#D4922A';
+  };
+  scores.forEach(s => {
+    const cell = document.createElement('div');
+    cell.className = 'wp-cell';
+    cell.style.background = wallColor(s);
+    grid.appendChild(cell);
+  });
+}
+
+// ── Scroll reveal ──
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ── FAQ accordion ──
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-q').addEventListener('click', () => {
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+
+// ── Smooth scroll on nav click ──
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    const id = link.getAttribute('href');
+    if (id === '#') return;
+    const target = document.querySelector(id);
+    if (!target) return;
+    e.preventDefault();
+    const offset = 70; // nav height
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  });
+});
+
+// ── Active nav on scroll ──
+// Map each nav link href to its section element
+const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+
+const sectionMap = {};
+navLinks.forEach(link => {
+  const id = link.getAttribute('href').replace('#', '');
+  const section = document.getElementById(id);
+  if (section) sectionMap[id] = { link, section };
+});
+
+const setActive = (id) => {
+  navLinks.forEach(l => l.classList.remove('active'));
+  if (sectionMap[id]) sectionMap[id].link.classList.add('active');
+};
+
+// IntersectionObserver — fires when a section crosses 30% viewport threshold
+const navObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) setActive(e.target.id);
+  });
+}, {
+  threshold: 0,
+  rootMargin: '-30% 0px -60% 0px' // activates when section is in the middle band
+});
+
+Object.values(sectionMap).forEach(({ section }) => navObserver.observe(section));
+</script>
+</body>
+</html>
