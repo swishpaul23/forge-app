@@ -434,6 +434,16 @@ const makeCSS = () => `
     /* Prevent horizontal scroll */
     .shell { overflow-x:hidden; }
     * { max-width:100vw; }
+
+    /* Partners — hide sidebar when detail open, show back button */
+    .ow-layout.detail-open .ow-sidebar { display:none !important; }
+    .ow-layout.detail-open .ow-detail  { flex:1; }
+    .ow-detail-back { display:flex !important; }
+
+    /* TALOS — stack columns */
+    .talos-layout { flex-direction:column !important; }
+    .talos-chat   { border-right:none !important; border-bottom:1px solid var(--border-0); min-height:60vh; }
+    .talos-context { width:100% !important; max-height:200px; overflow-y:auto; }
   }
   .page.partners-page { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
   .page.talos-page    { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
@@ -1215,6 +1225,7 @@ const makeCSS = () => `
 
   /* Detail panel */
   .ow-detail { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg-0); }
+  .ow-detail-back { display:none; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border-0); background:var(--bg-1); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2); cursor:pointer; border-top:none; border-left:none; border-right:none; width:100%; text-align:left; flex-shrink:0; }
   .ow-detail-head { padding:18px 22px 16px; border-bottom:1px solid var(--border-0); flex-shrink:0; position:relative; overflow:hidden; }
   .ow-detail-head-bg { position:absolute; inset:0; pointer-events:none; }
   .ow-detail-top { display:flex; align-items:flex-start; gap:14px; margin-bottom:12px; }
@@ -3487,16 +3498,6 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
 
           <div className="arena-main-stats">
             <div className="arena-ms">
-              <div className="arena-ms-val" style={{ color:"var(--warn)" }}>{main.streak}</div>
-              <div className="arena-ms-label">Streak</div>
-            </div>
-            <div className="arena-ms-divider" />
-            <div className="arena-ms">
-              <div className="arena-ms-val" style={{ color:"var(--ok)" }}>{main.consistency}%</div>
-              <div className="arena-ms-label">Consistency</div>
-            </div>
-            <div className="arena-ms-divider" />
-            <div className="arena-ms">
               <div className="arena-ms-val" style={{ color:"var(--accent)" }}>{mainPct}%</div>
               <div className="arena-ms-label">Complete</div>
             </div>
@@ -5058,7 +5059,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   return (
     <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
-      <div className="ow-layout" style={{flex:1,overflow:"hidden"}}>
+      <div className={`ow-layout${ap ? " detail-open" : ""}`} style={{flex:1,overflow:"hidden"}}>
 
         {/* ── OVERWATCH SIDEBAR ── */}
         <div className="ow-sidebar">
@@ -5159,6 +5160,10 @@ const Partners = ({ user, profile, challenges, sb }) => {
             </div>
           ) : (
             <>
+              {/* Back button — mobile only */}
+              <button className="ow-detail-back" onClick={()=>setActivePartner(null)}>
+                ← Overwatch
+              </button>
               {/* Header */}
               <div className="ow-detail-head">
                 <div className="ow-detail-head-bg" style={{background:`radial-gradient(ellipse 70% 100% at 90% 50%, ${pColor}0C, transparent 60%)`}} />
@@ -5698,10 +5703,10 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
       </div>
 
       {/* Body — chat + context panel */}
-      <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
+      <div className="talos-layout" style={{ flex:1, display:"flex", overflow:"hidden" }}>
 
         {/* Chat column */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", borderRight:"1px solid var(--border-0)" }}>
+        <div className="talos-chat" style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", borderRight:"1px solid var(--border-0)" }}>
 
           {/* Messages */}
           <div ref={feedRef} style={{ flex:1, overflowY:"auto", padding:"24px 28px", display:"flex", flexDirection:"column", gap:16 }}>
@@ -5800,7 +5805,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
         </div>
 
         {/* Context panel — live task state */}
-        <div style={{ width:260, padding:"20px 18px", overflowY:"auto", flexShrink:0, borderLeft:"1px solid var(--border-0)" }}>
+        <div className="talos-context" style={{ width:260, padding:"20px 18px", overflowY:"auto", flexShrink:0, borderLeft:"1px solid var(--border-0)" }}>
           <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:14 }}>
             Today's Tasks
           </div>
