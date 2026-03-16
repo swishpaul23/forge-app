@@ -2428,12 +2428,6 @@ const Entry = ({ onDone, authReady, mode }) => {
 // ============================================================
 // AUTH SCREEN (Login / Create Account)
 // ============================================================
-const QUOTES = [
-  { text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", attr: "Aristotle" },
-  { text: "The successful warrior is the average man, with laser-like focus.", attr: "Bruce Lee" },
-  { text: "It's not about having time. It's about making time.", attr: "— " },
-  { text: "Suffer the pain of discipline, or suffer the pain of regret.", attr: "Jim Rohn" },
-];
 
 const Auth = ({ onLogin, onSignup }) => {
   const [mode,     setMode]     = useState("login"); // "login" | "signup"
@@ -2441,7 +2435,6 @@ const Auth = ({ onLogin, onSignup }) => {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");
-  const quote = QUOTES[1];
 
   const validate = () => {
     if (mode === "signup" && !name.trim())        return "Name is required.";
@@ -2463,12 +2456,6 @@ const Auth = ({ onLogin, onSignup }) => {
       {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-bg" />
-
-        <div className="auth-left-quote">
-          <div className="auth-quote-mark">"</div>
-          <div className="auth-quote-text">{quote.text}</div>
-          <div className="auth-quote-attr">— {quote.attr}</div>
-        </div>
 
         <div className="auth-left-stats">
           {[
