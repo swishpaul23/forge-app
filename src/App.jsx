@@ -6785,10 +6785,14 @@ export default function App() {
   }, [loadProfile]);
 
   // ── App state ─────────────────────────────────────────────
-  const [stage, setStage] = useState(() => 
-    document.referrer.includes(window.location.origin) || 
-    sessionStorage.getItem("forge_visited") ? "auth_check" : "loader");
-  const [loaderMode, setLoaderMode] = useState("landing");
+  const [stage, setStage] = useState(
+    sessionStorage.getItem("forge_skip_loader") === "auth" ? "auth" : "loader"
+  );
+  const [loaderMode, setLoaderMode] = useState(() => {
+    const flag = sessionStorage.getItem("forge_skip_loader");
+    sessionStorage.removeItem("forge_skip_loader");
+    return flag === "auth" ? "login" : "inapp";
+  });
   const [page,        setPage]        = useState("home");
   const [dw,          setDW]          = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -6898,7 +6902,7 @@ export default function App() {
 
   const handleAuthed = (name) => {
     if (name) setUserName(name);
-    setLoaderMode("login");
+    setLoaderMode("inapp");
     setStage("loader");
   };
 

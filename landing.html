@@ -1289,6 +1289,12 @@ const navObserver = new IntersectionObserver((entries) => {
 });
 
 Object.values(sectionMap).forEach(({ section }) => navObserver.observe(section));
+// Set flag so app knows to skip loader and go straight to auth
+document.querySelectorAll('a[href="/app"]').forEach(el => {
+  el.addEventListener('click', () => {
+    sessionStorage.setItem('forge_skip_loader', 'auth');
+  });
+});
 </script>
 </body>
 </html>
