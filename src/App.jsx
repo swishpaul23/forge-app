@@ -355,50 +355,85 @@ const makeCSS = () => `
     .rail-streak-n { font-size:14px; }
     .rail-streak-l { font-size:7px; }
 
-    /* Main area — no left margin, add bottom padding for tab bar */
+    /* Main area */
     .main { margin-left:0 !important; padding-bottom:58px; }
-
-    /* Topbar */
     .topbar { padding:0 16px; }
 
     /* Pages */
     .page { padding:20px 16px 80px; }
     .home-page { padding:20px 16px 80px; }
-
-    /* Home layout already stacks at 960px — just fix padding */
     .home-left, .home-right { min-width:0; }
 
-    /* Task grid — single column on small screens */
+    /* Task grid — single column */
     .tasks-grid { grid-template-columns:1fr !important; }
 
-    /* Arena tiles */
-    .arena-side { flex-direction:column; }
+    /* Arena — stack on mobile */
+    .arena { grid-template-columns:1fr !important; }
+    .arena-main { grid-column:1; grid-row:1; }
+    .arena-side { grid-column:1; grid-row:2; flex-direction:column; }
     .arena-sec { min-width:unset; width:100%; }
 
-    /* Library — stack columns */
+    /* Stats — 3 col stays but smaller padding */
+    .stats { gap:8px; }
+    .stat { padding:14px 12px; }
+    .stat-n { font-size:38px; }
+
+    /* Scoreboard — 2x2 on mobile */
+    .scoreboard { grid-template-columns:repeat(2,1fr) !important; }
+
+    /* Library — hide detail panel, full-width cards */
     .lib-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .lib-detail { display:none !important; }
 
-    /* Partners — stack on mobile (handled in ow-layout CSS above) */
+    /* Onboarding grids */
+    .ob-truth-grid { grid-template-columns:1fr !important; }
+    .ob-for-grid   { grid-template-columns:1fr 1fr !important; }
 
-    /* TALOS — stack chat and context panel */
-    .talos-page > div > div:last-child { flex-direction:column !important; }
-    .talos-page > div > div:last-child > div:first-child { border-right:none !important; border-bottom:1px solid var(--border-0); }
-    .talos-page > div > div:last-child > div:last-child { width:100% !important; max-height:220px; overflow-y:auto; }
-
-    /* Modals — full screen on mobile */
+    /* Modals — full width */
     .modal { width:calc(100vw - 24px) !important; max-width:unset !important; margin:12px; max-height:90vh; overflow-y:auto; }
+    .cdm   { width:calc(100vw - 24px) !important; }
+    .recovery-modal { width:calc(100vw - 24px) !important; }
 
     /* Banner */
     .banner { padding:18px 16px; }
+    .ghost-num { display:none; }
 
-    /* Buttons — larger touch targets */
-    .btn { min-height:42px; }
+    /* Buttons — minimum touch target */
+    .btn { min-height:44px; }
 
-    /* Deep work — full screen */
-    .dw-overlay { padding:16px; }
+    /* Log day bar — full width above tab bar */
+    .logbar { left:0 !important; right:0 !important; bottom:58px !important; border-radius:0 !important; padding:10px 16px !important; }
 
-    /* Log day bar */
-    .logbar { left:0 !important; right:0 !important; bottom:58px !important; border-radius:0 !important; }
+    /* Deep work */
+    .dw { padding:16px; }
+
+    /* Wizard — full width */
+    .modal[style*="540"] { width:calc(100vw - 24px) !important; }
+
+    /* Challenge wizard steps — hide labels, show numbers only */
+    .wstep span { display:none !important; }
+    .wstep-line { min-width:8px; }
+
+    /* OnboardChallenge two-col → stack */
+    .ob-challenge-layout { flex-direction:column !important; }
+    .ob-challenge-left   { width:100% !important; max-height:220px; overflow-y:auto; border-right:none !important; border-bottom:1px solid var(--border-0); }
+    .ob-challenge-right  { padding:20px 16px !important; }
+
+    /* Partners Overwatch */
+    .ow-layout  { flex-direction:column; }
+    .ow-sidebar { width:100% !important; border-right:none; border-bottom:1px solid var(--border-0); max-height:320px; flex-shrink:0; }
+    .ow-detail  { flex:1; min-height:0; }
+    .you-card   { margin:6px 6px 0; }
+
+    /* Settings two-col → single col */
+    .settings-grid { grid-template-columns:1fr !important; }
+
+    /* Topbar right — hide Deep Work button label */
+    .topbar-r .btn span { display:none; }
+
+    /* Prevent horizontal scroll */
+    .shell { overflow-x:hidden; }
+    * { max-width:100vw; }
   }
   .page.partners-page { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
   .page.talos-page    { padding:0; max-width:100%; height:100%; width:100%; align-self:stretch; }
@@ -1128,7 +1163,7 @@ const makeCSS = () => `
   .ow-layout { display:flex; height:100%; overflow:hidden; }
 
   /* Overwatch sidebar */
-  .ow-sidebar { width:360px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
+  .ow-sidebar { width:340px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
   .ow-head { padding:18px 16px 14px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
   .ow-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:5px; display:flex; align-items:center; gap:7px; }
   .ow-tag::before { content:'◆'; font-size:7px; }
@@ -2339,13 +2374,13 @@ const InAppLoader = ({ onDone, authReady }) => {
       <div style={{position:"relative",zIndex:2,display:"flex",gap:2}}>
         {["F","O","R","G","E"].map((l,i)=>(
           <span key={i} id={`fsl${i}`} className="forge-stamp-letter" style={{
-            fontFamily:"'Bebas Neue',sans-serif", fontSize:100, color:"#080807",
+            fontFamily:"'Bebas Neue',sans-serif", fontSize:110, color:"#080807",
             letterSpacing:".06em", display:"inline-block", opacity:0,
             willChange:"transform,color,opacity",
           }}>{l}</span>
         ))}
       </div>
-      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
+      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:14,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
         your discipline engine
       </div>
       <div style={{width:220,height:1,background:"#161614",marginTop:56,overflow:"hidden",position:"relative",zIndex:2}}>
@@ -2682,10 +2717,10 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
       </div>
 
       {/* Body — two columns */}
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+      <div className="ob-challenge-layout" style={{display:"flex",flex:1,overflow:"hidden"}}>
 
         {/* Left — card list */}
-        <div style={{
+        <div className="ob-challenge-left" style={{
           width:300, flexShrink:0, overflowY:"auto",
           borderRight:"1px solid var(--border-0)", padding:"16px 12px",
           display:"flex", flexDirection:"column", gap:8,
@@ -2718,7 +2753,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
         </div>
 
         {/* Right — detail panel */}
-        <div style={{flex:1, overflowY:"auto", padding:"28px 36px"}}>
+        <div className="ob-challenge-right" style={{flex:1, overflowY:"auto", padding:"28px 36px"}}>
           {/* Title + badge */}
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
             <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)"}}>
@@ -3735,7 +3770,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
 
         {/* ── RIGHT COLUMN: tasks ── */}
         <div className="home-right">
-      <div className="a4" style={{marginTop:82}}>
+      <div className="a4" style={{marginTop:"clamp(0px, 5vw, 82px)"}}>
         <div className="flex between center mb12">
           <div className="slabel" style={{ marginBottom:0 }}>Today's Tasks</div>
           {isRecovery && (
@@ -5052,7 +5087,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
               </div>
               <div style={{textAlign:"right",flexShrink:0}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:".06em",color:"#F5C842"}}>★ TARGET</div>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:1,letterSpacing:".08em"}}>MET</div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",marginTop:1,letterSpacing:".08em"}}>MET</div>
               </div>
             </div>
             {myChallenge && (
@@ -6231,7 +6266,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       )}
 
       {/* ── Two-column top section ── */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:24,alignItems:"start"}}>
+      <div className="settings-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginTop:24,alignItems:"start"}}>
 
         {/* LEFT — Account */}
         <div style={{display:"flex",flexDirection:"column",gap:16}}>
