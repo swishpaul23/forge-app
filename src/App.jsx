@@ -5046,8 +5046,9 @@ const Partners = ({ user, profile, challenges, sb }) => {
               <div className="proto-opt-desc">Daily 140-char check-in note. Reactions only. No public status pressure. Warmth is the mechanism.</div>
             </div>
           </div>
-          <button className="proto-confirm" onClick={joinPartner} disabled={joinLoading}>
-            {joinLoading ? "Connecting…" : "Confirm & Connect →"}
+          <button className="proto-confirm" 
+          onClick={joinCode.trim() ? joinPartner : () => setJoinError("Enter an invite code first.")} 
+          disabled={joinLoading}>
           </button>
           {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:10,textAlign:"center"}}>{joinError}</div>}
         </div>
