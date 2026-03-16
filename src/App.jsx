@@ -6767,8 +6767,10 @@ export default function App() {
   }, [loadProfile]);
 
   // ── App state ─────────────────────────────────────────────
-  const [stage,       setStage]       = useState("loader");
-  const [loaderMode,  setLoaderMode]  = useState("landing");
+  const [stage, setStage] = useState(() => 
+    document.referrer.includes(window.location.origin) || 
+    sessionStorage.getItem("forge_visited") ? "auth_check" : "loader");
+  const [loaderMode, setLoaderMode] = useState("landing");
   const [page,        setPage]        = useState("home");
   const [dw,          setDW]          = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -7216,6 +7218,7 @@ export default function App() {
   // ── Stage routing ─────────────────────────────────────────
   // authReady = Supabase has resolved the session (user is no longer undefined)
   if (stage==="loader")    return <Entry authReady={user !== undefined} mode={loaderMode} onDone={()=>{ if(!user) setStage("auth"); else if(profile&&!profile.onboarded) setStage("ob_why"); else setStage("app"); }} />;
+  if (stage === "auth_check") { /* fall through to auth/app */ }
   if (stage==="auth")      return <AuthScreen onAuthed={handleAuthed} />;
   if (stage==="ob_why")    return <OnboardWhy   onNext={()=>setStage("ob_who")}      onSkip={handleOnboardDone} />;
   if (stage==="ob_who")    return <OnboardWho   onNext={()=>setStage("ob_induct")}   onSkip={handleOnboardDone} />;
