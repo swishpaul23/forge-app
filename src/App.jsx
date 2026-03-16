@@ -1611,7 +1611,9 @@ const makeCSS = () => `
   flex:1; display:flex; flex-direction:column;
   justify-content:center; align-items:center;
   padding:60px 56px;
-  overflow-y:auto;}
+  overflow-y:auto;
+  min-height:100vh;
+}
   @media (max-width:768px) {
   .auth-screen { flex-direction:column; }
   .auth-left { display:none; }
@@ -1625,14 +1627,8 @@ const makeCSS = () => `
   .auth-tab { padding:13px 0; font-size:11px; }
 }
   .auth-left {
-    width:52%; position:relative;
-    background:var(--bg-1);
-    border-right:1px solid var(--border-0);
-    display:flex; flex-direction:column;
-    justify-content:center; align-items:center;
-    padding:60px 64px;
-    overflow:hidden;
-  }
+  display:none;
+}
   .auth-left-bg {
     position:absolute; inset:0;
     background:radial-gradient(ellipse at 30% 40%, var(--accent-lo) 0%, transparent 60%);
