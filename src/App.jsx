@@ -7377,6 +7377,16 @@ export default function App() {
   }, []);
 
   // Load challenges + today's kpi state from Supabase
+  // Get the "challenge day" date - day changes at 3:01 AM local time
+  const getChallengeDate = () => {
+    const now = new Date();
+    // If before 3:01 AM, count as previous day
+    if (now.getHours() < 3 || (now.getHours() === 3 && now.getMinutes() === 0)) {
+      now.setDate(now.getDate() - 1);
+    }
+    return now.toISOString().split("T")[0];
+  };
+
   const loadChallenges = useCallback(async (uid) => {
     if (!uid || !sb) return;
     try {
@@ -7390,19 +7400,20 @@ export default function App() {
 
       if (!chs || chs.length === 0) return;
 
-      const today = new Date().toISOString().split("T")[0];
-      const todayDate = new Date();
-      todayDate.setHours(0, 0, 0, 0);
+      // Use challenge date (day changes at 3:01 AM)
+      const challengeToday = getChallengeDate();
+      
+      // For day number calculation
+      const todayForCalc = new Date(challengeToday + "T12:00:00"); // Use noon to avoid DST issues
 
       const shaped = chs.map(ch => {
         // Use start_date if available, otherwise fall back to created_at date portion
-        // This ensures consistent day calculation regardless of creation time
         const startStr = ch.start_date || ch.created_at?.split("T")[0];
-        const startDate = new Date(startStr + "T00:00:00");
+        const startDate = new Date(startStr + "T12:00:00"); // Use noon to avoid DST issues
         
         // Calculate days elapsed (day 1 = start date, day 2 = next day, etc.)
         const msPerDay = 24 * 60 * 60 * 1000;
-        const dayNum = Math.floor((todayDate - startDate) / msPerDay) + 1;
+        const dayNum = Math.floor((todayForCalc - startDate) / msPerDay) + 1;
 
         return {
           id:         ch.id,
@@ -7434,13 +7445,13 @@ export default function App() {
       if (main) {
         setChallenges({ main: { ...main, wall: buildWall() }, secondary });
 
-        // Load TODAY's kpi state from checkins
+        // Load TODAY's kpi state from checkins (using challenge date, not calendar date)
         // Important: If no checkin exists for today, all tasks start as false (unchecked)
         const { data: todayCheckin } = await sb
           .from("checkins")
           .select("completed_keys, score")
           .eq("challenge_id", main.id)
-          .eq("date", today)
+          .eq("date", challengeToday)
           .maybeSingle();
 
         // Build kpi state - start all as false, then apply today's completed keys
@@ -7465,7 +7476,7 @@ export default function App() {
             .from("checkins")
             .select("challenge_id, completed_keys")
             .in("challenge_id", secIds)
-            .eq("date", today);
+            .eq("date", challengeToday);
           (secCheckins || []).forEach(ci => {
             const sec = secondary.find(c => c.id === ci.challenge_id);
             if (sec && ci.completed_keys) {
@@ -7737,8 +7748,8 @@ export default function App() {
   };
 
   const hasChallenge = !!challenges.main;
-  // ── Today helpers ────────────────────────────────────────
-  const todayStr = () => new Date().toISOString().split("T")[0];
+  // ── Today helpers (day changes at 3:01 AM local time) ─────
+  const todayStr = () => getChallengeDate();
 
   // Load checkins from Supabase on mount
   useEffect(() => {
@@ -7809,9 +7820,10 @@ export default function App() {
         }, { onConflict: "challenge_id,date" });
 
         // 2. Compute new streak — check if yesterday had a passing checkin
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split("T")[0];
+        // Yesterday in challenge terms (respecting 3:01 AM boundary)
+        const todayDate = new Date(today + "T12:00:00");
+        todayDate.setDate(todayDate.getDate() - 1);
+        const yesterdayStr = todayDate.toISOString().split("T")[0];
 
         const { data: yCheckin } = await sb
           .from("checkins")
