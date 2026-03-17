@@ -1192,7 +1192,7 @@ const makeCSS = () => `
     animation:fadein .2s ease;
   }
   .lib-detail-tag {
-    font-family:'IBM Plex Mono',monospace; font-size:8.5px;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px;
     letter-spacing:.22em; text-transform:uppercase;
     color:var(--accent); margin-bottom:10px;
   }
@@ -1201,22 +1201,22 @@ const makeCSS = () => `
     letter-spacing:.04em; line-height:1; margin-bottom:12px;
   }
   .lib-detail-about {
-    font-size:14px; color:var(--text-1); line-height:1.7;
+    font-size:16px; color:var(--text-1); line-height:1.7;
     margin-bottom:20px;
   }
   .lib-detail-section {
-    font-family:'IBM Plex Mono',monospace; font-size:8.5px;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px;
     letter-spacing:.2em; text-transform:uppercase;
     color:var(--text-2); margin-bottom:8px; margin-top:18px;
   }
   .lib-detail-benefit {
     display:flex; align-items:flex-start; gap:10px;
-    font-size:13.5px; color:var(--text-0); line-height:1.5;
+    font-size:15.5px; color:var(--text-0); line-height:1.5;
     padding:6px 0; border-bottom:1px solid var(--border-0);
   }
   .lib-detail-benefit:last-child { border-bottom:none; }
   .lib-detail-best {
-    font-size:13.5px; color:var(--text-1); line-height:1.65;
+    font-size:15.5px; color:var(--text-1); line-height:1.65;
     background:var(--bg-2); border-radius:8px; padding:12px 14px;
     margin-top:4px;
   }
@@ -4068,8 +4068,8 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
   const fmtDur = (secs) => {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m}m`;
+    if (h > 0) return `${h}:${String(m).padStart(2,"0")}`;
+    return `${m} min`;
   };
 
   // Format date for session list
@@ -4176,7 +4176,11 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
           <div className="focus-stat-l">Sessions</div>
         </div>
         <div className="focus-stat">
-          <div className="focus-stat-n">{totalMinutes < 60 ? `${totalMinutes}m` : `${Math.floor(totalMinutes/60)}h ${totalMinutes%60}m`}</div>
+          <div className="focus-stat-n">
+            {totalMinutes < 60 
+              ? `${totalMinutes} min` 
+              : `${Math.floor(totalMinutes/60)}:${String(totalMinutes%60).padStart(2,"0")}`}
+          </div>
           <div className="focus-stat-l">Total Time</div>
         </div>
       </div>
@@ -4791,12 +4795,12 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                   
                   {/* Non-neg hint */}
                   {!editingTasks && selectedNonNegs.length > 0 && (
-                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--warn)", marginTop:8, marginBottom:4 }}>
+                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--warn)", marginTop:8, marginBottom:4 }}>
                       ◆ {selectedNonNegs.length} non-negotiable{selectedNonNegs.length > 1 ? "s" : ""} selected
                     </div>
                   )}
                   {editingTasks && (
-                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-2)", marginTop:8, marginBottom:8 }}>
+                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--text-2)", marginTop:8, marginBottom:8 }}>
                       Click tasks to mark as non-negotiable. Missing a non-neg = 0% day.
                     </div>
                   )}
@@ -4808,7 +4812,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                         key={k.key} 
                         onClick={() => editingTasks && toggleNonNeg(k.key)}
                         style={{ 
-                          fontSize:13, 
+                          fontSize:15, 
                           color: isNonNeg ? "var(--warn)" : "var(--text-1)", 
                           padding:"10px 12px",
                           marginTop:4,
@@ -5418,11 +5422,11 @@ const Partners = ({ user, profile, challenges, sb }) => {
       if (ex) throw new Error(ex.status === "active" ? "Already partners." : "Request already sent.");
       const { error: iErr } = await sb.from("partnerships").insert({ user_id:user.id, partner_id:tp.id, invite_code:`${user.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status:"active", protocol:selectedProto });
       if (iErr) throw new Error(iErr.message);
-      const isFirstPartner = partners.length === 0;
+      const shouldShowTutorial = !profile?.partner_tutorial_seen;
       setJoinCode(""); setShowAdd(false); setShowProto(false);
       await loadPartners();
-      // Show tutorial on first partner add
-      if (isFirstPartner) {
+      // Show tutorial if user hasn't seen it
+      if (shouldShowTutorial) {
         setTutorialStep(0);
         setShowTutorial(true);
       }
@@ -6046,7 +6050,13 @@ const Partners = ({ user, profile, challenges, sb }) => {
                   Next →
                 </button>
               ) : (
-                <button className="btn btn-a" style={{ flex:1 }} onClick={() => setShowTutorial(false)}>
+                <button className="btn btn-a" style={{ flex:1 }} onClick={async () => {
+                  // Mark tutorial as seen
+                  if (sb && user) {
+                    await sb.from("profiles").update({ partner_tutorial_seen: true }).eq("id", user.id);
+                  }
+                  setShowTutorial(false);
+                }}>
                   Got It →
                 </button>
               )}
