@@ -1507,9 +1507,32 @@ const makeCSS = () => `
   .rel     { position:relative; }
   .clamp   { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
+  /* WALL GRID - Responsive */
+  .wall-grid-container { width:100%; }
+  .wall-grid-months { display:flex; margin-bottom:6px; position:relative; height:14px; }
+  .wall-grid-month { position:absolute; }
+  .wall-grid-weeks { display:flex; gap:3px; }
+  .wall-grid-week { display:flex; flex-direction:column; gap:3px; flex:1; }
+  .wall-grid-cell { width:100%; aspect-ratio:1; }
+  .wall-grid-cell-empty { width:100%; aspect-ratio:1; }
+  @media (max-width:600px) {
+    .wall-grid-weeks { gap:2px; }
+    .wall-grid-week { gap:2px; flex:none; }
+    .wall-grid-cell { width:10px; height:10px; aspect-ratio:auto; }
+    .wall-grid-cell-empty { width:10px; height:10px; aspect-ratio:auto; }
+    .wall-grid-month { left:auto !important; position:relative; margin-right:16px; }
+    .wall-grid-months { position:static; height:auto; flex-wrap:wrap; gap:4px; }
+  }
+
   /* SCOREBOARD */
   .scoreboard {
     display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+  }
+  .wall-top-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+  }
+  @media (max-width:600px) {
+    .wall-top-grid { grid-template-columns:1fr; }
   }
   .sb-card {
     background:var(--bg-1); border:1px solid var(--border-0);
@@ -4344,11 +4367,81 @@ const groupByMonth = (wall) => {
   return Object.values(months);
 };
 
-const COMPLETED_CHALLENGES = []; // populated from DB in future
+const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challengeHistory = [], focusSessions = [], focusLoading = false }) => {
+  // Selected challenge state - default to active main challenge or most recent
+  const defaultChallenge = challenges.main 
+    ? { ...challenges.main, id: challenges.main.id } 
+    : challengeHistory[0] || null;
+  const [selectedId, setSelectedId] = useState(defaultChallenge?.id || null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  
+  // Find selected challenge from history or active challenges
+  const selectedChallenge = React.useMemo(() => {
+    if (!selectedId) return null;
+    // Check active challenges first
+    if (challenges.main?.id === selectedId) return challenges.main;
+    const sec = challenges.secondary?.find(c => c.id === selectedId);
+    if (sec) return sec;
+    // Check history
+    return challengeHistory.find(c => c.id === selectedId) || null;
+  }, [selectedId, challenges, challengeHistory]);
+  
+  // Get checkins for selected challenge
+  const selectedCheckins = React.useMemo(() => {
+    if (!selectedId) return {};
+    // For active main, use the live checkins prop
+    if (challenges.main?.id === selectedId) return checkins;
+    // Otherwise use allCheckins
+    return allCheckins[selectedId] || {};
+  }, [selectedId, checkins, allCheckins, challenges.main?.id]);
 
-const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusLoading = false }) => {
-  // If user has no challenge yet, show empty state
-  if (!challenges.main) return (
+  // Update selected when challenges load
+  React.useEffect(() => {
+    if (!selectedId && (challenges.main || challengeHistory.length > 0)) {
+      setSelectedId(challenges.main?.id || challengeHistory[0]?.id);
+    }
+  }, [challenges.main, challengeHistory, selectedId]);
+
+  // Format date range
+  const fmtDateRange = (startDate, totalDays) => {
+    if (!startDate) return "";
+    const start = new Date(startDate + "T12:00:00");
+    const end = new Date(start);
+    end.setDate(end.getDate() + totalDays - 1);
+    const fmt = (d) => d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
+    return `${fmt(start)} - ${fmt(end)}`;
+  };
+
+  // Get challenge status
+  const getStatus = (ch) => {
+    if (!ch.archived) return { label:"Active", color:"var(--ok)" };
+    if (ch.completedAt) return { label:"Completed", color:"var(--accent)" };
+    return { label:"Quit", color:"var(--text-2)" };
+  };
+
+  // Build unique challenge list (active + history, deduped)
+  const allChallengesList = React.useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    // Active challenges first
+    [challenges.main, ...(challenges.secondary || [])].filter(Boolean).forEach(c => {
+      if (!seen.has(c.id)) {
+        seen.add(c.id);
+        list.push({ ...c, startDate: c.start_date, archived: false });
+      }
+    });
+    // Then history
+    challengeHistory.forEach(c => {
+      if (!seen.has(c.id)) {
+        seen.add(c.id);
+        list.push(c);
+      }
+    });
+    return list;
+  }, [challenges, challengeHistory]);
+
+  // No challenges at all
+  if (allChallengesList.length === 0) return (
     <div className="page">
       <div className="a0">
         <div className="pg-tag">Proof of Work</div>
@@ -4361,10 +4454,10 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
     </div>
   );
 
-  // Build wall from real checkin data - GitHub style (6 months)
+  // Build wall days based on selected challenge
   const challengeToday = getChallengeDate();
-  const challengeStart = challenges.main?.start_date || challenges.main?.created_at?.split("T")[0] || challengeToday;
-  const totalDays = challenges.main?.totalDays || 30;
+  const challengeStart = selectedChallenge?.startDate || selectedChallenge?.start_date || challengeToday;
+  const totalDays = selectedChallenge?.totalDays || 30;
 
   const wallDays = (() => {
     const days = [];
@@ -4374,11 +4467,11 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
     // Start 6 months ago from today, on a Sunday
     const gridStart = new Date(today);
     gridStart.setMonth(gridStart.getMonth() - 6);
-    gridStart.setDate(gridStart.getDate() - gridStart.getDay()); // Back to Sunday
+    gridStart.setDate(gridStart.getDate() - gridStart.getDay());
     
     // End on Saturday after today
     const gridEnd = new Date(today);
-    gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay())); // Forward to Saturday
+    gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()));
     
     const msPerDay = 24 * 60 * 60 * 1000;
     const challengeEndDate = new Date(challengeStartDate);
@@ -4395,7 +4488,7 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
       
       days.push({
         date: dateStr,
-        score: isInChallenge && !isFuture ? (checkins[dateStr] !== undefined ? checkins[dateStr] : null) : null,
+        score: isInChallenge && !isFuture ? (selectedCheckins[dateStr] !== undefined ? selectedCheckins[dateStr] : null) : null,
         isToday,
         isFuture: isInChallenge && isFuture,
         isOutside: isBeforeChallenge || isAfterChallenge,
@@ -4405,16 +4498,16 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
     return days;
   })();
 
-  const strong  = wallDays.filter(d => d.score !== null && d.score >= 75).length;
-  const missed  = wallDays.filter(d => d.score === 0).length;
-  const allChallenges = [challenges.main, ...challenges.secondary].filter(Boolean);
+  // Stats for selected challenge
+  const strong = wallDays.filter(d => d.score !== null && d.score >= 75).length;
+  const missed = wallDays.filter(d => d.score === 0).length;
+  const daysLogged = Object.keys(selectedCheckins).length;
 
-  // Scoreboard totals — only real data, zeros for new users
-  const totalCompleted   = COMPLETED_CHALLENGES.length;
-  const bestConsistency  = totalCompleted > 0
-    ? Math.max(...COMPLETED_CHALLENGES.map(c => c.consistency), challenge.consistency)
-    : challenge.consistency || 0;
-  const totalDaysForged  = COMPLETED_CHALLENGES.reduce((s,c) => s + c.totalDays, 0) + (challenge.dayNum || 0);
+  // All-time stats
+  const completedChallenges = challengeHistory.filter(c => c.completedAt);
+  const totalCompleted = completedChallenges.length;
+  const bestConsistency = Math.max(...challengeHistory.map(c => c.consistency || 0), 0);
+  const totalDaysForged = challengeHistory.reduce((s, c) => s + (c.checkinCount || 0), 0);
 
   return (
     <div className="page">
@@ -4424,15 +4517,102 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
         <div className="pg-sub">Every cell is a day. Every shade is effort.</div>
       </div>
 
-      {/* SCOREBOARD */}
+      {/* TOP SECTION — 2 columns on desktop, stack on mobile */}
       <div className="a1 mt24">
-        <div className="slabel">All-Time Scoreboard</div>
-        <div className="scoreboard">
+        <div className="wall-top-grid">
+          {/* Left: First 2 scoreboard cards */}
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            <div className="slabel">All-Time Scoreboard</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+              {[
+                { n:totalCompleted,   l:"Challenges Completed", c:"c-ok"  },
+                { n:totalDaysForged,  l:"Total Days Forged",    c:"c-acc" },
+              ].map(s => (
+                <div key={s.l} className="sb-card">
+                  <div className={`sb-card-n ${s.c}`}>{s.n}</div>
+                  <div className="sb-card-l">{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Challenge History (collapsible) */}
+          <div style={{ 
+            background:"var(--bg-1)", 
+            borderRadius:12, 
+            border:"1px solid var(--border-0)",
+            overflow:"hidden",
+          }}>
+            <div 
+              onClick={() => setHistoryOpen(!historyOpen)}
+              style={{ 
+                padding:"12px 16px", 
+                cursor:"pointer",
+                display:"flex",
+                justifyContent:"space-between",
+                alignItems:"center",
+                borderBottom: historyOpen ? "1px solid var(--border-0)" : "none",
+              }}
+            >
+              <div className="f-mono" style={{ fontSize:10, letterSpacing:".15em", textTransform:"uppercase", color:"var(--text-2)" }}>
+                Challenge History ({allChallengesList.length})
+              </div>
+              <div style={{ color:"var(--text-2)", fontSize:12, transform: historyOpen ? "rotate(180deg)" : "rotate(0deg)", transition:"transform 0.2s" }}>
+                ▼
+              </div>
+            </div>
+            {historyOpen && (
+              <div style={{ padding:12, maxHeight:200, overflowY:"auto", display:"flex", flexDirection:"column", gap:6 }}>
+                {allChallengesList.map(c => {
+                  const isSelected = c.id === selectedId;
+                  const status = getStatus(c);
+                  return (
+                    <div 
+                      key={c.id}
+                      onClick={() => setSelectedId(c.id)}
+                      style={{
+                        padding:"8px 10px",
+                        borderRadius:6,
+                        background: isSelected ? "var(--accent)15" : "var(--bg-2)",
+                        border: `1px solid ${isSelected ? "var(--accent)" : "var(--border-0)"}`,
+                        cursor:"pointer",
+                        transition:"all 0.15s",
+                      }}
+                    >
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                        <div style={{ 
+                          fontFamily:"'Bebas Neue',sans-serif", 
+                          fontSize:14, 
+                          letterSpacing:".03em",
+                          color: isSelected ? "var(--accent)" : "var(--text-0)",
+                        }}>
+                          {c.name}
+                        </div>
+                        <span className="f-mono" style={{ fontSize:9, color:status.color }}>
+                          {status.label}
+                        </span>
+                      </div>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:4 }}>
+                        <span className="f-mono" style={{ fontSize:8, color:"var(--text-1)" }}>
+                          {fmtDateRange(c.startDate || c.start_date, c.totalDays)}
+                        </span>
+                        <span className="f-mono" style={{ fontSize:8, color:"var(--text-1)" }}>
+                          {c.consistency || 0}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Second row: Best Consistency + Current Streak */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:12 }}>
           {[
-            { n:totalCompleted,              l:"Challenges Completed", c:"c-ok"   },
-            { n:totalDaysForged,             l:"Total Days Forged",    c:"c-acc"  },
             { n:`${bestConsistency}%`,       l:"Best Consistency",     c:"c-warn" },
-            { n:challenge.streak,            l:"Current Streak 🔥",   c:"c-warn" },
+            { n:challenge?.streak || 0,      l:"Current Streak 🔥",   c:"c-warn" },
           ].map(s => (
             <div key={s.l} className="sb-card">
               <div className={`sb-card-n ${s.c}`}>{s.n}</div>
@@ -4440,151 +4620,121 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
             </div>
           ))}
         </div>
+      </div>
 
-        {totalCompleted > 0 && (
-          <div style={{ marginTop:12 }}>
-            <div className="slabel" style={{ marginBottom:8 }}>Completed Challenges</div>
-            <div className="sb-trophy-row">
-              {COMPLETED_CHALLENGES.map(c => (
-                <div key={c.id} className="sb-trophy">
-                  <div className="sb-trophy-icon">🏆</div>
-                  <div>
-                    <div className="sb-trophy-name">{c.name}</div>
-                    <div className="sb-trophy-meta">{c.totalDays}D · {c.consistency}% CONSISTENCY · {c.completedDate}</div>
-                  </div>
+      {/* SELECTED CHALLENGE INFO */}
+      {selectedChallenge && (
+          <div className="a2 mt24">
+            <div className="slabel">Selected Challenge</div>
+            <div className="oc-card">
+              <div className="oc-bar-wrap">
+                <div className="oc-name">{selectedChallenge.name}</div>
+                <div className="oc-meta">
+                  {selectedChallenge.archived 
+                    ? `${daysLogged} DAYS LOGGED · ${selectedChallenge.consistency || 0}% CONSISTENCY`
+                    : `DAY ${selectedChallenge.dayNum} OF ${selectedChallenge.totalDays} · ${selectedChallenge.streak || 0} DAY STREAK · ${selectedChallenge.consistency || 0}% CONSISTENCY`
+                  }
                 </div>
-              ))}
+                <div className="oc-track">
+                  <div className="oc-fill" style={{ 
+                    width:`${selectedChallenge.archived ? (selectedChallenge.consistency || 0) : pct(selectedChallenge.dayNum || 0, selectedChallenge.totalDays)}%`, 
+                    background:selectedChallenge.color || "var(--accent)" 
+                  }} />
+                </div>
+              </div>
+              <div className="oc-pct" style={{ color:selectedChallenge.color || "var(--accent)" }}>
+                {selectedChallenge.archived 
+                  ? `${selectedChallenge.consistency || 0}%`
+                  : `${pct(selectedChallenge.dayNum || 0, selectedChallenge.totalDays)}%`
+                }
+              </div>
             </div>
           </div>
         )}
-      </div>
 
-      {/* ONGOING CHALLENGES */}
-      <div className="a2 mt24">
-        <div className="slabel">Ongoing Challenges</div>
-        <div className="flex col g8">
-          {allChallenges.map(c => (
-            <div key={c.id} className="oc-card">
-              <div className="oc-bar-wrap">
-                <div className="oc-name">{c.name}</div>
-                <div className="oc-meta">DAY {c.dayNum} OF {c.totalDays} &nbsp;·&nbsp; {c.streak} DAY STREAK &nbsp;·&nbsp; {c.consistency}% CONSISTENCY</div>
-                <div className="oc-track">
-                  <div className="oc-fill" style={{ width:`${pct(c.dayNum, c.totalDays)}%`, background:c.color || "var(--accent)" }} />
-                </div>
-              </div>
-              <div className="oc-pct" style={{ color:c.color || "var(--accent)" }}>{pct(c.dayNum, c.totalDays)}%</div>
+        {/* WALL GRID — GitHub style */}
+        <div className="a2 mt32">
+          <div className="flex between center mb12" style={{ flexWrap:"wrap", gap:8 }}>
+            <div className="slabel" style={{ marginBottom:0 }}>Consistency Grid</div>
+            <div className="flex g8 center f-mono" style={{ fontSize:11, letterSpacing:".06em", color:"var(--text-2)" }}>
+              <span>Less</span>
+              <div className="cell level-0" style={{ width:10, height:10 }} />
+              <div className="cell level-1" style={{ width:10, height:10 }} />
+              <div className="cell level-2" style={{ width:10, height:10 }} />
+              <div className="cell level-3" style={{ width:10, height:10 }} />
+              <div className="cell level-4" style={{ width:10, height:10 }} />
+              <span>More</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* WALL GRID — GitHub style */}
-      <div className="a2 mt32">
-        {/* Header with legend */}
-        <div className="flex between center mb12">
-          <div className="slabel" style={{ marginBottom:0 }}>Consistency Grid</div>
-          <div className="flex g8 center f-mono" style={{ fontSize:11, letterSpacing:".06em", color:"var(--text-2)" }}>
-            <span>Less</span>
-            <div className="cell level-0" style={{ width:10, height:10 }} />
-            <div className="cell level-1" style={{ width:10, height:10 }} />
-            <div className="cell level-2" style={{ width:10, height:10 }} />
-            <div className="cell level-3" style={{ width:10, height:10 }} />
-            <div className="cell level-4" style={{ width:10, height:10 }} />
-            <span>More</span>
           </div>
-        </div>
 
-        <div className="card" style={{ padding:"16px 20px" }}>
-          {(() => {
-            // Build weeks array (columns)
-            const weeks = [];
-            let currentWeek = [];
-            
-            wallDays.forEach((d, i) => {
-              const dayOfWeek = new Date(d.date + "T12:00:00").getDay();
-              currentWeek.push(d);
-              if (dayOfWeek === 6) { // Saturday = end of week
-                weeks.push(currentWeek);
-                currentWeek = [];
-              }
-            });
-            if (currentWeek.length > 0) weeks.push(currentWeek);
-            
-            // Build month labels with positions
-            const monthLabels = [];
-            let lastMonth = null;
-            weeks.forEach((week, wi) => {
-              const firstDay = week.find(d => d);
-              if (firstDay) {
-                const m = new Date(firstDay.date + "T12:00:00").toLocaleString("en-US", { month:"short" });
-                if (m !== lastMonth) {
-                  monthLabels.push({ label: m, weekIndex: wi });
-                  lastMonth = m;
+          <div className="card" style={{ padding:"16px 12px", overflowX:"auto" }}>
+            {(() => {
+              const weeks = [];
+              let currentWeek = [];
+              
+              wallDays.forEach((d, i) => {
+                const dayOfWeek = new Date(d.date + "T12:00:00").getDay();
+                currentWeek.push(d);
+                if (dayOfWeek === 6) {
+                  weeks.push(currentWeek);
+                  currentWeek = [];
                 }
-              }
-            });
-            
-            // Calculate cell size to fill container (approx 700px - 40px padding - 36px labels)
-            const availableWidth = 624;
-            const gap = 3;
-            const numWeeks = weeks.length;
-            const cellSize = Math.floor((availableWidth - (numWeeks - 1) * gap) / numWeeks);
-            const weekWidth = cellSize + gap;
-            
-            return (
-              <div>
-                {/* Month labels */}
-                <div style={{ display:"flex", marginLeft:36, marginBottom:8, position:"relative", height:16 }}>
-                  {monthLabels.map((m, i) => (
-                    <div 
-                      key={i} 
-                      className="f-mono" 
-                      style={{ 
-                        fontSize:11, 
-                        color:"var(--text-2)", 
-                        letterSpacing:".03em",
-                        position:"absolute",
-                        left: m.weekIndex * weekWidth,
-                      }}
-                    >
-                      {m.label}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Grid container */}
-                <div style={{ display:"flex" }}>
-                  {/* Weekday labels */}
-                  <div style={{ display:"flex", flexDirection:"column", gap:gap, marginRight:8, paddingTop:0 }}>
-                    {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
-                      <div key={i} className="f-mono" style={{ 
-                        height:cellSize, fontSize:10, color:"var(--text-2)", 
-                        display:"flex", alignItems:"center",
-                        visibility: (i === 1 || i === 3 || i === 5) ? "visible" : "hidden",
-                      }}>
-                        {d}
+              });
+              if (currentWeek.length > 0) weeks.push(currentWeek);
+              
+              const monthLabels = [];
+              let lastMonth = null;
+              weeks.forEach((week, wi) => {
+                const firstDay = week.find(d => d);
+                if (firstDay) {
+                  const m = new Date(firstDay.date + "T12:00:00").toLocaleString("en-US", { month:"short" });
+                  if (m !== lastMonth) {
+                    monthLabels.push({ label: m, weekIndex: wi });
+                    lastMonth = m;
+                  }
+                }
+              });
+              
+              const gap = 2;
+              const cellSize = 10;
+              const numWeeks = weeks.length;
+              const gridWidth = numWeeks * (cellSize + gap);
+              
+              return (
+                <div className="wall-grid-container" style={{ minWidth: gridWidth }}>
+                  <div className="wall-grid-months">
+                    {monthLabels.map((m, i) => (
+                      <div 
+                        key={i} 
+                        className="f-mono wall-grid-month" 
+                        style={{ 
+                          fontSize:10, 
+                          color:"var(--text-1)", 
+                          letterSpacing:".03em",
+                          left: `${(m.weekIndex / numWeeks) * 100}%`,
+                        }}
+                      >
+                        {m.label}
                       </div>
                     ))}
                   </div>
-
-                  {/* Weeks (columns) */}
-                  <div style={{ display:"flex", gap:gap, flex:1 }}>
+                  
+                  <div className="wall-grid-weeks">
                     {weeks.map((week, wi) => (
-                      <div key={wi} style={{ display:"flex", flexDirection:"column", gap:gap, flex:1 }}>
+                      <div key={wi} className="wall-grid-week">
                         {[0,1,2,3,4,5,6].map(dayIndex => {
                           const d = week.find(day => new Date(day.date + "T12:00:00").getDay() === dayIndex);
                           
                           if (!d) {
-                            return <div key={dayIndex} style={{ width:"100%", aspectRatio:"1" }} />;
+                            return <div key={dayIndex} className="wall-grid-cell-empty" />;
                           }
                           
-                          // Outside challenge range - still hoverable
                           if (d.isOutside) {
                             return (
                               <div
                                 key={dayIndex}
-                                className="cell level-0"
-                                style={{ width:"100%", aspectRatio:"1", opacity:0.4 }}
+                                className="cell level-0 wall-grid-cell"
+                                style={{ opacity:0.4 }}
                               >
                                 <div className="ctip">
                                   <span className="ctip-date">{fmtFullDate(d.date)}</span>
@@ -4598,8 +4748,7 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
                           return (
                             <div
                               key={dayIndex}
-                              className={`cell ${d.isFuture ? "future" : getCellLevel(d.score)}${d.isToday ? " today" : ""}`}
-                              style={{ width:"100%", aspectRatio:"1" }}
+                              className={`cell wall-grid-cell ${d.isFuture ? "future" : getCellLevel(d.score)}${d.isToday ? " today" : ""}`}
                             >
                               <div className="ctip">
                                 <span className="ctip-date">Day {d.day} · {fmtFullDate(d.date)}</span>
@@ -4622,30 +4771,29 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
                     ))}
                   </div>
                 </div>
-              </div>
-            );
-          })()}
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="stats a3 mt24">
-        {[
-          { n:strong,                l:"Strong Days (75%+)",  c:"c-ok"   },
-          { n:missed,                l:"Missed Days",         c:"c-err"  },
-          { n:Object.keys(checkins).length, l:"Days Logged",  c:"c-warn" },
-        ].map((s,i) => (
-          <div key={i} className="stat">
-            <div className={`stat-n ${s.c}`}>{s.n}</div>
-            <div className="stat-l">{s.l}</div>
+              );
+            })()}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Focus Sessions */}
-      <div className="a4 mt24">
-        <FocusSessions sessions={focusSessions} loading={focusLoading} />
-      </div>
+        {/* Stats for selected challenge */}
+        <div className="stats a3 mt24">
+          {[
+            { n:strong,     l:"Strong Days (75%+)",  c:"c-ok"   },
+            { n:missed,     l:"Missed Days",         c:"c-err"  },
+            { n:daysLogged, l:"Days Logged",         c:"c-warn" },
+          ].map((s,i) => (
+            <div key={i} className="stat">
+              <div className={`stat-n ${s.c}`}>{s.n}</div>
+              <div className="stat-l">{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Focus Sessions */}
+        <div className="a4 mt24">
+          <FocusSessions sessions={focusSessions} loading={focusLoading} />
+        </div>
     </div>
   );
 };
@@ -7658,6 +7806,8 @@ export default function App() {
   const [sparkTrigger, setSparkTrigger] = useState(false);
   const [loggedToday,  setLoggedToday]  = useState(false);
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
+  const [allCheckins,  setAllCheckins]  = useState({}); // { challengeId: { "YYYY-MM-DD": score } }
+  const [challengeHistory, setChallengeHistory] = useState([]); // All challenges (active + archived with >1 day)
   const [focusSessions, setFocusSessions] = useState([]);
   const [focusLoading,  setFocusLoading]  = useState(true);
   const [theme,       setThemeState]  = useState("forge");
@@ -7889,6 +8039,62 @@ export default function App() {
     load();
   }, [user, challenges.main?.id]);
 
+  // Load all challenge history + checkins for Wall page
+  const loadChallengeHistory = useCallback(async () => {
+    if (!sb || !user) return;
+    try {
+      // Load all challenges (active + archived) that have more than 1 day
+      const { data: allChallenges } = await sb
+        .from("challenges")
+        .select("id, name, tag, total_days, start_date, created_at, streak, consistency, is_main, archived, completed_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      
+      if (!allChallenges) return;
+      
+      // Filter: only challenges with >1 day of activity
+      const challengeIds = allChallenges.map(c => c.id);
+      
+      // Load all checkins for these challenges
+      const { data: allCheckinRows } = await sb
+        .from("checkins")
+        .select("challenge_id, date, score")
+        .in("challenge_id", challengeIds);
+      
+      // Group checkins by challenge_id
+      const checkinsByChallenge = {};
+      (allCheckinRows || []).forEach(c => {
+        if (!checkinsByChallenge[c.challenge_id]) checkinsByChallenge[c.challenge_id] = {};
+        checkinsByChallenge[c.challenge_id][c.date] = c.score;
+      });
+      
+      // Filter challenges: keep only those with >1 checkin OR currently active
+      const validChallenges = allChallenges.filter(c => {
+        const checkinCount = Object.keys(checkinsByChallenge[c.id] || {}).length;
+        return checkinCount > 1 || !c.archived;
+      }).map(c => ({
+        id: c.id,
+        name: c.name,
+        tag: c.tag || "CUSTOM",
+        totalDays: c.total_days,
+        startDate: c.start_date || c.created_at?.split("T")[0],
+        streak: c.streak || 0,
+        consistency: c.consistency || 0,
+        isMain: c.is_main,
+        archived: c.archived,
+        completedAt: c.completed_at,
+        checkinCount: Object.keys(checkinsByChallenge[c.id] || {}).length,
+      }));
+      
+      setChallengeHistory(validChallenges);
+      setAllCheckins(checkinsByChallenge);
+    } catch(e) { console.warn("load challenge history:", e); }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) loadChallengeHistory();
+  }, [user, loadChallengeHistory]);
+
   // Load focus sessions from Supabase
   const loadFocusSessions = useCallback(async () => {
     if (!sb || !user) return;
@@ -8071,7 +8277,7 @@ export default function App() {
       );
       return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} checkins={checkins} />;
     }
-    if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} focusSessions={focusSessions} focusLoading={focusLoading} />;
+    if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} allCheckins={allCheckins} challengeHistory={challengeHistory} focusSessions={focusSessions} focusLoading={focusLoading} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
