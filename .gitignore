@@ -1,5 +1,31 @@
-node_modules
-dist
+# Environment & Secrets
 .env
 .env.local
+.env.*.local
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/.gitignore
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 .DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local testing
+.vercel/
