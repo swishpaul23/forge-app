@@ -7391,18 +7391,24 @@ export default function App() {
       if (!chs || chs.length === 0) return;
 
       const today = new Date().toISOString().split("T")[0];
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
 
       const shaped = chs.map(ch => {
-        const startDate = new Date(ch.created_at);
-        startDate.setHours(0, 0, 0, 0);
-        const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0);
-        const dayNum = Math.floor((todayDate - startDate) / 86400000) + 1;
+        // Use start_date if available, otherwise fall back to created_at date portion
+        // This ensures consistent day calculation regardless of creation time
+        const startStr = ch.start_date || ch.created_at?.split("T")[0];
+        const startDate = new Date(startStr + "T00:00:00");
+        
+        // Calculate days elapsed (day 1 = start date, day 2 = next day, etc.)
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const dayNum = Math.floor((todayDate - startDate) / msPerDay) + 1;
 
         return {
           id:         ch.id,
           name:       ch.name,
           tag:        ch.tag || "CUSTOM",
-          dayNum:     Math.min(Math.max(dayNum, 0), ch.total_days),
+          dayNum:     Math.min(Math.max(dayNum, 1), ch.total_days),
           totalDays:  ch.total_days,
           streak:     ch.streak || 0,
           consistency:ch.consistency || 0,
@@ -7410,6 +7416,7 @@ export default function App() {
           mission:    ch.mission || "",
           is_main:    ch.is_main,
           created_at: ch.created_at,
+          start_date: startStr,
           kpis: (ch.challenge_tasks || [])
             .sort((a,b) => a.sort_order - b.sort_order)
             .map(t => ({
@@ -7427,7 +7434,8 @@ export default function App() {
       if (main) {
         setChallenges({ main: { ...main, wall: buildWall() }, secondary });
 
-        // Load today's kpi state from checkins
+        // Load TODAY's kpi state from checkins
+        // Important: If no checkin exists for today, all tasks start as false (unchecked)
         const { data: todayCheckin } = await sb
           .from("checkins")
           .select("completed_keys, score")
@@ -7435,12 +7443,19 @@ export default function App() {
           .eq("date", today)
           .maybeSingle();
 
-        // Build kpi state from main checkin
+        // Build kpi state - start all as false, then apply today's completed keys
         const kpiState = {};
         main.kpis.forEach(k => { kpiState[k.key] = false; });
+        
         if (todayCheckin?.completed_keys) {
-          main.kpis.forEach(k => { kpiState[k.key] = todayCheckin.completed_keys.includes(k.key); });
+          // Only mark as complete if there's a checkin for TODAY with these keys
+          todayCheckin.completed_keys.forEach(key => {
+            if (kpiState.hasOwnProperty(key)) kpiState[key] = true;
+          });
           setLoggedToday(true);
+        } else {
+          // No checkin for today = not logged, all tasks unchecked
+          setLoggedToday(false);
         }
 
         // Also load today's completed keys for each secondary challenge
@@ -7629,11 +7644,9 @@ export default function App() {
         await sb.from("challenges").update({ archived: true }).eq("id", challenges.main.id);
       }
 
-      // Use startDate if provided, otherwise now
-      // Set to midnight local time so dayNum calc starts correctly
-      const createdAt = startDate
-        ? new Date(startDate + "T00:00:00").toISOString()
-        : new Date().toISOString();
+      // Use startDate if provided, otherwise today
+      // Format as YYYY-MM-DD for consistent day calculation
+      const startDateStr = startDate || new Date().toISOString().split("T")[0];
 
       // Insert challenge row
       const { data: chRow, error: chErr } = await sb.from("challenges").insert({
@@ -7647,7 +7660,7 @@ export default function App() {
         mission:    m || null,
         is_main:    !isSecondary,
         archived:   false,
-        created_at: createdAt,
+        start_date: startDateStr,
       }).select().single();
 
       if (chErr || !chRow) throw chErr;
