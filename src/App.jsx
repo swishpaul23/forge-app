@@ -174,6 +174,17 @@ const getLevel  = (days) => [...LEVELS].reverse().find(l => days >= l.minDays) |
 const pct       = (a, b) => Math.round((a / b) * 100);
 const fmtDate   = () => new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 const greeting  = () => { const h = new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Still at it"; };
+// Get the "challenge day" date - day changes at 3:01 AM local time
+const getChallengeDate = () => {
+  const now = new Date();
+  if (now.getHours() < 3 || (now.getHours() === 3 && now.getMinutes() === 0)) {
+    now.setDate(now.getDate() - 1);
+  }
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 // VAPID: convert base64url public key to Uint8Array for pushManager.subscribe
 const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - base64String.length % 4) % 4);
@@ -655,6 +666,7 @@ const makeCSS = () => `
   .cell.level-3 { background:var(--accent); opacity:0.8; }
   .cell.level-4 { background:var(--accent); }
   .cell.missed { background:var(--err); opacity:0.3; }
+  .cell.future { background:var(--bg-2); border:1px dashed var(--border-1); opacity:0.5; }
 
   .ctip {
     display:none; position:absolute;
@@ -3553,8 +3565,8 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
           <div className="arena-main-name">{main.name}</div>
           <div className="arena-main-meta">
             {main.dayNum < 1
-              ? <>STARTS {main.start_date || main.created_at ? new Date(main.start_date || main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase() : "SOON"}</>
-              : <>DAY {main.dayNum} OF {main.totalDays} &nbsp;·&nbsp; {main.totalDays - main.dayNum} DAYS REMAINING{(main.start_date || main.created_at) && <>&nbsp;·&nbsp; STARTED {new Date(main.start_date || main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase()}</>}</>
+              ? <>STARTS {main.created_at ? new Date(main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase() : "SOON"}</>
+              : <>DAY {main.dayNum} OF {main.totalDays} &nbsp;·&nbsp; {main.totalDays - main.dayNum} DAYS REMAINING{main.created_at && <>&nbsp;·&nbsp; STARTED {new Date(main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase()}</>}</>
             }
           </div>
 
@@ -4349,23 +4361,45 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
     </div>
   );
 
-  // Build wall from real checkin data
-  const today = new Date().toISOString().split("T")[0];
-  const startDate = challenges.main?.created_at
-    ? new Date(challenges.main.created_at).toISOString().split("T")[0]
-    : today;
+  // Build wall from real checkin data - GitHub style (6 months)
+  const challengeToday = getChallengeDate();
+  const challengeStart = challenges.main?.start_date || challenges.main?.created_at?.split("T")[0] || challengeToday;
+  const totalDays = challenges.main?.totalDays || 30;
 
   const wallDays = (() => {
     const days = [];
-    const start = new Date(startDate + "T00:00:00");
-    const end   = new Date(today + "T00:00:00");
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+    const today = new Date(challengeToday + "T12:00:00");
+    const challengeStartDate = new Date(challengeStart + "T12:00:00");
+    
+    // Start 6 months ago from today, on a Sunday
+    const gridStart = new Date(today);
+    gridStart.setMonth(gridStart.getMonth() - 6);
+    gridStart.setDate(gridStart.getDate() - gridStart.getDay()); // Back to Sunday
+    
+    // End on Saturday after today
+    const gridEnd = new Date(today);
+    gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay())); // Forward to Saturday
+    
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const challengeEndDate = new Date(challengeStartDate);
+    challengeEndDate.setDate(challengeEndDate.getDate() + totalDays - 1);
+    
+    for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split("T")[0];
+      const isInChallenge = d >= challengeStartDate && d <= challengeEndDate;
+      const dayNum = isInChallenge ? Math.floor((d - challengeStartDate) / msPerDay) + 1 : null;
+      const isToday = dateStr === challengeToday;
+      const isFuture = d > today;
+      const isBeforeChallenge = d < challengeStartDate;
+      const isAfterChallenge = d > challengeEndDate;
+      
       days.push({
         date: dateStr,
-        score: checkins[dateStr] !== undefined ? checkins[dateStr] : null,
-        isToday: dateStr === today,
-        day: Math.floor((d - start) / 86400000) + 1,
+        score: isInChallenge && !isFuture ? (checkins[dateStr] !== undefined ? checkins[dateStr] : null) : null,
+        isToday,
+        isFuture: isInChallenge && isFuture,
+        isOutside: isBeforeChallenge || isAfterChallenge,
+        day: dayNum,
       });
     }
     return days;
@@ -4373,7 +4407,6 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
 
   const strong  = wallDays.filter(d => d.score !== null && d.score >= 75).length;
   const missed  = wallDays.filter(d => d.score === 0).length;
-  const grouped = groupByMonth(wallDays);
   const allChallenges = [challenges.main, ...challenges.secondary].filter(Boolean);
 
   // Scoreboard totals — only real data, zeros for new users
@@ -4445,56 +4478,153 @@ const Wall = ({ challenge, challenges, checkins = {}, focusSessions = [], focusL
         </div>
       </div>
 
-      {/* WALL GRID — grouped by month */}
+      {/* WALL GRID — GitHub style */}
       <div className="a2 mt32">
-        {/* Legend */}
-        <div className="flex between center mb16">
+        {/* Header with legend */}
+        <div className="flex between center mb12">
           <div className="slabel" style={{ marginBottom:0 }}>Consistency Grid</div>
-          <div className="flex g8 center f-mono" style={{ fontSize:12, letterSpacing:".06em", color:"var(--text-1)" }}>
+          <div className="flex g8 center f-mono" style={{ fontSize:11, letterSpacing:".06em", color:"var(--text-2)" }}>
             <span>Less</span>
-            <div className="cell level-0" style={{ width:14, height:14 }} />
-            <div className="cell level-1" style={{ width:14, height:14 }} />
-            <div className="cell level-2" style={{ width:14, height:14 }} />
-            <div className="cell level-3" style={{ width:14, height:14 }} />
-            <div className="cell level-4" style={{ width:14, height:14 }} />
+            <div className="cell level-0" style={{ width:10, height:10 }} />
+            <div className="cell level-1" style={{ width:10, height:10 }} />
+            <div className="cell level-2" style={{ width:10, height:10 }} />
+            <div className="cell level-3" style={{ width:10, height:10 }} />
+            <div className="cell level-4" style={{ width:10, height:10 }} />
             <span>More</span>
           </div>
         </div>
 
-        <div className="card" style={{ padding:"20px 20px 16px" }}>
-          {/* Day-of-week header — shown once */}
-          <div className="wall-grid mb8">
-            {["SUN","MON","TUE","WED","THU","FRI","SAT"].map(d => (
-              <div key={d} className="f-mono" style={{ fontSize:12, textAlign:"center", letterSpacing:".08em", paddingBottom:4, color:"var(--text-1)" }}>{d}</div>
-            ))}
-          </div>
-
-          {grouped.map((month, mi) => (
-            <div key={mi}>
-              <div className="month-label">{month.label.toUpperCase()}</div>
-              <div className="wall-grid" style={{ marginBottom:4 }}>
-                {month.days.map((d, i) => (
-                  <div
-                    key={i}
-                    className={`cell ${getCellLevel(d.score)}${d.isToday?" today":""}`}
-                  >
-                    <div className="ctip">
-                      <span className="ctip-date">{fmtFullDate(d.date)}</span>
-                      {d.isToday && <span style={{color:"var(--accent)", marginLeft:6}}>TODAY</span>}
-                      <br />
-                      {d.score !== null ? (
-                        <span className={d.score === 0 ? "ctip-missed" : "ctip-score"}>
-                          {d.score === 0 ? "Missed" : `${d.score}% complete`}
-                        </span>
-                      ) : (
-                        <span style={{color:"var(--text-2)"}}>Not logged</span>
-                      )}
+        <div className="card" style={{ padding:"16px 20px" }}>
+          {(() => {
+            // Build weeks array (columns)
+            const weeks = [];
+            let currentWeek = [];
+            
+            wallDays.forEach((d, i) => {
+              const dayOfWeek = new Date(d.date + "T12:00:00").getDay();
+              currentWeek.push(d);
+              if (dayOfWeek === 6) { // Saturday = end of week
+                weeks.push(currentWeek);
+                currentWeek = [];
+              }
+            });
+            if (currentWeek.length > 0) weeks.push(currentWeek);
+            
+            // Build month labels with positions
+            const monthLabels = [];
+            let lastMonth = null;
+            weeks.forEach((week, wi) => {
+              const firstDay = week.find(d => d);
+              if (firstDay) {
+                const m = new Date(firstDay.date + "T12:00:00").toLocaleString("en-US", { month:"short" });
+                if (m !== lastMonth) {
+                  monthLabels.push({ label: m, weekIndex: wi });
+                  lastMonth = m;
+                }
+              }
+            });
+            
+            // Calculate cell size to fill container (approx 700px - 40px padding - 36px labels)
+            const availableWidth = 624;
+            const gap = 3;
+            const numWeeks = weeks.length;
+            const cellSize = Math.floor((availableWidth - (numWeeks - 1) * gap) / numWeeks);
+            const weekWidth = cellSize + gap;
+            
+            return (
+              <div>
+                {/* Month labels */}
+                <div style={{ display:"flex", marginLeft:36, marginBottom:8, position:"relative", height:16 }}>
+                  {monthLabels.map((m, i) => (
+                    <div 
+                      key={i} 
+                      className="f-mono" 
+                      style={{ 
+                        fontSize:11, 
+                        color:"var(--text-2)", 
+                        letterSpacing:".03em",
+                        position:"absolute",
+                        left: m.weekIndex * weekWidth,
+                      }}
+                    >
+                      {m.label}
                     </div>
+                  ))}
+                </div>
+                
+                {/* Grid container */}
+                <div style={{ display:"flex" }}>
+                  {/* Weekday labels */}
+                  <div style={{ display:"flex", flexDirection:"column", gap:gap, marginRight:8, paddingTop:0 }}>
+                    {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
+                      <div key={i} className="f-mono" style={{ 
+                        height:cellSize, fontSize:10, color:"var(--text-2)", 
+                        display:"flex", alignItems:"center",
+                        visibility: (i === 1 || i === 3 || i === 5) ? "visible" : "hidden",
+                      }}>
+                        {d}
+                      </div>
+                    ))}
                   </div>
-                ))}
+
+                  {/* Weeks (columns) */}
+                  <div style={{ display:"flex", gap:gap, flex:1 }}>
+                    {weeks.map((week, wi) => (
+                      <div key={wi} style={{ display:"flex", flexDirection:"column", gap:gap, flex:1 }}>
+                        {[0,1,2,3,4,5,6].map(dayIndex => {
+                          const d = week.find(day => new Date(day.date + "T12:00:00").getDay() === dayIndex);
+                          
+                          if (!d) {
+                            return <div key={dayIndex} style={{ width:"100%", aspectRatio:"1" }} />;
+                          }
+                          
+                          // Outside challenge range - still hoverable
+                          if (d.isOutside) {
+                            return (
+                              <div
+                                key={dayIndex}
+                                className="cell level-0"
+                                style={{ width:"100%", aspectRatio:"1", opacity:0.4 }}
+                              >
+                                <div className="ctip">
+                                  <span className="ctip-date">{fmtFullDate(d.date)}</span>
+                                  <br />
+                                  <span style={{color:"var(--text-2)"}}>Outside challenge</span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <div
+                              key={dayIndex}
+                              className={`cell ${d.isFuture ? "future" : getCellLevel(d.score)}${d.isToday ? " today" : ""}`}
+                              style={{ width:"100%", aspectRatio:"1" }}
+                            >
+                              <div className="ctip">
+                                <span className="ctip-date">Day {d.day} · {fmtFullDate(d.date)}</span>
+                                {d.isToday && <span style={{color:"var(--accent)", marginLeft:6}}>TODAY</span>}
+                                <br />
+                                {d.isFuture ? (
+                                  <span style={{color:"var(--text-2)"}}>Upcoming</span>
+                                ) : d.score !== null ? (
+                                  <span className={d.score === 0 ? "ctip-missed" : "ctip-score"}>
+                                    {d.score === 0 ? "Missed" : `${d.score}%`}
+                                  </span>
+                                ) : (
+                                  <span style={{color:"var(--text-2)"}}>Not logged</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })()}
         </div>
       </div>
 
@@ -7377,16 +7507,6 @@ export default function App() {
   }, []);
 
   // Load challenges + today's kpi state from Supabase
-  // Get the "challenge day" date - day changes at 3:01 AM local time
-  const getChallengeDate = () => {
-    const now = new Date();
-    // If before 3:01 AM, count as previous day
-    if (now.getHours() < 3 || (now.getHours() === 3 && now.getMinutes() === 0)) {
-      now.setDate(now.getDate() - 1);
-    }
-    return now.toISOString().split("T")[0];
-  };
-
   const loadChallenges = useCallback(async (uid) => {
     if (!uid || !sb) return;
     try {
