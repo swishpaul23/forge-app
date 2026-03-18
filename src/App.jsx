@@ -4506,7 +4506,7 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
   // All-time stats
   const completedChallenges = challengeHistory.filter(c => c.completedAt);
   const totalCompleted = completedChallenges.length;
-  const bestConsistency = Math.max(...challengeHistory.map(c => c.consistency || 0), 0);
+  const bestConsistency = Math.min(100, Math.max(...challengeHistory.map(c => c.consistency || 0), 0));
   const totalDaysForged = challengeHistory.reduce((s, c) => s + (c.checkinCount || 0), 0);
 
   return (
@@ -7936,7 +7936,7 @@ export default function App() {
         tag:        tag || "CUSTOM",
         total_days: parseInt(days),
         streak:     0,
-        consistency:100,
+        consistency:0,
         color:      isSecondary ? "#5DBF8A" : "#D4922A",
         mission:    m || null,
         is_main:    !isSecondary,
@@ -8162,7 +8162,9 @@ export default function App() {
         const prevStreak = challenges.main.streak || 0;
         const newStreak  = (yCheckin && yCheckin.score > 0) ? prevStreak + 1 : 1;
 
-        // 3. Compute consistency — (days with score > 0) / dayNum
+        // 3. Compute consistency — (days with score > 0) / completed days
+        // Completed days = dayNum - 1 (today doesn't count until logged)
+        // But if we just logged today, include today in both numerator and denominator
         const { data: allCheckins } = await sb
           .from("checkins")
           .select("score")
@@ -8170,7 +8172,11 @@ export default function App() {
 
         const dayNum      = challenges.main.dayNum || 1;
         const passingDays = (allCheckins || []).filter(c => c.score > 0).length;
-        const newConsistency = Math.round((passingDays / dayNum) * 100);
+        // Days passed = number of days we could have logged (including today since we just logged)
+        const daysPassed  = passingDays > 0 ? Math.max(passingDays, dayNum - 1 + 1) : dayNum;
+        // Simpler: after logging, completed days = dayNum (since today is now complete)
+        const completedDays = dayNum;
+        const newConsistency = completedDays > 0 ? Math.min(100, Math.round((passingDays / completedDays) * 100)) : 0;
 
         // 4. Write streak + consistency back to challenges table
         await sb.from("challenges").update({
