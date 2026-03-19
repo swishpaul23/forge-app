@@ -174,17 +174,16 @@ const getLevel  = (days) => [...LEVELS].reverse().find(l => days >= l.minDays) |
 const pct       = (a, b) => Math.round((a / b) * 100);
 const fmtDate   = () => new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 const greeting  = () => { const h = new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Still at it"; };
-// Get the "challenge day" date - day changes at 3:01 AM local time
-const getChallengeDate = () => {
+// Get today's date string in local timezone (day changes at midnight)
+const getTodayStr = () => {
   const now = new Date();
-  if (now.getHours() < 3 || (now.getHours() === 3 && now.getMinutes() === 0)) {
-    now.setDate(now.getDate() - 1);
-  }
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+// Alias for backwards compatibility
+const getChallengeDate = getTodayStr;
 // VAPID: convert base64url public key to Uint8Array for pushManager.subscribe
 const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - base64String.length % 4) % 4);
@@ -8031,8 +8030,51 @@ export default function App() {
         if (data) {
           const map = {};
           data.forEach(c => { map[c.date] = c.score; });
+          
+          // CLIENT-SIDE AUTO-LOG: Backfill 0% for any missed days
+          const today = todayStr();
+          const startDate = challenges.main.start_date || challenges.main.created_at?.split("T")[0];
+          if (startDate) {
+            const missedDays = [];
+            const start = new Date(startDate + "T12:00:00");
+            const todayDate = new Date(today + "T12:00:00");
+            const msPerDay = 24 * 60 * 60 * 1000;
+            
+            // Check each day from start to yesterday
+            for (let d = new Date(start); d < todayDate; d.setDate(d.getDate() + 1)) {
+              const dateStr = d.toISOString().split("T")[0];
+              if (!map[dateStr]) {
+                missedDays.push(dateStr);
+              }
+            }
+            
+            // Backfill missed days with 0%
+            if (missedDays.length > 0) {
+              const inserts = missedDays.map(date => ({
+                challenge_id: challenges.main.id,
+                date,
+                score: 0,
+                completed_keys: [],
+                day_mode: "auto",
+              }));
+              await sb.from("checkins").upsert(inserts, { onConflict: "challenge_id,date" });
+              
+              // Add to local map
+              missedDays.forEach(date => { map[date] = 0; });
+              
+              // Reset streak to 0 since we missed days
+              await sb.from("challenges").update({ streak: 0 }).eq("id", challenges.main.id);
+              setChallenges(prev => ({
+                ...prev,
+                main: { ...prev.main, streak: 0 },
+              }));
+              
+              console.log("Auto-logged missed days:", missedDays);
+            }
+          }
+          
           setCheckins(map);
-          setLoggedToday(todayStr() in map);
+          setLoggedToday(today in map);
         }
       } catch(e) { console.warn("load checkins:", e); }
     };
@@ -8228,24 +8270,7 @@ export default function App() {
     return () => clearTimeout(t);
   }, [challenges.main?.id, user?.id]);
 
-  // ── Midnight auto-log ─────────────────────────────────────
-  useEffect(() => {
-    const msUntilMidnight = () => {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      return midnight - now;
-    };
-    const t = setTimeout(() => {
-      // Auto-log if at least 1 task done and not already logged
-      const safeKpis = challenges.main?.kpis || [];
-      const done = safeKpis.filter(k => kpis[k.key]).length;
-      if (done > 0 && !loggedToday) handleLogDay(done, safeKpis.length);
-    }, msUntilMidnight());
-    return () => clearTimeout(t);
-  }, [kpis, loggedToday, challenges.main]);
-
-  // Fire sparks when all tasks done
+  // ── Fire sparks when all tasks done ─────────────────────────
   const prevDone = useRef(false);
   useEffect(() => {
     if (!challenges.main) return;
