@@ -68,12 +68,13 @@ const THEMES = {
 };
 
 const LEVELS = [
-  { id: "initiate",    label: "INITIATE",    minDays: 0,  color: "#56524D" },
-  { id: "committed",   label: "COMMITTED",   minDays: 7,  color: "#D4B22A" },
-  { id: "consistent",  label: "CONSISTENT",  minDays: 14, color: "#5DBF8A" },
-  { id: "disciplined", label: "DISCIPLINED", minDays: 30, color: "#D4922A" },
-  { id: "forged",      label: "FORGED",      minDays: 60, color: "#4A8FD4" },
-  { id: "legendary",   label: "LEGENDARY",   minDays: 90, color: "#BF5DBF" },
+  { id: "initiate",    label: "INITIATE",    minDays: 0,   color: "#56524D" },
+  { id: "committed",   label: "COMMITTED",   minDays: 7,   color: "#CD7F32" },
+  { id: "consistent",  label: "CONSISTENT",  minDays: 21,  color: "#2E8B57" },
+  { id: "disciplined", label: "DISCIPLINED", minDays: 45,  color: "#DC2626" },
+  { id: "forged",      label: "FORGED",      minDays: 75,  color: "#0F52BA" },
+  { id: "elite",       label: "ELITE",       minDays: 100, color: "#7851A9" },
+  { id: "legendary",   label: "LEGENDARY",   minDays: 150, color: "#FFC125" },
 ];
 
 const TASK_CATEGORIES = {
@@ -193,7 +194,7 @@ const urlBase64ToUint8Array = (base64String) => {
 };
 const getCellLevel = (score) => {
   if (score === null) return "level-0";
-  if (score === 0) return "missed";
+  if (score === 0) return "level-0";
   if (score < 25) return "level-1";
   if (score < 50) return "level-2";
   if (score < 75) return "level-3";
@@ -326,6 +327,7 @@ const makeCSS = () => `
   .topbar-date { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-2); letter-spacing:.06em; }
   .topbar-r { display:flex; align-items:center; gap:10px; }
 
+  .lvl-chip-wrap { position:relative; }
   .lvl-chip {
     display:flex; align-items:center; gap:6px;
     padding:4px 11px; border-radius:4px;
@@ -335,6 +337,22 @@ const makeCSS = () => `
   }
   .lvl-chip:hover { border-color:var(--border-accent); }
   .lvl-dot { width:5px; height:5px; border-radius:50%; }
+  
+  .lvl-tooltip {
+    position:absolute; top:calc(100% + 8px); right:0; z-index:100;
+    background:var(--bg-1); border:1px solid var(--border-0); border-radius:10px;
+    padding:14px 16px; min-width:200px;
+    opacity:0; visibility:hidden; transform:translateY(-4px);
+    transition:opacity .18s, transform .18s, visibility .18s;
+    box-shadow:0 4px 20px rgba(0,0,0,0.15);
+  }
+  .lvl-chip-wrap:hover .lvl-tooltip { opacity:1; visibility:visible; transform:translateY(0); }
+  .lvl-tooltip-header { display:flex; flex-direction:column; gap:2px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border-0); }
+  .lvl-tooltip-list { display:flex; flex-direction:column; gap:6px; }
+  .lvl-tooltip-row { display:flex; align-items:center; gap:8px; font-size:11px; padding:4px 0; }
+  .lvl-tooltip-row.active { background:var(--bg-2); margin:0 -8px; padding:4px 8px; border-radius:4px; }
+  .lvl-tooltip-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .lvl-tooltip-footer { margin-top:12px; padding-top:10px; border-top:1px solid var(--border-0); text-align:center; }
 
   /* PAGE */
   .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; margin:0 auto; }
@@ -660,11 +678,10 @@ const makeCSS = () => `
 
   /* GitHub-style color levels */
   .cell.level-0 { background:var(--bg-3); }
-  .cell.level-1 { background:var(--accent-lo); }
-  .cell.level-2 { background:var(--accent-mid); }
-  .cell.level-3 { background:var(--accent); opacity:0.8; }
+  .cell.level-1 { background:color-mix(in srgb, var(--accent) 25%, var(--bg-2)); }
+  .cell.level-2 { background:color-mix(in srgb, var(--accent) 50%, var(--bg-2)); }
+  .cell.level-3 { background:color-mix(in srgb, var(--accent) 75%, var(--bg-2)); }
   .cell.level-4 { background:var(--accent); }
-  .cell.missed { background:var(--err); opacity:0.3; }
   .cell.future { background:var(--bg-2); border:1px dashed var(--border-1); opacity:0.5; }
 
   .ctip {
@@ -4500,7 +4517,7 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
   // Stats for selected challenge
   const strong = wallDays.filter(d => d.score !== null && d.score >= 75).length;
   const missed = wallDays.filter(d => d.score === 0).length;
-  const daysLogged = Object.keys(selectedCheckins).length;
+  const daysLogged = Object.values(selectedCheckins).filter(score => score > 0).length;
 
   // All-time stats
   const completedChallenges = challengeHistory.filter(c => c.completedAt);
@@ -7807,6 +7824,7 @@ export default function App() {
   const [checkins,     setCheckins]     = useState({}); // { "YYYY-MM-DD": score }
   const [allCheckins,  setAllCheckins]  = useState({}); // { challengeId: { "YYYY-MM-DD": score } }
   const [challengeHistory, setChallengeHistory] = useState([]); // All challenges (active + archived with >1 day)
+  const [totalDaysForged, setTotalDaysForged] = useState(0); // Cumulative days with score > 0
   const [focusSessions, setFocusSessions] = useState([]);
   const [focusLoading,  setFocusLoading]  = useState(true);
   const [theme,       setThemeState]  = useState("forge");
@@ -8105,31 +8123,37 @@ export default function App() {
       
       // Group checkins by challenge_id
       const checkinsByChallenge = {};
+      let totalForgedDays = 0;
       (allCheckinRows || []).forEach(c => {
         if (!checkinsByChallenge[c.challenge_id]) checkinsByChallenge[c.challenge_id] = {};
         checkinsByChallenge[c.challenge_id][c.date] = c.score;
+        if (c.score > 0) totalForgedDays++;
       });
       
       // Filter challenges: keep only those with >1 checkin OR currently active
       const validChallenges = allChallenges.filter(c => {
         const checkinCount = Object.keys(checkinsByChallenge[c.id] || {}).length;
         return checkinCount > 1 || !c.archived;
-      }).map(c => ({
-        id: c.id,
-        name: c.name,
-        tag: c.tag || "CUSTOM",
-        totalDays: c.total_days,
-        startDate: c.start_date || c.created_at?.split("T")[0],
-        streak: c.streak || 0,
-        consistency: c.consistency || 0,
-        isMain: c.is_main,
-        archived: c.archived,
-        completedAt: c.completed_at,
-        checkinCount: Object.keys(checkinsByChallenge[c.id] || {}).length,
-      }));
+      }).map(c => {
+        const scores = Object.values(checkinsByChallenge[c.id] || {});
+        return {
+          id: c.id,
+          name: c.name,
+          tag: c.tag || "CUSTOM",
+          totalDays: c.total_days,
+          startDate: c.start_date || c.created_at?.split("T")[0],
+          streak: c.streak || 0,
+          consistency: c.consistency || 0,
+          isMain: c.is_main,
+          archived: c.archived,
+          completedAt: c.completed_at,
+          checkinCount: scores.filter(s => s > 0).length,
+        };
+      });
       
       setChallengeHistory(validChallenges);
       setAllCheckins(checkinsByChallenge);
+      setTotalDaysForged(totalForgedDays);
     } catch(e) { console.warn("load challenge history:", e); }
   }, [user]);
 
@@ -8289,7 +8313,9 @@ export default function App() {
   const activeChallenge = hasChallenge
     ? { ...challenges.main, kpis: challenges.main.kpis || [], wall: challenges.main.wall || buildWall() }
     : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() };
-  const level = getLevel(activeChallenge.dayNum);
+  const level = getLevel(totalDaysForged);
+  const nextLevel = LEVELS.find(l => l.minDays > totalDaysForged);
+  const daysToNext = nextLevel ? nextLevel.minDays - totalDaysForged : 0;
 
   const renderPage = () => {
     if (page==="home") {
@@ -8384,8 +8410,34 @@ export default function App() {
         <div className="topbar">
           <div className="topbar-date f-mono">{fmtDate()}</div>
           <div className="topbar-r">
-            <div className="lvl-chip" style={{color:level.color,borderColor:`${level.color}30`}}>
-              <div className="lvl-dot" style={{background:level.color}} />{level.label}
+            <div className="lvl-chip-wrap">
+              <div className="lvl-chip" style={{color:level.color,borderColor:`${level.color}30`}}>
+                <div className="lvl-dot" style={{background:level.color}} />{level.label}
+              </div>
+              <div className="lvl-tooltip">
+                <div className="lvl-tooltip-header">
+                  <span className="f-mono" style={{fontSize:10,color:"var(--text-2)",letterSpacing:".1em"}}>TOTAL DAYS FORGED</span>
+                  <span style={{fontSize:18,fontWeight:500,color:"var(--text-0)"}}>{totalDaysForged}</span>
+                </div>
+                <div className="lvl-tooltip-list">
+                  {LEVELS.map((l, i) => {
+                    const isActive = l.id === level.id;
+                    const isAchieved = totalDaysForged >= l.minDays;
+                    return (
+                      <div key={l.id} className={`lvl-tooltip-row ${isActive ? "active" : ""}`}>
+                        <div className="lvl-tooltip-dot" style={{background: isAchieved ? l.color : "var(--bg-3)"}} />
+                        <span style={{color: isAchieved ? l.color : "var(--text-2)", flex:1}}>{l.label}</span>
+                        <span className="f-mono" style={{fontSize:10,color:"var(--text-2)"}}>{l.minDays}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {nextLevel && (
+                  <div className="lvl-tooltip-footer">
+                    <span style={{color:"var(--text-2)",fontSize:12}}>{daysToNext} days to {nextLevel.label}</span>
+                  </div>
+                )}
+              </div>
             </div>
             <button id="tut-deepwork" className="btn btn-g" style={{padding:"5px 13px",fontSize:12}} onClick={()=>setDW(true)}>⚡ Deep Work</button>
             {user && <button className="btn btn-g" style={{padding:"5px 13px",fontSize:12,borderColor:"var(--err)30",color:"var(--text-2)"}} onClick={()=>sb&&sb.auth.signOut()}>↩</button>}
