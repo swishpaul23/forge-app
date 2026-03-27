@@ -2,206 +2,42 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // ============================================================
-// THEMES
+// IMPORTS FROM EXTRACTED MODULES
 // ============================================================
-const THEMES = {
-  forge: {
-    "--bg-0": "#080807",
-    "--bg-1": "#0F0F0D",
-    "--bg-2": "#161613",
-    "--bg-3": "#1E1E1A",
-    "--bg-4": "#252520",
-    "--accent": "#D4922A",
-    "--accent-lo": "#D4922A18",
-    "--accent-mid": "#D4922A55",
-    "--text-0": "#EDEAE3",
-    "--text-1": "#B8B4AE",
-    "--text-2": "#8A857E",
-    "--text-3": "#2E2C28",
-    "--border-0": "#1E1E1A",
-    "--border-1": "#2A2A25",
-    "--border-accent": "#D4922A30",
-    "--ok": "#5DBF8A",
-    "--warn": "#D4B22A",
-    "--err": "#BF5D5D",
-  },
-  slate: {
-    "--bg-0": "#F2F0EC",
-    "--bg-1": "#E8E5DF",
-    "--bg-2": "#DEDAD3",
-    "--bg-3": "#D0CBC2",
-    "--bg-4": "#FFFFFF",
-    "--accent": "#2A4A38",
-    "--accent-lo": "#2A4A3812",
-    "--accent-mid": "#2A4A3850",
-    "--text-0": "#0E0D0C",
-    "--text-1": "#3A3835",
-    "--text-2": "#6A6560",
-    "--text-3": "#A8A49E",
-    "--border-0": "#DDD9D2",
-    "--border-1": "#CECAC2",
-    "--border-accent": "#2A4A3830",
-    "--ok": "#2A6644",
-    "--warn": "#7A5C1A",
-    "--err": "#7A2A2A",
-  },
-  iron: {
-    "--bg-0": "#060810",
-    "--bg-1": "#0A0D18",
-    "--bg-2": "#101320",
-    "--bg-3": "#161A28",
-    "--bg-4": "#1C2030",
-    "--accent": "#4A8FD4",
-    "--accent-lo": "#4A8FD418",
-    "--accent-mid": "#4A8FD455",
-    "--text-0": "#E0E8F0",
-    "--text-1": "#A0A8B8",
-    "--text-2": "#6A7488",
-    "--text-3": "#242C38",
-    "--border-0": "#161A28",
-    "--border-1": "#1E2438",
-    "--border-accent": "#4A8FD430",
-    "--ok": "#4AD48A",
-    "--warn": "#D4B24A",
-    "--err": "#D44A4A",
-  },
-};
-
-const LEVELS = [
-  { id: "initiate",    label: "INITIATE",    minDays: 0,   color: "#56524D" },
-  { id: "committed",   label: "COMMITTED",   minDays: 7,   color: "#CD7F32" },
-  { id: "consistent",  label: "CONSISTENT",  minDays: 21,  color: "#2E8B57" },
-  { id: "disciplined", label: "DISCIPLINED", minDays: 45,  color: "#DC2626" },
-  { id: "forged",      label: "FORGED",      minDays: 75,  color: "#0F52BA" },
-  { id: "elite",       label: "ELITE",       minDays: 100, color: "#7851A9" },
-  { id: "legendary",   label: "LEGENDARY",   minDays: 150, color: "#FFC125" },
-];
-
-const TASK_CATEGORIES = {
-  body:  { label: "Body",    color: "#D4922A" },
-  mind:  { label: "Mind",    color: "#4A8FD4" },
-  diet:  { label: "Diet",    color: "#5DBF8A" },
-  build: { label: "Build",   color: "#BF5DBF" },
-  other: { label: "Other",   color: "var(--text-2)" },
-};
-
-const TEMPLATES = [
-  {
-    id: "75hard", name: "75 HARD", duration: 75, tag: "ENDURANCE",
-    kpis: [{ key:"w1",label:"Workout 1 — 45min",cat:"body"},{key:"w2",label:"Workout 2 — 45min",cat:"body"},{key:"diet",label:"Stick to diet",cat:"diet"},{key:"water",label:"1 gallon water",cat:"diet"},{key:"read",label:"Read 10 pages",cat:"mind"},{key:"photo",label:"Progress photo",cat:"other"}],
-    blurb: "Two-a-day workouts, strict diet, 1 gallon of water, 10 pages of reading. Every day. No days off.",
-    about: "75 Hard is a mental toughness program built by Andy Frisella. The premise is simple: complete five daily tasks for 75 consecutive days with zero compromise. Miss a single day and you restart from day one. There are no substitutions, no scaled versions, no excuses.",
-    benefits: ["Builds ironclad daily discipline", "Significant physical transformation", "Proven mental resilience framework", "Develops non-negotiation with yourself"],
-    bestFor: "People who need an external framework to force the habit of showing up. Especially effective if you've tried and quit challenges before.",
-    difficulty: "Hard",
-  },
-  {
-    id: "30day", name: "30 DAY HARD", duration: 30, tag: "FOUNDATION",
-    kpis: [{key:"workout",label:"Workout",cat:"body"},{key:"diet",label:"Clean eating",cat:"diet"},{key:"mindset",label:"Mindset work",cat:"mind"}],
-    blurb: "The accessible entry point. 30 days of workouts, clean eating, and mindset work. Build the foundation.",
-    about: "A stripped-back version of the 75 Hard structure, designed for people who are building habits from scratch or coming back after a long break. Three tasks daily for 30 days — enough to feel the compound effect without the extreme commitment.",
-    benefits: ["Entry-level structure for beginners", "Builds the three pillars: body, diet, mind", "Short enough to commit to fully", "Establishes baseline discipline"],
-    bestFor: "First-time challengers, people returning from injury or burnout, or anyone who wants a clear 30-day reset.",
-    difficulty: "Moderate",
-  },
-  {
-    id: "10apps", name: "10 APPS / 10 DAYS", duration: 10, tag: "BUILDER",
-    kpis: [{key:"shipped",label:"App shipped",cat:"build"},{key:"deployed",label:"Deployed live",cat:"build"},{key:"docs",label:"Documented",cat:"build"}],
-    blurb: "Ship one working, deployed app every single day for 10 days. Speed over perfection.",
-    about: "A builder's sprint designed to break perfectionism and force rapid shipping. Each day you must design, build, deploy, and document a working app. The constraints are the point — you learn more shipping 10 imperfect things than agonising over one perfect one.",
-    benefits: ["Destroys perfectionism fast", "Forces scope discipline", "Builds a portfolio in 10 days", "Rapid skill compression under pressure"],
-    bestFor: "Developers who overthink, people learning to build, or anyone who wants to prove to themselves they can actually ship.",
-    difficulty: "Intense",
-  },
-  {
-    id: "noai", name: "30 DAYS NO AI", duration: 30, tag: "DISCIPLINE",
-    kpis: [{key:"no_ai",label:"Zero AI used",cat:"mind"},{key:"dw",label:"2hr deep work",cat:"build"}],
-    blurb: "No AI tools for 30 days. Two hours of uninterrupted deep work daily. Rebuild your raw thinking.",
-    about: "A cognitive recalibration challenge. In a world where AI handles first drafts, debugging, and decision support, this forces you to operate without the crutch. Pair it with mandatory deep work sessions and you'll remember what your brain is actually capable of.",
-    benefits: ["Rediscovers raw problem-solving ability", "Rebuilds deep focus capacity", "Exposes AI dependency blind spots", "Strengthens independent thinking"],
-    bestFor: "Developers, writers, and knowledge workers who've noticed their thinking has gotten shallower or their tolerance for hard problems has dropped.",
-    difficulty: "Moderate",
-  },
-  {
-    id: "custom", name: "CUSTOM", duration: 30, tag: "YOUR RULES",
-    kpis: [],
-    blurb: "Define your own daily tasks, your own duration, your own rules. Built entirely around your goals.",
-    about: "No template fits every person. Custom lets you define exactly what you're committing to — whether that's language learning, sobriety, creative output, athletic training, or anything else. You set the tasks, you set the duration, you set the standard.",
-    benefits: ["Fully tailored to your specific goal", "No irrelevant tasks diluting your focus", "Can be as hard or as focused as you need", "Grows with you over multiple challenges"],
-    bestFor: "Anyone with a clear goal that doesn't fit the pre-built templates. Also good for veterans who've finished other challenges and want to design their next level.",
-    difficulty: "You decide",
-  },
-];
+import { LEVELS, getLevel } from "./constants/levels";
+import { TEMPLATES, TASK_CATEGORIES } from "./constants/templates";
+import { ALL_THEMES, THEME_ORDER, applyThemeVars } from "./constants/themes";
+import { 
+  NAV,
+  IconDashboard,
+  IconTracking,
+  IconLibrary,
+  IconPartners,
+  IconSettings,
+  IconTalos,
+  NavIcon 
+} from "./constants/navigation";
+import { 
+  getTodayStr, 
+  getChallengeDate, 
+  fmtDate, 
+  fmtCellDate, 
+  fmtFullDate, 
+  greeting 
+} from "./utils/dates";
+import { 
+  pct, 
+  getCellLevel, 
+  urlBase64ToUint8Array, 
+  buildWall 
+} from "./utils/helpers";
 
 // ============================================================
-// MOCK DATA
+// APP-SPECIFIC CONSTANTS (not extracted - used only here)
 // ============================================================
-
-// ============================================================
-const buildWall = (withMockData = false) => {
-  const out = [];
-  const now = new Date();
-  for (let i = 41; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i);
-    const r = Math.random();
-    out.push({
-      date: d.toISOString().split("T")[0],
-      // Only generate fake scores if explicitly requested (never for real users)
-      score: withMockData && i > 2 ? (r > 0.15 ? Math.floor(r * 40 + 60) : 0) : null,
-      day: 42 - i,
-      isToday: i === 0,
-    });
-  }
-  return out;
-};
-
-const MOCK_CHALLENGES = { // kept for reference only — not used as initial state
-  main: { id:"c1", name:"75 Hard", tag:"ENDURANCE", dayNum:28, totalDays:75, streak:12, consistency:87, color:"#D4922A", kpis: TEMPLATES[0].kpis, wall: null },
-  secondary: [
-    { id:"c2", name:"10 Apps / 10 Days", tag:"BUILDER",    dayNum:4,  totalDays:10, streak:4,  consistency:100, color:"#5DBF8A", kpis: TEMPLATES[2].kpis },
-    { id:"c3", name:"30 Days No AI",      tag:"DISCIPLINE", dayNum:4,  totalDays:30, streak:4,  consistency:92,  color:"#4A8FD4", kpis: TEMPLATES[3].kpis },
-  ],
-};
-
-const CHALLENGE = { ...MOCK_CHALLENGES.main, wall: buildWall() }; // legacy reference
 const EMPTY_CHALLENGES = { main: null, secondary: [] };
 const EMPTY_KPIS = {};
 const INIT_KPIS = Object.fromEntries(TEMPLATES[0].kpis.map(k => [k.key, false]));
-
-// ============================================================
-// UTILS
-// ============================================================
-const getLevel  = (days) => [...LEVELS].reverse().find(l => days >= l.minDays) || LEVELS[0];
-const pct       = (a, b) => Math.round((a / b) * 100);
-const fmtDate   = () => new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-const greeting  = () => { const h = new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Still at it"; };
-// Get today's date string in local timezone (day changes at midnight)
-const getTodayStr = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-// Alias for backwards compatibility
-const getChallengeDate = getTodayStr;
-// VAPID: convert base64url public key to Uint8Array for pushManager.subscribe
-const urlBase64ToUint8Array = (base64String) => {
-  const padding = "=".repeat((4 - base64String.length % 4) % 4);
-  const base64  = (base64String + padding).replace(/-/g,"+").replace(/_/g,"/");
-  const raw     = atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-};
-const getCellLevel = (score) => {
-  if (score === null) return "level-0";
-  if (score === 0) return "level-0";
-  if (score < 25) return "level-1";
-  if (score < 50) return "level-2";
-  if (score < 75) return "level-3";
-  return "level-4";
-};
-const fmtCellDate = (dateStr) => { const d = new Date(dateStr + "T00:00:00"); return `${d.toLocaleString("en-US",{month:"short"}).toUpperCase()}/${String(d.getDate()).padStart(2,"0")}`; };
-const fmtFullDate = (dateStr) => { const d = new Date(dateStr + "T00:00:00"); return d.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" }); };
 
 // ============================================================
 // STYLES
@@ -6373,59 +6209,6 @@ const Partners = ({ user, profile, challenges, sb }) => {
   );
 };
 
-const NavIcon = ({ d, d2, size=20, strokeW=1.5 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
-    <path d={d} />{d2 && <path d={d2} />}
-  </svg>
-);
-
-// Dashboard — large panel left, two stacked right (classic dashboard layout)
-const IconDashboard = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="10" height="18" rx="1.5" />
-    <rect x="15" y="3" width="6" height="8" rx="1.5" />
-    <rect x="15" y="13" width="6" height="8" rx="1.5" />
-  </svg>
-);
-
-// Wall / Tracking — bar chart going up
-const IconTracking = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    <line x1="3" y1="21" x2="21" y2="21" />
-    <rect x="4" y="13" width="4" height="8" rx="0.5" />
-    <rect x="10" y="8" width="4" height="13" rx="0.5" />
-    <rect x="16" y="4" width="4" height="17" rx="0.5" />
-  </svg>
-);
-
-// Library — open book
-const IconLibrary = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 6c0-1.1.9-2 2-2h5c1.1 0 2 .5 3 1.5C13 4.5 14 4 15 4h5c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2h-5c-1 0-2 .4-3 1-1-.6-2-1-3-1H4c-1.1 0-2-.9-2-2V6z" />
-    <line x1="12" y1="5.5" x2="12" y2="20.5" />
-  </svg>
-);
-
-// Partners — two people
-const IconPartners = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="8" cy="7" r="3" />
-    <path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-    <circle cx="17" cy="7" r="3" />
-    <path d="M16 14c1-.4 2-.6 3-.4 2.5.5 4 2.7 4 5.4" />
-  </svg>
-);
-
-// Settings — gear with 8 teeth (classic cog)
-const IconSettings = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-  </svg>
-);
-
-
 // ============================================================
 // TUTORIAL OVERLAY
 // ============================================================
@@ -6908,25 +6691,6 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
   );
 };
 
-const IconTalos = () => (
-  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="3.5" />
-    <path d="M7.5 8H4L2 17h20l-2-9h-3.5" />
-    <path d="M10 17v3.5h4V17" />
-    <line x1="9" y1="8" x2="9" y2="8.01" strokeWidth={2.5} />
-    <line x1="15" y1="8" x2="15" y2="8.01" strokeWidth={2.5} />
-  </svg>
-);
-
-const NAV = [
-  { id:"home",     icon:<IconDashboard />, tip:"Dashboard"  },
-  { id:"wall",     icon:<IconTracking />,  tip:"The Wall"    },
-  { id:"library",  icon:<IconLibrary />,   tip:"Library"     },
-  { id:"partners", icon:<IconPartners />,  tip:"Partners"    },
-  { id:"talos",    icon:<IconTalos />,     tip:"TALOS"       },
-  { id:"settings", icon:<IconSettings />,  tip:"Settings"    },
-];
-
 // ============================================================
 // SUPABASE CLIENT
 // ============================================================
@@ -6939,81 +6703,6 @@ console.log("[Forge] Supabase Key:", _sbKey ? "✓ loaded" : "✗ MISSING");
 const sb = (_sbUrl && _sbKey) ? createClient(_sbUrl, _sbKey, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 }) : null;
-
-// ============================================================
-// SUPABASE THEMES (8 total — original 3 + 5 new)
-// ============================================================
-const ALL_THEMES = {
-  forge:    { label:"Forge",              desc:"Dark industrial. The original.",             swatch:"#D4922A", vars: THEMES.forge    },
-  slate:    { label:"Slate",              desc:"Clean parchment. Eyes-first.",               swatch:"#2A4A38", vars: THEMES.slate    },
-  iron:     { label:"Iron",               desc:"Cold blue steel. Night sessions.",           swatch:"#4A8FD4", vars: THEMES.iron     },
-  neutrals: { label:"Elevated Neutrals",  desc:"Calm & Clarity. Warm greys, zero noise.",   swatch:"#8C7355", vars: {
-    "--bg-0":"#FAF8F5","--bg-1":"#F0EDE8","--bg-2":"#E6E2DB","--bg-3":"#D8D3CB","--bg-4":"#FFFFFF",
-    "--accent":"#8C7355","--accent-lo":"#8C735514","--accent-mid":"#8C735545",
-    "--text-0":"#1A1816","--text-1":"#605A52","--text-2":"#706A62","--text-3":"#C8C2BA",
-    "--border-0":"#E0DCD4","--border-1":"#CECAC2","--border-accent":"#8C735530",
-    "--ok":"#4A7C59","--warn":"#B8880A","--err":"#A03030",
-  }},
-  digital:  { label:"Digital Trust",      desc:"Finance & Habit. Blue-green authority.",    swatch:"#0DBEAA", vars: {
-    "--bg-0":"#070E12","--bg-1":"#0B1520","--bg-2":"#10202E","--bg-3":"#162A38","--bg-4":"#1C3344",
-    "--accent":"#0DBEAA","--accent-lo":"#0DBEAA18","--accent-mid":"#0DBEAA50",
-    "--text-0":"#DFF4F0","--text-1":"#6FA8A0","--text-2":"#3A6860","--text-3":"#1E3C38",
-    "--border-0":"#162A38","--border-1":"#1E3844","--border-accent":"#0DBEAA30",
-    "--ok":"#2DD4AA","--warn":"#F0C040","--err":"#E05050",
-  }},
-  dusk:     { label:"Future Dusk",         desc:"Focus & Mystery. Deep work sessions.",      swatch:"#8B5CF6", vars: {
-    "--bg-0":"#08060F","--bg-1":"#0F0B1C","--bg-2":"#161028","--bg-3":"#1E1636","--bg-4":"#261E42",
-    "--accent":"#8B5CF6","--accent-lo":"#8B5CF618","--accent-mid":"#8B5CF650",
-    "--text-0":"#EDE8FF","--text-1":"#8A80B0","--text-2":"#4A4268","--text-3":"#2C2648",
-    "--border-0":"#1E1636","--border-1":"#2A2048","--border-accent":"#8B5CF630",
-    "--ok":"#6EE7B7","--warn":"#FBBF24","--err":"#F87171",
-  }},
-  pastel:   { label:"Sunwashed Pastels",   desc:"Energy & Joy. Casual planning, students.", swatch:"#E07B4A", vars: {
-    "--bg-0":"#FFFBF7","--bg-1":"#FFF3EA","--bg-2":"#FFE8D6","--bg-3":"#FFD9C0","--bg-4":"#FFFFFF",
-    "--accent":"#E07B4A","--accent-lo":"#E07B4A14","--accent-mid":"#E07B4A44",
-    "--text-0":"#2A1A10","--text-1":"#7A5040","--text-2":"#7A5848","--text-3":"#D8C0B0",
-    "--border-0":"#F5DDD0","--border-1":"#EAC8B4","--border-accent":"#E07B4A30",
-    "--ok":"#3DA870","--warn":"#E0A020","--err":"#D04040",
-  }},
-  mono:     { label:"Monochrome+",         desc:"Precision & Speed. One colour, max clarity.", swatch:"#E8E8E8", vars: {
-    "--bg-0":"#080808","--bg-1":"#111111","--bg-2":"#191919","--bg-3":"#222222","--bg-4":"#2C2C2C",
-    "--accent":"#F0F0F0","--accent-lo":"#F0F0F014","--accent-mid":"#F0F0F040",
-    "--text-0":"#F8F8F8","--text-1":"#888888","--text-2":"#444444","--text-3":"#282828",
-    "--border-0":"#222222","--border-1":"#2E2E2E","--border-accent":"#F0F0F025",
-    "--ok":"#70C070","--warn":"#C0A030","--err":"#C04040",
-  }},
-  orbit:    { label:"Orbit Navy",           desc:"Deep space blue. Electric accent.", swatch:"#0066FF", vars: {
-    "--bg-0":"#0A1024","--bg-1":"#0D1530","--bg-2":"#121A38","--bg-3":"#182040","--bg-4":"#1E2850",
-    "--accent":"#0066FF","--accent-lo":"#0066FF18","--accent-mid":"#0066FF50",
-    "--text-0":"#E8EEFF","--text-1":"#7A9ACC","--text-2":"#3A5A88","--text-3":"#1A2A50",
-    "--border-0":"#182040","--border-1":"#1E2A50","--border-accent":"#0066FF35",
-    "--ok":"#3DD68C","--warn":"#F5C542","--err":"#FF4D4D",
-  }},
-  mars:     { label:"Mars Red",             desc:"Dark charcoal. Aggressive red accent.", swatch:"#FF3B3B", vars: {
-    "--bg-0":"#11131A","--bg-1":"#161820","--bg-2":"#1C1E28","--bg-3":"#222530","--bg-4":"#282C38",
-    "--accent":"#FF3B3B","--accent-lo":"#FF3B3B18","--accent-mid":"#FF3B3B50",
-    "--text-0":"#F0EAE8","--text-1":"#9A8A88","--text-2":"#504848","--text-3":"#2C2828",
-    "--border-0":"#1C1E28","--border-1":"#282A38","--border-accent":"#FF3B3B35",
-    "--ok":"#4AD48A","--warn":"#F0C040","--err":"#FF3B3B",
-  }},
-  plasma:   { label:"Plasma Orange",        desc:"Core black. High-voltage orange.", swatch:"#FF5E00", vars: {
-    "--bg-0":"#0E0E12","--bg-1":"#131318","--bg-2":"#18181F","--bg-3":"#1E1E26","--bg-4":"#24242E",
-    "--accent":"#FF5E00","--accent-lo":"#FF5E0018","--accent-mid":"#FF5E0050",
-    "--text-0":"#F2EDE8","--text-1":"#9A8878","--text-2":"#504438","--text-3":"#2C2620",
-    "--border-0":"#18181F","--border-1":"#242026","--border-accent":"#FF5E0035",
-    "--ok":"#4AD48A","--warn":"#F5C040","--err":"#FF4444",
-  }},
-};
-const THEME_ORDER = ["forge","slate","iron","neutrals","digital","dusk","pastel","mono","orbit","mars","plasma"];
-
-function applyThemeVars(themeId) {
-  const t = ALL_THEMES[themeId];
-  if (!t) return;
-  Object.entries(t.vars).forEach(([k,v]) => {
-    document.documentElement.style.setProperty(k,v);
-    document.body.style.setProperty(k,v);
-  });
-}
 
 // ============================================================
 // AUTH SCREEN (Supabase-wired: Google + Email/Password)
