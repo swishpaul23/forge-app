@@ -31,6 +31,11 @@ import {
   urlBase64ToUint8Array, 
   buildWall 
 } from "./utils/helpers";
+import DashboardV2 from "./components/pages/DashboardV2";
+import ProfilePage from "./components/pages/ProfilePage";
+import ProfilePanel from "./components/shared/ProfilePanel";
+import Avatar from "./components/ui/Avatar";
+import { useIsMobile } from "./hooks/useIsMobile";
 
 // ============================================================
 // APP-SPECIFIC CONSTANTS (not extracted - used only here)
@@ -192,6 +197,7 @@ const makeCSS = () => `
 
   /* PAGE */
   .page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; margin:0 auto; }
+  .dashboard-page { padding:36px 32px 100px; width:100%; max-width:900px; box-sizing:border-box; margin:0 auto; }
 
   .home-page { padding:36px 32px 100px; width:100%; max-width:1400px; box-sizing:border-box; }
   .home-layout { display:flex; gap:28px; align-items:flex-start; width:100%; }
@@ -7506,6 +7512,7 @@ export default function App() {
     return flag === "auth" ? "login" : "inapp";
   });
   const [page,        setPage]        = useState("home");
+  const [showProfile, setShowProfile] = useState(false);
   const [dw,          setDW]          = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [sparkTrigger, setSparkTrigger] = useState(false);
@@ -7523,8 +7530,73 @@ export default function App() {
   const [libModal,    setLibModal]    = useState(false);
   const [mission,     setMission]     = useState("I am becoming someone who shows up every day without negotiating with myself.");
   const [userName,    setUserName]    = useState("You");
+  const [profileImageUrl, setProfileImageUrl] = useState(() => localStorage.getItem('forge_profile_image') || null);
   const [kpis,        setKpis]        = useState(EMPTY_KPIS);
+  const [secondaryKpis, setSecondaryKpis] = useState({}); // { challengeId: { taskKey: boolean } }
   const [challenges,  setChallenges]  = useState(EMPTY_CHALLENGES);
+
+  const handleProfileImageUpload = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      setProfileImageUrl(dataUrl);
+      localStorage.setItem('forge_profile_image', dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const toggleSecondary = (challengeId, taskKey) => {
+    setSecondaryKpis(prev => ({
+      ...prev,
+      [challengeId]: {
+        ...(prev[challengeId] || {}),
+        [taskKey]: !(prev[challengeId]?.[taskKey]),
+      },
+    }));
+  };
+
+  // ============================================================
+  // REGIMEN STATE (new)
+  // ============================================================
+  const [regimen, setRegimen] = useState(() => {
+    const saved = localStorage.getItem('forge_regimen');
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
+    return {
+      days: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] },
+      temp_items: [],
+    };
+  });
+  const [regimenChecked, setRegimenChecked] = useState({});
+  const [tempChecked, setTempChecked] = useState({});
+  const [dayType, setDayType] = useState('full'); // 'full' | 'scaled' | 'recovery'
+
+  const toggleRegimen = (id) => setRegimenChecked(p => ({ ...p, [id]: !p[id] }));
+  const toggleTemp = (id) => setTempChecked(p => ({ ...p, [id]: !p[id] }));
+
+  // Reset regimen checks at midnight
+  const getTodayKey = () => new Date().toISOString().split('T')[0];
+  const [lastRegimenDate, setLastRegimenDate] = useState(() => {
+    return localStorage.getItem('forge_regimen_date') || getTodayKey();
+  });
+  
+  useEffect(() => {
+    const today = getTodayKey();
+    if (today !== lastRegimenDate) {
+      setRegimenChecked({});
+      setTempChecked({});
+      setLastRegimenDate(today);
+      localStorage.setItem('forge_regimen_date', today);
+    }
+  }, [lastRegimenDate]);
+
+  // Persist regimen to localStorage
+  useEffect(() => {
+    localStorage.setItem('forge_regimen', JSON.stringify(regimen));
+  }, [regimen]);
+
+  // ============================================================
 
   // Inject CSS on mount
   useEffect(() => {
@@ -8005,23 +8077,83 @@ export default function App() {
   const level = getLevel(totalDaysForged);
   const nextLevel = LEVELS.find(l => l.minDays > totalDaysForged);
   const daysToNext = nextLevel ? nextLevel.minDays - totalDaysForged : 0;
+  const isMobile = useIsMobile();
+
+  const handleAvatarClick = () => {
+    if (isMobile) {
+      setPage("profile");
+    } else {
+      setShowProfile(true);
+    }
+  };
 
   const renderPage = () => {
-    if (page==="home") {
-      if (!hasChallenge) return (
-        <div className="page">
-          <div className="a0" style={{marginBottom:32}}>
-            <div className="pg-tag">Welcome to Forge</div>
-            <div className="pg-title">Ready to Begin?</div>
-            <div className="pg-sub">You have no active challenge. Start one from the Library.</div>
-          </div>
-          <button className="btn btn-a" style={{padding:"14px 32px",fontSize:16,letterSpacing:".04em"}}
-            onClick={()=>setPage("library")}>
-            Browse Challenges →
-          </button>
-        </div>
+    if (page==="profile") {
+      return (
+        <ProfilePage
+          onBack={() => setPage("home")}
+          userName={userName}
+          memberSince={user?.created_at}
+          mission={mission}
+          challenge={activeChallenge}
+          checkins={Object.entries(checkins).map(([date, score]) => ({ date, score }))}
+          longestStreak={activeChallenge?.streak || 0}
+          consistency={activeChallenge?.consistency || 0}
+          daysForged={totalDaysForged}
+          badges={[]}
+          levels={LEVELS}
+        />
       );
-      return <Home challenge={activeChallenge} challenges={challenges} kpis={kpis} toggle={toggle} onDW={()=>setDW(true)} tone={tone} mission={mission} onAddSecondary={addSecondary} userName={userName} onViewChallenge={handleViewChallenge} onLogDay={handleLogDay} loggedToday={loggedToday} checkins={checkins} />;
+    }
+    if (page==="home") {
+      return (
+        <DashboardV2
+          challenge={activeChallenge}
+          challenges={challenges}
+          kpis={kpis}
+          toggle={toggle}
+          checkins={checkins}
+          userName={userName}
+          onLogDay={handleLogDay}
+          loggedToday={loggedToday}
+          onAddSecondary={addSecondary}
+          onViewChallenge={handleViewChallenge}
+          onStartChallenge={() => setPage("library")}
+          onUpdateChallengeTasks={(newTasks) => {
+            if (!challenges.main) return;
+            const updated = { ...challenges.main, kpis: newTasks };
+            setChallenges(prev => ({ ...prev, main: updated }));
+            // Persist to Supabase
+            if (sb && user) {
+              sb.from("challenge_tasks").delete().eq("challenge_id", challenges.main.id).then(() => {
+                const rows = newTasks.map((t, i) => ({
+                  challenge_id: challenges.main.id,
+                  key: t.key,
+                  label: t.label,
+                  cat: t.cat || 'other',
+                  non_neg: t.nonNeg || false,
+                  sort_order: i,
+                }));
+                if (rows.length > 0) {
+                  sb.from("challenge_tasks").insert(rows).then(() => {});
+                }
+              });
+            }
+          }}
+          regimen={regimen}
+          onUpdateRegimen={setRegimen}
+          regimenChecked={regimenChecked}
+          toggleRegimen={toggleRegimen}
+          tempChecked={tempChecked}
+          toggleTemp={toggleTemp}
+          dayType={dayType}
+          onSetDayType={setDayType}
+          secondaryKpis={secondaryKpis}
+          toggleSecondary={toggleSecondary}
+          talosInsight={null}
+          onRefreshTalos={() => {}}
+        />
+      );
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} allCheckins={allCheckins} challengeHistory={challengeHistory} focusSessions={focusSessions} focusLoading={focusLoading} />;
     if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
@@ -8082,7 +8214,7 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="rail">
-        <div className="rail-logo" onClick={()=>setPage("home")}><img src="/forge_icon_dark.png" style={{width:39,height:39,objectFit:"contain"}} /></div>
+        <Avatar name={userName} size={39} onClick={handleAvatarClick} imageUrl={profileImageUrl} />
         <div className="rail-nav">
           {NAV.map(n=>(
             <div key={n.id} id={`tut-${n.id}`} className={`rail-btn ${page===n.id?"on":""}`} onClick={()=>setPage(n.id)}>
@@ -8145,6 +8277,22 @@ export default function App() {
         </div>
       )}
       {detailModal && <ChallengeDetailModal challenge={detailModal.challenge} mission={detailModal.type==="main"?mission:null} onClose={()=>setDetailModal(null)} onEdit={handleEditChallenge} />}
+      <ProfilePanel
+        open={showProfile}
+        onClose={() => setShowProfile(false)}
+        userName={userName}
+        memberSince={user?.created_at}
+        mission={mission}
+        challenge={activeChallenge}
+        checkins={Object.entries(checkins).map(([date, score]) => ({ date, score }))}
+        longestStreak={activeChallenge?.streak || 0}
+        consistency={activeChallenge?.consistency || 0}
+        daysForged={totalDaysForged}
+        badges={[]}
+        levels={LEVELS}
+        profileImageUrl={profileImageUrl}
+        onUploadImage={handleProfileImageUpload}
+      />
       <SparkCanvas trigger={sparkTrigger} />
     </div>
   );

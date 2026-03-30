@@ -1,4 +1,4 @@
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -76,7 +76,7 @@
   }
   .rail-logo:hover { opacity:.7; }
 
-  .rail-nav { display:flex; flex-direction:column; gap:2px; width:100%; align-items:center; }
+  .rail-nav { display:flex; flex-direction:column; gap:2px; width:100%; align-items:center; margin-top:16px; }
 
   .rail-btn {
     width:38px; height:38px; border-radius:8px;
