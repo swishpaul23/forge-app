@@ -7,7 +7,7 @@ import { getLevel } from '../../constants/levels';
 const fmtMemberSince = (dateStr) => {
   if (!dateStr) return 'MEMBER';
   const d = new Date(dateStr);
-  const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   return `MEMBER SINCE ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
 
@@ -49,18 +49,27 @@ const ActivityHeatmap = ({ checkins = [], weeks = 10 }) => {
       const isFuture = cellDate > today;
       const score = checkinMap[dateKey];
       
-      let bg = 'var(--bg-2)';
+      // Match Wall's 5-level color scheme using accent color
+      let level = 0; // level-0 = no data / missed
       if (isFuture) {
-        bg = 'var(--bg-1)';
-      } else if (isToday) {
-        bg = 'var(--accent)';
+        level = -1; // future = dim
       } else if (score !== undefined) {
-        if (score >= 80) bg = 'var(--ok)';
-        else if (score >= 50) bg = 'rgba(93, 191, 138, 0.6)';
-        else if (score > 0) bg = 'rgba(93, 191, 138, 0.35)';
+        if (score === 0) level = 0;
+        else if (score <= 25) level = 1;
+        else if (score <= 50) level = 2;
+        else if (score <= 75) level = 3;
+        else level = 4;
       }
       
-      cells.push({ key: dateKey, bg, isToday });
+      let bg = 'var(--bg-3)'; // level-0
+      if (level === -1) bg = 'var(--bg-1)';
+      else if (level === 1) bg = 'color-mix(in srgb, var(--accent) 25%, var(--bg-2))';
+      else if (level === 2) bg = 'color-mix(in srgb, var(--accent) 50%, var(--bg-2))';
+      else if (level === 3) bg = 'color-mix(in srgb, var(--accent) 75%, var(--bg-2))';
+      else if (level === 4) bg = 'var(--accent)';
+      
+      // Today ring handled separately
+      cells.push({ key: dateKey, bg, isToday, level });
     }
   }
   
@@ -75,20 +84,23 @@ const ActivityHeatmap = ({ checkins = [], weeks = 10 }) => {
       }}>
         {cells.map((cell) => (
           <div key={cell.key} style={{
-            background: cell.bg,
+            background: cell.isToday ? 'var(--accent)' : cell.bg,
             borderRadius: 2,
+            boxShadow: cell.isToday ? '0 0 0 1px var(--bg-0), 0 0 0 2px var(--accent)' : 'none',
           }} />
         ))}
       </div>
       
       <div style={{
-        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 8,
-        fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: 'var(--text-3)',
+        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 3, marginTop: 8,
+        fontFamily: "'DM Sans', sans-serif", fontSize: 9, fontWeight: 500, color: 'var(--text-2)',
       }}>
         <span>Less</span>
-        <div style={{ width: 8, height: 8, background: 'var(--bg-2)', borderRadius: 2 }} />
-        <div style={{ width: 8, height: 8, background: 'rgba(93, 191, 138, 0.35)', borderRadius: 2 }} />
-        <div style={{ width: 8, height: 8, background: 'var(--ok)', borderRadius: 2 }} />
+        <div style={{ width: 8, height: 8, background: 'var(--bg-3)', borderRadius: 2 }} />
+        <div style={{ width: 8, height: 8, background: 'color-mix(in srgb, var(--accent) 25%, var(--bg-2))', borderRadius: 2 }} />
+        <div style={{ width: 8, height: 8, background: 'color-mix(in srgb, var(--accent) 50%, var(--bg-2))', borderRadius: 2 }} />
+        <div style={{ width: 8, height: 8, background: 'color-mix(in srgb, var(--accent) 75%, var(--bg-2))', borderRadius: 2 }} />
+        <div style={{ width: 8, height: 8, background: 'var(--accent)', borderRadius: 2 }} />
         <span>More</span>
       </div>
     </div>
@@ -133,15 +145,15 @@ const ProfilePage = ({
           onClick={onBack}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
-            color: 'var(--text-3)', cursor: 'pointer',
+            fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 500,
+            color: 'var(--text-2)', cursor: 'pointer',
           }}
         >
           <span style={{ fontSize: 14 }}>←</span> BACK
         </div>
         <div style={{
-          fontFamily: "'IBM Plex Mono', monospace", fontSize: 10,
-          letterSpacing: '.15em', color: 'var(--text-2)',
+          fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500,
+          letterSpacing: '.1em', color: 'var(--text-1)',
         }}>PROFILE</div>
         <div style={{ width: 50 }} />
       </div>
@@ -161,12 +173,12 @@ const ProfilePage = ({
           border: '3px solid var(--bg-0)',
           boxShadow: '0 0 0 2px var(--accent)',
         }}>{getInitials(userName)}</div>
-        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: '.02em' }}>
+        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: '.02em', color: 'var(--text-0)' }}>
           {(userName || 'User').toUpperCase()}
         </div>
         <div style={{
-          fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
-          color: 'var(--text-3)', marginTop: 6,
+          fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500,
+          color: 'var(--text-2)', letterSpacing: '.08em', marginTop: 6,
         }}>{fmtMemberSince(memberSince)}</div>
       </div>
       
@@ -181,11 +193,11 @@ const ProfilePage = ({
         <div style={{ background: 'var(--bg-2)', borderRadius: 10, padding: 14, textAlign: 'center' }}>
           <div style={{
             fontFamily: "'Bebas Neue', sans-serif", fontSize: 16,
-            color: 'var(--accent)', lineHeight: 1, marginBottom: 2,
+            color: 'var(--accent)', lineHeight: 1, marginBottom: 4,
           }}>{currentLevel?.title?.toUpperCase() || 'INITIATE'}</div>
           <div style={{
-            fontFamily: "'IBM Plex Mono', monospace", fontSize: 8,
-            color: 'var(--text-3)', letterSpacing: '.08em',
+            fontFamily: "'DM Sans', sans-serif", fontSize: 9, fontWeight: 500,
+            color: 'var(--text-2)', letterSpacing: '.06em',
           }}>TITLE</div>
         </div>
         <div style={{ background: 'var(--bg-2)', borderRadius: 10, padding: 14, textAlign: 'center' }}>
@@ -194,8 +206,8 @@ const ProfilePage = ({
             color: 'var(--warn)', lineHeight: 1,
           }}>{longestStreak}</div>
           <div style={{
-            fontFamily: "'IBM Plex Mono', monospace", fontSize: 8,
-            color: 'var(--text-3)', letterSpacing: '.08em',
+            fontFamily: "'DM Sans', sans-serif", fontSize: 9, fontWeight: 500,
+            color: 'var(--text-2)', letterSpacing: '.06em',
           }}>LONGEST STREAK</div>
         </div>
         <div style={{ background: 'var(--bg-2)', borderRadius: 10, padding: 14, textAlign: 'center' }}>
@@ -204,8 +216,8 @@ const ProfilePage = ({
             color: 'var(--ok)', lineHeight: 1,
           }}>{consistency}%</div>
           <div style={{
-            fontFamily: "'IBM Plex Mono', monospace", fontSize: 8,
-            color: 'var(--text-3)', letterSpacing: '.08em',
+            fontFamily: "'DM Sans', sans-serif", fontSize: 9, fontWeight: 500,
+            color: 'var(--text-2)', letterSpacing: '.06em',
           }}>CONSISTENCY</div>
         </div>
       </div>
@@ -222,10 +234,11 @@ const ProfilePage = ({
                 padding: '14px 0',
                 textAlign: 'center',
                 borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: 10,
-                color: activeTab === tab ? 'var(--accent)' : 'var(--text-3)',
-                letterSpacing: '.08em',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 11,
+                fontWeight: 500,
+                color: activeTab === tab ? 'var(--accent)' : 'var(--text-2)',
+                letterSpacing: '.06em',
                 cursor: 'pointer',
                 textTransform: 'uppercase',
               }}
@@ -241,12 +254,12 @@ const ProfilePage = ({
             {mission && (
               <>
                 <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
-                  letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 10,
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500,
+                  letterSpacing: '.1em', color: 'var(--text-2)', marginBottom: 10,
                 }}>MISSION</div>
                 <div style={{
                   fontFamily: 'Georgia, serif', fontSize: 14, fontStyle: 'italic',
-                  color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 20,
+                  color: 'var(--text-1)', lineHeight: 1.5, marginBottom: 20,
                 }}>"{mission}"</div>
               </>
             )}
@@ -254,20 +267,23 @@ const ProfilePage = ({
             {challenge && (
               <>
                 <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
-                  letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 10,
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500,
+                  letterSpacing: '.1em', color: 'var(--text-2)', marginBottom: 10,
                 }}>CURRENT CHALLENGE</div>
                 <div style={{
-                  background: 'var(--accent-lo)',
-                  border: '1px solid var(--accent-mid)',
+                  background: 'var(--bg-1)',
+                  border: '1px solid var(--border-0)',
                   borderRadius: 12,
                   padding: 16,
                   marginBottom: 20,
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'var(--accent)' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20 }}>{challenge.name}</div>
-                      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--text-3)' }}>
+                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: 'var(--text-0)' }}>{challenge.name}</div>
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)' }}>
                         DAY {challenge.dayNum} OF {challenge.totalDays}
                       </div>
                     </div>
@@ -275,7 +291,7 @@ const ProfilePage = ({
                       {Math.round((challenge.dayNum / challenge.totalDays) * 100)}%
                     </div>
                   </div>
-                  <div style={{ height: 4, background: 'var(--bg-2)', borderRadius: 2, marginTop: 12 }}>
+                  <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 2, marginTop: 12 }}>
                     <div style={{
                       width: `${(challenge.dayNum / challenge.totalDays) * 100}%`,
                       height: '100%', background: 'var(--accent)', borderRadius: 2,
@@ -285,13 +301,13 @@ const ProfilePage = ({
               </>
             )}
             
-            <div style={{ padding: 16, background: 'var(--bg-2)', borderRadius: 10 }}>
+            <div style={{ padding: 16, background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
-                  letterSpacing: '.1em', color: 'var(--text-3)',
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500,
+                  letterSpacing: '.08em', color: 'var(--text-2)',
                 }}>TOTAL DAYS FORGED</div>
-                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20 }}>{daysForged}</div>
+                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: 'var(--text-0)' }}>{daysForged}</div>
               </div>
               <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 2, marginBottom: 8 }}>
                 <div style={{
@@ -302,7 +318,7 @@ const ProfilePage = ({
                 }} />
               </div>
               {nextLevel && (
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: 'var(--text-3)' }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500, color: 'var(--text-2)' }}>
                   {daysToNext} days to <span style={{ color: 'var(--accent)' }}>{nextLevel.title.toUpperCase()}</span>
                 </div>
               )}
@@ -313,8 +329,8 @@ const ProfilePage = ({
         {activeTab === 'activity' && (
           <>
             <div style={{
-              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
-              letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 12,
+              fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500,
+              letterSpacing: '.1em', color: 'var(--text-2)', marginBottom: 12,
             }}>ACTIVITY · LAST 10 WEEKS</div>
             <ActivityHeatmap checkins={checkins} weeks={10} />
           </>
@@ -323,8 +339,8 @@ const ProfilePage = ({
         {activeTab === 'badges' && (
           <>
             <div style={{
-              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9,
-              letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 12,
+              fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500,
+              letterSpacing: '.1em', color: 'var(--text-2)', marginBottom: 12,
             }}>BADGES EARNED</div>
             {badges.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
@@ -340,7 +356,7 @@ const ProfilePage = ({
             ) : (
               <div style={{
                 padding: 32, textAlign: 'center',
-                fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--text-3)',
+                fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 500, color: 'var(--text-2)',
               }}>Complete challenges to earn badges</div>
             )}
           </>

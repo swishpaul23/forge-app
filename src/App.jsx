@@ -34,6 +34,8 @@ import {
 import DashboardV2 from "./components/pages/DashboardV2";
 import ProfilePage from "./components/pages/ProfilePage";
 import ProfilePanel from "./components/shared/ProfilePanel";
+import LibraryDesktop from "./components/pages/LibraryDesktop";
+import LibraryMobile from "./components/pages/LibraryMobile";
 import Avatar from "./components/ui/Avatar";
 import { useIsMobile } from "./hooks/useIsMobile";
 
@@ -7480,6 +7482,11 @@ export default function App() {
       if (data) setProfile(data);
     } catch(e) { console.warn("profile save:", e); }
   }, [user]);
+  
+  const handleSaveMission = useCallback(async (newMission) => {
+    setMission(newMission);
+    await saveProfile({ mission: newMission });
+  }, [saveProfile]);
 
   // Supabase auth listener
   // Register service worker for push notifications
@@ -8152,11 +8159,15 @@ export default function App() {
           toggleSecondary={toggleSecondary}
           talosInsight={null}
           onRefreshTalos={() => {}}
+          mission={mission}
+          onSaveMission={handleSaveMission}
         />
       );
     }
     if (page==="wall")     return <Wall challenge={activeChallenge} challenges={challenges} checkins={checkins} allCheckins={allCheckins} challengeHistory={challengeHistory} focusSessions={focusSessions} focusLoading={focusLoading} />;
-    if (page==="library")  return <Library onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
+    if (page==="library")  return isMobile
+      ? <LibraryMobile onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />
+      : <LibraryDesktop onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
     if (page==="talos") return (
