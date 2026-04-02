@@ -588,7 +588,7 @@ const DashboardMobile = ({
         <MobileRegimenBlock
           regimen={regimen}
           today={today}
-          onEdit={() => setShowEditor('regimen')}
+          onEdit={openRegimenEditor}
         />
       </div>
 

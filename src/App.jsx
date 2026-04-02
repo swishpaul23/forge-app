@@ -8334,10 +8334,6 @@ export default function App() {
             </div>
           ))}
         </div>
-        <div className="rail-foot">
-          <div className="rail-streak-n" id="forge-streak-n">{activeChallenge.streak}</div>
-          <div className="rail-streak-l">streak</div>
-        </div>
       </nav>
       <div className="main">
         <div className="topbar">
