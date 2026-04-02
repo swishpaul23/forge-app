@@ -7363,6 +7363,16 @@ export default function App() {
           data.invite_code = code;
         }
         setProfile(data);
+        if (data.momentum != null) setMomentum(data.momentum);
+        // Load most recent regimen log date
+        const { data: lastRegimenLog } = await sb
+          .from("regimen_logs")
+          .select("date")
+          .eq("user_id", uid)
+          .order("date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastRegimenLog) setLastRegimenLogDate(lastRegimenLog.date);
       }
     } catch(e) { console.warn("profile load:", e); }
   }, []);
@@ -7576,10 +7586,27 @@ export default function App() {
     };
   });
   const [regimenChecked, setRegimenChecked] = useState({});
+  const [momentum, setMomentum] = useState(0);
+  const [lastRegimenLogDate, setLastRegimenLogDate] = useState(null);
   const [tempChecked, setTempChecked] = useState({});
   const [dayType, setDayType] = useState('full'); // 'full' | 'scaled' | 'recovery'
 
-  const toggleRegimen = (id) => setRegimenChecked(p => ({ ...p, [id]: !p[id] }));
+  const toggleRegimen = (id) => {
+    setRegimenChecked(p => {
+      const updated = { ...p, [id]: !p[id] };
+      if (sb && user) {
+        const n = new Date();
+        const todayLocal = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+        const completedIds = Object.entries(updated).filter(([,v]) => v).map(([k]) => k);
+        sb.from("regimen_logs").upsert(
+          { user_id: user.id, date: todayLocal, completed_ids: completedIds },
+          { onConflict: "user_id,date" }
+        ).then(() => {});
+        setLastRegimenLogDate(todayLocal);
+      }
+      return updated;
+    });
+  };
   const toggleTemp = (id) => setTempChecked(p => ({ ...p, [id]: !p[id] }));
 
   // Reset regimen checks at midnight
@@ -7949,6 +7976,67 @@ export default function App() {
   }, [user, loadFocusSessions]);
 
 
+  // ── Momentum decay on app load ────────────────────────────
+  useEffect(() => {
+    if (!challenges.main || !user || !sb || momentum === 0) return;
+
+    const n = new Date();
+    const todayLocal = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+
+    const lastChallengeDate = Object.values(allCheckins)
+      .flatMap(byDate => Object.keys(byDate))
+      .sort()
+      .pop();
+
+    const candidates = [lastChallengeDate, lastRegimenLogDate].filter(Boolean).sort();
+    const lastLogDate = candidates[candidates.length - 1];
+
+    if (!lastLogDate || lastLogDate >= todayLocal) return;
+
+    const daysMissed = Math.round(
+      (new Date(todayLocal) - new Date(lastLogDate)) / 86400000
+    ) - 1;
+
+    if (daysMissed <= 0) return;
+
+    const decayed = Math.round(momentum * Math.pow(0.90, daysMissed) * 10) / 10;
+    if (decayed === momentum) return;
+
+    setMomentum(decayed);
+    sb.from("profiles").update({ momentum: decayed }).eq("id", user.id).then(() => {});
+  }, [challenges.main?.id, allCheckins, lastRegimenLogDate, user?.id]);
+
+  // ── Momentum formula ──────────────────────────────────────
+  const computeMomentum = (prevMomentum) => {
+    const dow = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const todayRegimen = dayType === 'scaled'
+      ? (regimen.days[dow] || []).filter(t => t.nonNeg)
+      : (regimen.days[dow] || []);
+
+    const sources = [
+      ...(challenges.main?.kpis || []).map(t => ({
+        weight: t.non_neg ? 3 : 1,
+        done: !!kpis[t.key],
+      })),
+      ...((challenges.secondary || []).flatMap(ch =>
+        (ch.kpis || []).map(t => ({
+          weight: t.non_neg ? 3 : 1,
+          done: !!(secondaryKpis[ch.id]?.[t.key]),
+        }))
+      )),
+      ...todayRegimen.map(t => ({
+        weight: t.nonNeg ? 3 : 1,
+        done: !!regimenChecked[t.id],
+      })),
+    ];
+
+    if (sources.length === 0) return prevMomentum;
+    const targetScore = sources.reduce((s, t) => s + t.weight, 0);
+    const dailyScore  = sources.reduce((s, t) => s + (t.done ? t.weight : 0), 0);
+    const gain = Math.min(10, (dailyScore / targetScore) * 10);
+    return Math.min(100, Math.round(((prevMomentum * 0.90) + gain) * 10) / 10);
+  };
+
   // ── Log a day ─────────────────────────────────────────────
   const handleLogDay = async (done, total) => {
     if (loggedToday || !challenges.main) return;
@@ -8024,6 +8112,11 @@ export default function App() {
           main: { ...prev.main, streak: newStreak, consistency: newConsistency },
         }));
 
+        // 6. Compute + save momentum
+        const newMomentum = computeMomentum(momentum);
+        await sb.from("profiles").update({ momentum: newMomentum }).eq("id", user.id);
+        setMomentum(newMomentum);
+
       } catch(e) { console.warn("save checkin:", e); }
     }
   };
@@ -8034,10 +8127,10 @@ export default function App() {
     const scheduleRefresh = () => {
       const now  = new Date();
       const next = new Date(now);
-      next.setHours(24, 0, 0, 0); // next calendar midnight
+      next.setHours(24, 0, 0, 0);
       const ms = next - now;
-      // Capture the date string of the day that's about to end
-      const endingDayStr = now.toISOString().split("T")[0];
+      const n = now;
+      const endingDayStr = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
       return setTimeout(async () => {
         // Check if the day that just ended was ever logged
         if (sb && challenges.main) {
@@ -8077,6 +8170,13 @@ export default function App() {
     }
     prevDone.current = allDone;
   }, [kpis, challenges.main]);
+
+  // ── Live momentum update as tasks are ticked ─────────────
+  useEffect(() => {
+    if (!challenges.main) return;
+    const persistedMomentum = profile?.momentum ?? 0;
+    setMomentum(computeMomentum(persistedMomentum));
+  }, [kpis, secondaryKpis, regimenChecked]);
 
   const activeChallenge = hasChallenge
     ? { ...challenges.main, kpis: challenges.main.kpis || [], wall: challenges.main.wall || buildWall() }
@@ -8161,6 +8261,7 @@ export default function App() {
           onRefreshTalos={() => {}}
           mission={mission}
           onSaveMission={handleSaveMission}
+          momentum={momentum}
         />
       );
     }

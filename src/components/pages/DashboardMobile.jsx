@@ -26,6 +26,78 @@ const getTimeOfDay = () => {
   return h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
 };
 
+// ============================================================
+// MOMENTUM METER
+// ============================================================
+const MOMENTUM_SEGMENTS = 20;
+const getMomentumState = (v) => {
+  if (v <= 30)  return { color: '#4A6A8A', label: 'Building initial inertia', vibrate: false };
+  if (v <= 70)  return { color: '#5DBF8A', label: 'Consistency established',  vibrate: false };
+  if (v <= 89)  return { color: '#D4922A', label: 'High momentum detected',   vibrate: true  };
+  return              { color: '#E8F2FA', label: 'Flow state achieved',        vibrate: false };
+};
+const getMomentumSegColor = (i, filled, v) => {
+  if (i >= filled) return '#2A2A25';
+  if (v >= 90) return '#7A9DB5';
+  const r = i / (MOMENTUM_SEGMENTS - 1);
+  if (v <= 30) return `hsl(210,40%,${28 + r * 12}%)`;
+  if (v <= 70) return `rgb(${Math.round(93+r*100)},${Math.round(191-r*40)},${Math.round(138-r*80)})`;
+  return `rgb(${Math.round(93+r*119)},${Math.round(191-r*46)},${Math.round(138-r*138)})`;
+};
+
+const MomentumMeter = ({ momentum = 0 }) => {
+  const v      = Math.round(momentum);
+  const state  = getMomentumState(v);
+  const isFlow = v >= 90;
+  const filled = Math.round((v / 100) * MOMENTUM_SEGMENTS);
+
+  const segments = Array.from({ length: MOMENTUM_SEGMENTS }, (_, i) => {
+    const color  = getMomentumSegColor(i, filled, v);
+    const isLast4 = i >= filled - 4 && i < filled;
+    let anim = 'none';
+    if (i < filled && isFlow) anim = 'mFlowPulse 1.8s ease-in-out infinite';
+    else if (i < filled && state.vibrate && isLast4) anim = 'mVibrate .12s infinite';
+    return (
+      <div key={i} style={{ flex: 1, height: 5, borderRadius: 2, background: color, animation: anim }} />
+    );
+  });
+
+  return (
+    <>
+      <style>{`
+        @keyframes mVibrate{0%,100%{transform:translateY(0)}25%{transform:translateY(-1px)}75%{transform:translateY(1px)}}
+        @keyframes mFlowPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+        @keyframes mShine{0%{transform:translateX(-80%)}50%{transform:translateX(80%)}100%{transform:translateX(-80%)}}
+      `}</style>
+      <div style={{
+        position: 'relative', overflow: 'hidden',
+        background: isFlow
+          ? 'linear-gradient(135deg,#2C3540 0%,#3E4E5E 25%,#5A6E80 50%,#3E4E5E 75%,#2C3540 100%)'
+          : 'var(--bg-1)',
+        border: `1px solid ${isFlow ? '#A0BDD0' : 'var(--border-0)'}`,
+        borderRadius: 10, padding: '12px 16px',
+        transition: 'background .8s ease, border-color .8s ease',
+      }}>
+        {isFlow && (
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: 'linear-gradient(105deg,transparent 35%,rgba(220,235,248,0.28) 48%,rgba(255,255,255,0.45) 50%,rgba(220,235,248,0.28) 52%,transparent 65%)',
+            animation: 'mShine 2.8s ease-in-out infinite',
+          }} />
+        )}
+        <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize: 9, letterSpacing:'.14em', textTransform:'uppercase', color: isFlow ? '#A0BDD0' : 'var(--text-2)', fontWeight: 500, marginBottom: 4 }}>
+          Momentum
+        </div>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize: 32, lineHeight: 1, color: state.color, transition:'color .6s' }}>{v}</div>
+          <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize: 9, letterSpacing:'.1em', textTransform:'uppercase', color: state.color, transition:'color .6s', textAlign:'right', maxWidth: 120 }}>{state.label}</div>
+        </div>
+        <div style={{ display:'flex', gap: 3, marginTop: 8 }}>{segments}</div>
+      </div>
+    </>
+  );
+};
+
 // Non-negotiable icon component
 const NonNegIcon = ({ size = 14, color = "var(--ok)" }) => (
   <svg width={size} height={size} viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
@@ -347,7 +419,7 @@ const DashboardMobile = ({
   regimen, onUpdateRegimen, regimenChecked, toggleRegimen,
   tempChecked, toggleTemp, dayType, onSetDayType,
   secondaryKpis, toggleSecondary, talosInsight, onRefreshTalos,
-  mission, onSaveMission, onUpdateChallengeTasks,
+  mission, onSaveMission, onUpdateChallengeTasks, momentum = 0,
 }) => {
   const [activeDrawer, setActiveDrawer] = useState(null);
   const [showEditor, setShowEditor] = useState(null);
@@ -436,10 +508,9 @@ const DashboardMobile = ({
       </div>
 
       {/* STATS ROW */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: 'var(--warn)' }}>{challenge?.streak || 0}</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: 'var(--text-2)', letterSpacing: '.1em' }}>STREAK</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <MomentumMeter momentum={momentum} compact={false} />
         </div>
         <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
           <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: 'var(--ok)' }}>{challenge?.consistency || 0}%</div>
