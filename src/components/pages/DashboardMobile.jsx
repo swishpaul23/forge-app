@@ -52,7 +52,7 @@ const MomentumMeter = ({ momentum = 0 }) => {
   const filled = Math.round((v / 100) * MOMENTUM_SEGMENTS);
 
   const segments = Array.from({ length: MOMENTUM_SEGMENTS }, (_, i) => {
-    const color  = getMomentumSegColor(i, filled, v);
+    const color   = getMomentumSegColor(i, filled, v);
     const isLast4 = i >= filled - 4 && i < filled;
     let anim = 'none';
     if (i < filled && isFlow) anim = 'mFlowPulse 1.8s ease-in-out infinite';
@@ -93,6 +93,81 @@ const MomentumMeter = ({ momentum = 0 }) => {
           <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize: 9, letterSpacing:'.1em', textTransform:'uppercase', color: state.color, transition:'color .6s', textAlign:'right', maxWidth: 120 }}>{state.label}</div>
         </div>
         <div style={{ display:'flex', gap: 3, marginTop: 8 }}>{segments}</div>
+      </div>
+    </>
+  );
+};
+
+// ============================================================
+// MOBILE REGIMEN BLOCK
+// ============================================================
+const MobileRegimenBlock = ({ regimen, today, onEdit }) => {
+  const [tappedDay, setTappedDay] = useState(null);
+
+  const tappedTasks = tappedDay ? (regimen?.days?.[tappedDay] || []) : [];
+
+  const handleTap = (day) => {
+    const tasks = regimen?.days?.[day] || [];
+    if (tasks.length === 0) return;
+    setTappedDay(prev => prev === day ? null : day);
+  };
+
+  return (
+    <>
+      <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '14px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '.08em', color: 'var(--accent)' }}>WEEKLY REGIMEN</div>
+          <button onClick={onEdit} style={{
+            fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-2)',
+            padding: '5px 12px', background: 'var(--bg-2)', border: '1px solid var(--border-1)',
+            borderRadius: 6, cursor: 'pointer',
+          }}>Edit</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, textAlign: 'center' }}>
+          {DAYS.map(day => {
+            const count   = (regimen?.days?.[day] || []).length;
+            const isToday = day === today;
+            const isTapped = tappedDay === day;
+            return (
+              <div
+                key={day}
+                onClick={() => handleTap(day)}
+                style={{
+                  background: isToday ? 'var(--accent-lo)' : isTapped ? 'var(--bg-3)' : 'transparent',
+                  borderRadius: 8, padding: '4px 0',
+                  cursor: count > 0 ? 'pointer' : 'default',
+                  border: isTapped ? '1px solid var(--border-1)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500, color: isToday ? 'var(--accent)' : 'var(--text-2)', marginBottom: 6 }}>
+                  {day.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, color: isToday ? 'var(--accent)' : count > 0 ? 'var(--text-1)' : 'var(--text-3)' }}>
+                  {count > 0 ? count : '·'}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Inline task list on tap */}
+        {tappedDay && tappedTasks.length > 0 && (
+          <div style={{ marginTop: 12, borderTop: '1px solid var(--border-0)', paddingTop: 10 }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
+              {DAY_LABELS_FULL[tappedDay].toUpperCase()}
+            </div>
+            {tappedTasks.map((task, i) => (
+              <div key={task.id || i} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '6px 0',
+                borderTop: i > 0 ? '1px solid var(--border-1)' : 'none',
+              }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, flex: 1, color: 'var(--text-0)' }}>{task.label}</span>
+                {task.nonNeg && <NonNegIcon size={10} color="var(--ok)" />}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
@@ -508,18 +583,13 @@ const DashboardMobile = ({
       </div>
 
       {/* STATS ROW */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-        <div style={{ gridColumn: '1 / -1' }}>
-          <MomentumMeter momentum={momentum} compact={false} />
-        </div>
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: 'var(--ok)' }}>{challenge?.consistency || 0}%</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: 'var(--text-2)', letterSpacing: '.1em' }}>CONSISTENCY</div>
-        </div>
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: 'var(--accent)' }}>{challenge ? pct(challenge.dayNum, challenge.totalDays) : 0}%</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: 'var(--text-2)', letterSpacing: '.1em' }}>COMPLETE</div>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+        <MomentumMeter momentum={momentum} />
+        <MobileRegimenBlock
+          regimen={regimen}
+          today={today}
+          onEdit={() => setShowEditor('regimen')}
+        />
       </div>
 
       {/* TALOS */}
