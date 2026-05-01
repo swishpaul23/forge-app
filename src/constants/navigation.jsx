@@ -59,11 +59,26 @@ export const NavIcon = ({ d, d2, size = 20, strokeW = 1.5 }) => (
   </svg>
 );
 
+export const IconSchedule = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+    <line x1="8" y1="14" x2="8" y2="14.01" strokeWidth={2.5} />
+    <line x1="12" y1="14" x2="12" y2="14.01" strokeWidth={2.5} />
+    <line x1="16" y1="14" x2="16" y2="14.01" strokeWidth={2.5} />
+    <line x1="8" y1="18" x2="8" y2="18.01" strokeWidth={2.5} />
+    <line x1="12" y1="18" x2="12" y2="18.01" strokeWidth={2.5} />
+  </svg>
+);
+
 // Navigation items
 export const NAV = [
   { id: "home",     icon: <IconDashboard />, tip: "Dashboard" },
   { id: "wall",     icon: <IconTracking />,  tip: "The Wall" },
   { id: "library",  icon: <IconLibrary />,   tip: "Library" },
+  { id: "schedule", icon: <IconSchedule />,  tip: "Schedule" },
   { id: "partners", icon: <IconPartners />,  tip: "Partners" },
   { id: "talos",    icon: <IconTalos />,     tip: "TALOS" },
   { id: "settings", icon: <IconSettings />,  tip: "Settings" },
