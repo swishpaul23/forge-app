@@ -60,14 +60,14 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
         {/* Header */}
         <div style={{ padding: "0 20px 16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
           <div>
-            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 4 }}>
+            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 4 }}>
               {template.tag} · {isCustom ? "∞" : template.duration} days
             </div>
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 32, letterSpacing: ".04em", lineHeight: 1, color: "var(--text-0)" }}>
               {template.name}
             </div>
             {/* Difficulty badge */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, fontFamily: "'IBM Plex Mono',monospace", fontSize: 8.5, letterSpacing: ".14em", textTransform: "uppercase", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 10px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8.5, letterSpacing: ".14em", textTransform: "uppercase", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 10px" }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: DIFF_COLOUR[template.difficulty] || "var(--accent)", flexShrink: 0 }} />
               <span style={{ color: DIFF_COLOUR[template.difficulty] || "var(--accent)" }}>{template.difficulty}</span>
             </div>
@@ -86,7 +86,7 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
           </p>
 
           {/* Benefits */}
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 10 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 10 }}>
             Benefits
           </div>
           {template.benefits.map((b, i) => (
@@ -97,7 +97,7 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
           ))}
 
           {/* Best For */}
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--text-2)", marginTop: 16, marginBottom: 8 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--text-2)", marginTop: 16, marginBottom: 8 }}>
             Best For
           </div>
           <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "var(--text-1)", lineHeight: 1.6, marginBottom: 20, fontStyle: "italic" }}>
@@ -108,7 +108,7 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
           {template.kpis.length > 0 && (
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--text-2)" }}>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--text-2)" }}>
                   Daily Tasks
                 </div>
                 <button
@@ -120,12 +120,12 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
               </div>
 
               {editingTasks && (
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: "var(--text-2)", marginBottom: 10 }}>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: "var(--text-2)", marginBottom: 10 }}>
                   Tap to mark as non-negotiable. Missing a non-neg = 0% day.
                 </div>
               )}
               {!editingTasks && selectedNonNegs.length > 0 && (
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: "var(--warn)", marginBottom: 10 }}>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: "var(--warn)", marginBottom: 10 }}>
                   ◆ {selectedNonNegs.length} non-negotiable{selectedNonNegs.length > 1 ? "s" : ""} selected
                 </div>
               )}
@@ -152,7 +152,7 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
                       {k.label}
                     </span>
                     {isNonNeg && (
-                      <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: ".1em", color: "var(--warn)" }}>
+                      <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8, letterSpacing: ".1em", color: "var(--warn)" }}>
                         NON-NEG
                       </span>
                     )}
@@ -210,7 +210,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
     <div style={{ padding: "20px 16px", paddingBottom: 80 }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 4 }}>
+        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 4 }}>
           Challenge Library
         </div>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 42, letterSpacing: ".02em", lineHeight: 0.95, color: "var(--text-0)" }}>
@@ -227,7 +227,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
           onClick={() => !hasMain && setMode("main")}
           style={{
             flex: 1, padding: "10px 0", borderRadius: 8, border: "1px solid var(--border-1)",
-            fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase",
+            fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase",
             background: mode === "main" ? "var(--accent)" : "var(--bg-2)",
             color: mode === "main" ? "#080807" : "var(--text-2)",
             cursor: hasMain ? "not-allowed" : "pointer",
@@ -240,7 +240,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
           onClick={() => setMode("secondary")}
           style={{
             flex: 1, padding: "10px 0", borderRadius: 8, border: "1px solid var(--border-1)",
-            fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase",
+            fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase",
             background: mode === "secondary" ? "var(--accent)" : "var(--bg-2)",
             color: mode === "secondary" ? "#080807" : "var(--text-2)",
             cursor: "pointer",
@@ -251,7 +251,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
       </div>
 
       {hasMain && mode === "main" && (
-        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: "var(--warn)", marginBottom: 16, letterSpacing: ".06em" }}>
+        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: "var(--warn)", marginBottom: 16, letterSpacing: ".06em" }}>
           ⚠ Abandon your main challenge first to start a new one.
         </div>
       )}
@@ -278,7 +278,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
               }}
             >
               <div>
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 6 }}>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 6 }}>
                   {t.tag} · {isCustom ? "∞" : t.duration}D
                 </div>
                 <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, letterSpacing: ".04em", lineHeight: 1, color: "var(--text-0)", marginBottom: 4 }}>
@@ -289,7 +289,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
                   {t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}
                 </div>
               </div>
-              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8.5, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--accent)", marginTop: 10 }}>
+              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8.5, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--accent)", marginTop: 10 }}>
                 {isCustom ? "→ Create yours" : "→ Learn more"}
               </div>
             </div>

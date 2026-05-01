@@ -7,7 +7,7 @@
     --accent:#D4922A; --accent-lo:#D4922A18; --accent-mid:#D4922A55;
     --text-0:#EDEAE3; --text-1:#B8B4AE; --text-2:#8A857E; --text-3:#2E2C28;
     --border-0:#1E1E1A; --border-1:#2A2A25; --border-accent:#D4922A30;
-    --ok:#5DBF8A; --warn:#D4B22A; --err:#BF5D5D;
+    --ok:#5DBF8A; --warn:#D4B22A; --err:#BF5D5D; --mono-weight: 300;
   }
 
   html, body { height:100%; background:var(--bg-0); color:var(--text-0); overflow-x:hidden; }
@@ -1921,3 +1921,5 @@
 
   /* SPARK CANVAS */
   #forge-sparks { position:fixed; inset:0; pointer-events:none; z-index:9999; }
+
+  .f-mono { font-weight: 300 !important; }

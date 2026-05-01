@@ -153,7 +153,7 @@ const MobileRegimenBlock = ({ regimen, today, onEdit }) => {
         {/* Inline task list on tap */}
         {tappedDay && tappedTasks.length > 0 && (
           <div style={{ marginTop: 12, borderTop: '1px solid var(--border-0)', paddingTop: 10 }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
               {DAY_LABELS_FULL[tappedDay].toUpperCase()}
             </div>
             {tappedTasks.map((task, i) => (
@@ -270,7 +270,7 @@ const TaskDrawer = ({ isOpen, onClose, title, tasks, color, checked, onToggle, d
         <div style={{ padding: '0 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: color, letterSpacing: '.02em' }}>{title}</div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--text-2)', marginTop: 2 }}>{done}/{total} COMPLETE</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-2)', marginTop: 2 }}>{done}/{total} COMPLETE</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {onEdit && (
@@ -366,7 +366,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
 
         {/* Header */}
         <div style={{ padding: '0 20px 16px', borderBottom: '1px solid var(--border-0)' }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '.12em', color: 'var(--text-3)' }}>EDIT {title.toUpperCase()}</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: 'var(--text-3)' }}>EDIT {title.toUpperCase()}</div>
         </div>
 
         {/* Day selector for regimen */}
@@ -382,7 +382,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
                     border: isActive ? '1px solid var(--accent)' : '1px solid var(--border-1)',
                     borderRadius: 8, cursor: 'pointer',
                   }}>
-                    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: isActive ? 'var(--accent)' : 'var(--text-3)' }}>{DAY_LABELS[day]}</div>
+                    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: isActive ? 'var(--accent)' : 'var(--text-3)' }}>{DAY_LABELS[day]}</div>
                   </div>
                 );
               })}
@@ -399,7 +399,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
                 padding: '12px 14px', background: 'var(--bg-2)',
                 border: '1px solid var(--border-1)', borderRadius: 10,
               }}>
-                <span style={{ flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 }}>{task.label}</span>
+                <span style={{ flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 13 }}>{task.label}</span>
                 <div
                   onClick={() => toggleNonNeg(task.id || task.key)}
                   style={{
@@ -411,7 +411,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
                   }}
                 >
                   <NonNegIcon size={10} color={task.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
-                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 8, color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                 </div>
                 <div onClick={() => removeTask(task.id || task.key)} style={{
                   width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -420,7 +420,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
               </div>
             ))}
             {localTasks.length === 0 && (
-              <div style={{ padding: 24, textAlign: 'center', fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--text-3)' }}>
+              <div style={{ padding: 24, textAlign: 'center', fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-3)' }}>
                 No tasks
               </div>
             )}
@@ -437,13 +437,13 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
                 flex: 1, padding: '12px 14px',
                 background: 'var(--bg-0)', border: '1px solid var(--border-1)',
                 borderRadius: 8, color: 'var(--text-0)',
-                fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, outline: 'none',
+                fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 13, outline: 'none',
               }}
             />
             <button onClick={addTask} style={{
               padding: '12px 16px', background: color,
               border: 'none', borderRadius: 8,
-              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+              fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11,
               color: 'var(--bg-0)', cursor: 'pointer',
             }}>ADD</button>
           </div>
@@ -480,7 +480,7 @@ const TaskSectionCard = ({ title, color, done, total, onClick }) => (
   }}>
     <div>
       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: color }}>{title}</div>
-      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--text-2)', marginTop: 2 }}>{done}/{total} complete</div>
+      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-2)', marginTop: 2 }}>{done}/{total} complete</div>
     </div>
     <CompletionRing done={done} total={total} size={40} />
   </div>
@@ -574,7 +574,7 @@ const DashboardMobile = ({
 
       {/* HEADER */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '.2em', color: 'var(--text-warm)', marginBottom: 6 }}>
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-warm)', marginBottom: 6 }}>
           FORGE · {fmtDate().toUpperCase()}
         </div>
         <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, lineHeight: 1 }}>
@@ -626,7 +626,7 @@ const DashboardMobile = ({
           })}
         </div>
         {isScaled && (
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: 'var(--text-2)', marginTop: 8, textAlign: 'center' }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-2)', marginTop: 8, textAlign: 'center' }}>
             Complete non-negotiables to keep streak. Max 2 scaled days/week.
           </div>
         )}
@@ -673,7 +673,7 @@ const DashboardMobile = ({
         {regimenTotal === 0 && challengeKpis.length === 0 && (
           <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 32, textAlign: 'center' }}>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, marginBottom: 6 }}>No tasks today</div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--text-2)' }}>Set up your regimen or start a challenge</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-2)' }}>Set up your regimen or start a challenge</div>
           </div>
         )}
       </div>

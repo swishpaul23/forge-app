@@ -2309,7 +2309,7 @@ const LandingLoader = ({ onDone, authReady }) => {
           }}>{l}</span>
         ))}
       </div>
-      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
+      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
         your discipline engine
       </div>
       <div style={{width:220,height:1,background:"#161614",marginTop:56,overflow:"hidden",position:"relative",zIndex:2}}>
@@ -2355,7 +2355,7 @@ const LoginLoader = ({ onDone, authReady }) => {
   return (
     <div style={{position:"fixed",inset:0,background:"#080807",zIndex:999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       <div style={{
-        fontFamily:"'IBM Plex Mono',monospace", fontSize:11.5,
+        fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:11.5,
         letterSpacing:".42em", textTransform:"uppercase",
         opacity: visible ? 1 : 0,
         transition:"opacity .45s ease",
@@ -2397,7 +2397,7 @@ const InAppLoader = ({ onDone, authReady }) => {
           }}>{l}</span>
         ))}
       </div>
-      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:14,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
+      <div id="forge-landing-sub" style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:14,letterSpacing:".38em",textTransform:"uppercase",color:"transparent",marginTop:10,position:"relative",zIndex:2}}>
         your discipline engine
       </div>
       <div style={{width:220,height:1,background:"#161614",marginTop:56,overflow:"hidden",position:"relative",zIndex:2}}>
@@ -2600,7 +2600,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
         display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexShrink:0,
       }}>
         <div>
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".35em",textTransform:"uppercase",color:"var(--accent)",marginBottom:8}}>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".35em",textTransform:"uppercase",color:"var(--accent)",marginBottom:8}}>
             Final step — choose your challenge
           </div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",lineHeight:1}}>
@@ -2634,7 +2634,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
                 borderRadius:8, padding:"14px 16px", cursor:"pointer",
                 transition:"border-color .15s, background .15s",
               }}>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--accent)",marginBottom:5}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--accent)",marginBottom:5}}>
                 {tmpl.tag} · {tmpl.duration}d
               </div>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:".04em",color:"var(--text-0)",marginBottom:5}}>
@@ -2642,7 +2642,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
               </div>
               <div style={{
                 display:"inline-block",
-                fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",
+                fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".16em",
                 textTransform:"uppercase",padding:"2px 8px",borderRadius:3,
                 color: DIFF_COLOR[tmpl.difficulty]||"var(--text-2)",
                 background: (DIFF_COLOR[tmpl.difficulty]||"#888")+"18",
@@ -2656,11 +2656,11 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
         <div className="ob-challenge-right" style={{flex:1, overflowY:"auto", padding:"28px 36px"}}>
           {/* Title + badge */}
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)"}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)"}}>
               {t.tag}
             </div>
             <div style={{
-              fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".16em",
+              fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".16em",
               textTransform:"uppercase",padding:"2px 8px",borderRadius:3,
               color: DIFF_COLOR[t.difficulty]||"var(--text-2)",
               background:(DIFF_COLOR[t.difficulty]||"#888")+"18",
@@ -2672,14 +2672,14 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
             {t.name}
           </div>
 
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-1)",lineHeight:1.7,marginBottom:24}}>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--text-1)",lineHeight:1.7,marginBottom:24}}>
             {t.about}
           </div>
 
           {/* Daily tasks */}
           <div style={{marginBottom:24}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)"}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)"}}>
                 Daily tasks
               </div>
               <button 
@@ -2694,12 +2694,12 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {/* Non-neg hint */}
                 {nonNegs.length > 0 && (
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--warn)", marginBottom:4 }}>
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, color:"var(--warn)", marginBottom:4 }}>
                     ◆ {nonNegs.length} non-negotiable{nonNegs.length > 1 ? "s" : ""} — click to toggle
                   </div>
                 )}
                 {nonNegs.length === 0 && (
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-2)", marginBottom:4 }}>
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, color:"var(--text-2)", marginBottom:4 }}>
                     Click tasks to mark as non-negotiable
                   </div>
                 )}
@@ -2720,11 +2720,11 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
                         width:6,height:6,borderRadius:"50%",flexShrink:0,
                         background: isNonNeg ? "var(--warn)" : k.cat==="body"?"#D4922A":k.cat==="diet"?"#5DBF8A":k.cat==="mind"?"#4A8FD4":k.cat==="build"?"#BF5DBF":"var(--text-2)",
                       }} />
-                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color: isNonNeg ? "var(--warn)" : "var(--text-0)",letterSpacing:".06em",flex:1}}>
+                      <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color: isNonNeg ? "var(--warn)" : "var(--text-0)",letterSpacing:".06em",flex:1}}>
                         {k.label}
                       </div>
                       {isNonNeg && (
-                        <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".1em", color:"var(--warn)" }}>
+                        <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".1em", color:"var(--warn)" }}>
                           NON-NEG
                         </span>
                       )}
@@ -2743,7 +2743,7 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
                       style={{
                         flex:1,background:"var(--bg-3)",border:"1px solid var(--border-1)",
                         borderRadius:6,padding:"9px 12px",color:"var(--text-0)",
-                        fontFamily:"'IBM Plex Mono',monospace",fontSize:11,outline:"none",
+                        fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,outline:"none",
                       }}
                     />
                     {tasks.length > 1 && (
@@ -2764,13 +2764,13 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
 
           {/* Benefits */}
           <div style={{marginBottom:24}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
               What you'll build
             </div>
             {t.benefits.map(b=>(
               <div key={b} style={{display:"flex",gap:10,marginBottom:8,alignItems:"flex-start"}}>
-                <span style={{color:"var(--accent)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:1}}>◆</span>
-                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>{b}</span>
+                <span style={{color:"var(--accent)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,marginTop:1}}>◆</span>
+                <span style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>{b}</span>
               </div>
             ))}
           </div>
@@ -2780,10 +2780,10 @@ const OnboardChallenge = ({ onStart, onSkip }) => {
             background:"var(--bg-2)",border:"1px solid var(--border-1)",
             borderRadius:8,padding:"16px 20px",marginBottom:32,
           }}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>
               Best for
             </div>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>
               {t.bestFor}
             </div>
           </div>
@@ -2821,7 +2821,7 @@ class DeepWorkBoundary extends React.Component {
   render() {
     if (this.state.crashed) return (
       <div style={{position:"fixed",inset:0,background:"#080807",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:24}}>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"#56524D"}}>Something went wrong</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"#56524D"}}>Something went wrong</div>
         <button className="btn btn-g" onClick={this.props.onExit}>← Exit Deep Work</button>
       </div>
     );
@@ -2977,7 +2977,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved })
   if (showSummary) return (
     <div className="dw">
       <div style={{maxWidth:480,width:"100%",padding:"40px 24px",textAlign:"center"}}>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",color:"var(--accent)",textTransform:"uppercase",marginBottom:8}}>Session Complete</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".3em",color:"var(--accent)",textTransform:"uppercase",marginBottom:8}}>Session Complete</div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:56,letterSpacing:".04em",lineHeight:1,marginBottom:32}}>Good Work.</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:32}}>
           {[
@@ -2987,7 +2987,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved })
           ].map(s => (
             <div key={s.l} style={{background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:10,padding:"16px 12px"}}>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:"var(--accent)",lineHeight:1}}>{s.n}</div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".12em",textTransform:"uppercase",color:"var(--text-2)",marginTop:4}}>{s.l}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".12em",textTransform:"uppercase",color:"var(--text-2)",marginTop:4}}>{s.l}</div>
             </div>
           ))}
         </div>
@@ -2995,27 +2995,27 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved })
         {/* Save status message */}
         {saveStatus === "min_time" && (
           <div style={{background:"var(--warn)15",border:"1px solid var(--warn)40",borderRadius:8,padding:"12px 16px",marginBottom:20}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--warn)",letterSpacing:".06em"}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--warn)",letterSpacing:".06em"}}>
               ⚠ Session not logged — focus for 30 seconds or more to save.
             </div>
           </div>
         )}
         {saveStatus === "saved" && (
           <div style={{background:"var(--ok)15",border:"1px solid var(--ok)40",borderRadius:8,padding:"12px 16px",marginBottom:20}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--ok)",letterSpacing:".06em"}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--ok)",letterSpacing:".06em"}}>
               ✓ Session logged to your focus history.
             </div>
           </div>
         )}
         {saveStatus === "error" && (
           <div style={{background:"var(--err)15",border:"1px solid var(--err)40",borderRadius:8,padding:"12px 16px",marginBottom:20}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--err)",letterSpacing:".06em"}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--err)",letterSpacing:".06em"}}>
               ✕ Failed to save session. Check your connection.
             </div>
           </div>
         )}
         
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",letterSpacing:".1em",marginBottom:24}}>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-2)",letterSpacing:".1em",marginBottom:24}}>
           {sessionTasks === safeKpis.length && safeKpis.length > 0
             ? "✓ All tasks completed. That's a perfect session."
             : sessionTasks > 0
@@ -3063,7 +3063,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved })
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,letterSpacing:".02em",lineHeight:1,color:phase==="break"?"var(--ok)":"var(--text-0)"}}>
                 {phase==="idle" ? fmt(workSecs()) : fmt(timeLeft)}
               </div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-2)",marginTop:4}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-2)",marginTop:4}}>
                 {phase==="idle"?"ready":phase==="work"?"focus":phase==="break"?"break":""}
               </div>
             </div>
@@ -3071,7 +3071,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved })
 
           {/* Cycle count */}
           {cycle > 0 && (
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".16em",color:"var(--accent)",marginTop:12,textTransform:"uppercase"}}>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".16em",color:"var(--accent)",marginTop:12,textTransform:"uppercase"}}>
               {cycle} cycle{cycle!==1?"s":""} complete · {fmt(totalFocused)} focused
             </div>
           )}
@@ -3246,7 +3246,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
         <div className="ring-info">
           <div className="ring-pct" style={{ color: isScaled ? (allNonNegDone ? "var(--ok)" : "#D4B22A") : done===total && total>0 ? "var(--ok)" : done>0 ? "var(--accent)" : "var(--text-2)" }}>
             {displayPct}%
-            {isScaled && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, marginLeft:8, color:"#D4B22A", letterSpacing:".1em" }}>SCALED</span>}
+            {isScaled && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, marginLeft:8, color:"#D4B22A", letterSpacing:".1em" }}>SCALED</span>}
           </div>
           <div className="ring-sub">
             {getSubMessage()}
@@ -3256,7 +3256,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
               const info = TASK_CATEGORIES[cat] || TASK_CATEGORIES.other;
               return (
                 <div key={cat} style={{
-                  fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".1em",
+                  fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".1em",
                   padding:"2px 7px", borderRadius:3,
                   border:`1px solid ${info.color}44`,
                   color: s.done === s.total ? info.color : "var(--text-2)",
@@ -3307,7 +3307,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }) => {
                   </div>
                   {t.nonNeg && (
                     <div style={{
-                      fontFamily:"'IBM Plex Mono',monospace", fontSize:7, letterSpacing:".14em",
+                      fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:7, letterSpacing:".14em",
                       color:"var(--warn)", marginTop:3, display:"flex", alignItems:"center", gap:4,
                     }}>
                       ◆ NON-NEG
@@ -3443,7 +3443,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
 
         {/* MAIN CHALLENGE — left column */}
         <div className="arena-main" onClick={() => onViewChallenge(main, "main")}>
-          <div style={{ position:"absolute", top:8, right:12, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".14em", color:"var(--accent)", zIndex:2, opacity:.7 }}>TAP TO VIEW ↗</div>
+          <div style={{ position:"absolute", top:8, right:12, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".14em", color:"var(--accent)", zIndex:2, opacity:.7 }}>TAP TO VIEW ↗</div>
           <div className="arena-main-crown">Main Challenge</div>
           <div className="arena-main-name">{main.name}</div>
           <div className="arena-main-meta">
@@ -3482,7 +3482,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }) => {
             const sp = pct(c.dayNum, c.totalDays);
             return (
               <div key={c.id} className="arena-sec" onClick={() => onViewChallenge(c, "secondary")}>
-                <div style={{ position:"absolute", top:6, right:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:7, letterSpacing:".12em", color:c.color, opacity:.7 }}>↗</div>
+                <div style={{ position:"absolute", top:6, right:10, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:7, letterSpacing:".12em", color:c.color, opacity:.7 }}>↗</div>
                 <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:c.color, borderRadius:"10px 10px 0 0" }} />
                 <div className="arena-sec-tag" style={{ color:c.color }}>SECONDARY</div>
                 <div className="arena-sec-name">{c.name}</div>
@@ -3804,10 +3804,10 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
             {/* Section header with inline progress */}
             <div style={{ marginBottom:12, paddingBottom:10, borderBottom:"1px solid var(--border-0)" }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-1)", display:"flex", alignItems:"center", gap:8, fontWeight:500 }}>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:11, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-1)", display:"flex", alignItems:"center", gap:8, fontWeight:500 }}>
                   <span style={{ color:"var(--accent)", opacity:.7 }}>◈</span> {c.name}
                 </div>
-                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--text-2)", letterSpacing:".08em" }}>
+                <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, color: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--text-2)", letterSpacing:".08em" }}>
                   {secDone}/{secTotal}
                 </span>
               </div>
@@ -3875,7 +3875,7 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
       {showCaution && (
         <div className="overlay" onClick={()=>setShowCaution(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:420,padding:32}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--warn)",marginBottom:8}}>⚠ Incomplete Day</div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"var(--warn)",marginBottom:8}}>⚠ Incomplete Day</div>
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:32,letterSpacing:".02em",marginBottom:12}}>Not All Tasks Done</div>
             <div style={{fontSize:14,color:"var(--text-1)",lineHeight:1.6,marginBottom:24}}>
               You've completed <strong style={{color:"var(--text-0)"}}>{done} of {total} tasks</strong>. Logging now will record this as a partial day on your wall.
@@ -3912,7 +3912,7 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
             {done}/{total}
           </div>
           <div>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".14em",textTransform:"uppercase",
+            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".14em",textTransform:"uppercase",
               color: allDone ? "var(--ok)" : partDone ? "var(--accent)" : "var(--text-2)"}}>
               {logged ? "Day Logged ✓" : allDone ? "All tasks done" : noneDone ? "No tasks done yet" : `${total-done} remaining`}
             </div>
@@ -3927,7 +3927,7 @@ const LogDayBar = ({ done, total, logged, onLog }) => {
 
         {/* Button */}
         {logged ? (
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",
+          <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,letterSpacing:".14em",
             textTransform:"uppercase",color:"var(--ok)",display:"flex",alignItems:"center",gap:6}}>
             ✓ Logged Today
           </div>
@@ -4035,7 +4035,7 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
         <div className="focus-card-header">
           <div className="focus-card-title">Focus Sessions</div>
         </div>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--text-1)", padding:"20px 0", textAlign:"center" }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:12, color:"var(--text-1)", padding:"20px 0", textAlign:"center" }}>
           Loading sessions...
         </div>
       </div>
@@ -4050,7 +4050,7 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
         </div>
         <div style={{ textAlign:"center", padding:"32px 16px" }}>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"var(--text-3)", marginBottom:8 }}>No Sessions Yet</div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--text-1)", letterSpacing:".08em" }}>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:12, color:"var(--text-1)", letterSpacing:".08em" }}>
             Use Deep Work mode to start tracking focus time
           </div>
         </div>
@@ -4105,7 +4105,7 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
         }}>
           {[...yTicks].reverse().map((tick, i) => (
             <div key={i} style={{ 
-              fontFamily:"'IBM Plex Mono',monospace", fontSize:10, 
+              fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, 
               color:"var(--text-2)", textAlign:"right", lineHeight:1 
             }}>
               {tick}
@@ -4156,7 +4156,7 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
                       position:"absolute", bottom:"calc(100% + 8px)",
                       background:"var(--bg-4)", border:"1px solid var(--border-1)",
                       borderRadius:6, padding:"6px 10px",
-                      fontFamily:"'IBM Plex Mono',monospace", fontSize:11,
+                      fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:11,
                       color:"var(--text-0)", whiteSpace:"nowrap", zIndex:20,
                       boxShadow:"0 4px 12px rgba(0,0,0,0.3)",
                     }}>
@@ -4180,7 +4180,7 @@ const FocusSessions = ({ sessions = [], loading = false }) => {
               return (
                 <div key={i} style={{ 
                   flex:1, textAlign:"center",
-                  fontFamily:"'IBM Plex Mono',monospace", fontSize:9, 
+                  fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, 
                   color:"var(--text-2)", 
                   opacity: showLabel ? 1 : 0,
                 }}>
@@ -4309,7 +4309,7 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
       </div>
       <div style={{marginTop:64,textAlign:"center",padding:"48px 0"}}>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,color:"var(--text-3)",letterSpacing:".04em",marginBottom:12}}>Nothing Here Yet</div>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:"var(--text-1)",letterSpacing:".12em",textTransform:"uppercase"}}>Come back when you've started a challenge</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:12,color:"var(--text-1)",letterSpacing:".12em",textTransform:"uppercase"}}>Come back when you've started a challenge</div>
       </div>
     </div>
   );
@@ -4824,7 +4824,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
         </div>
       )}
       {!isSecondaryMode && hasMain && mode === "main" && (
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".1em", color:"var(--warn)", marginTop:10 }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".1em", color:"var(--warn)", marginTop:10 }}>
           ⚠ You have an active main challenge. Abandon it first to start a new one.
         </div>
       )}
@@ -4863,11 +4863,11 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                 </div>
                 <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
                 {isSecondaryMode ? (
-                  <div style={{ marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:9.5, color:"var(--text-2)", lineHeight:1.55 }}>
+                  <div style={{ marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9.5, color:"var(--text-2)", lineHeight:1.55 }}>
                     {t.blurb}
                   </div>
                 ) : (
-                  <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ marginTop:10, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8.5, letterSpacing:".14em", textTransform:"uppercase", color: active===t.id ? "var(--text-0)" : "var(--accent)", opacity:.9, display:"flex", alignItems:"center", gap:6 }}>
                     {active === t.id ? "↑ Close" : isCustom ? "→ Create yours" : "→ Learn more"}
                   </div>
                 )}
@@ -4886,7 +4886,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
               alignItems:"center", justifyContent:"center", gap:10,
             }}>
               <div style={{ fontSize:28, color:"var(--text-3)", opacity:.4 }}>◆</div>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".22em",
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".22em",
                 textTransform:"uppercase", color:"var(--text-3)", opacity:.5 }}>
                 Select a challenge to preview
               </div>
@@ -4898,7 +4898,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
 
               {/* Difficulty badge */}
               <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:16,
-                fontFamily:"'IBM Plex Mono',monospace", fontSize:8.5, letterSpacing:".14em",
+                fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8.5, letterSpacing:".14em",
                 textTransform:"uppercase", background:"var(--bg-2)", border:"1px solid var(--border-1)",
                 borderRadius:6, padding:"4px 10px" }}>
                 <div style={{ width:6, height:6, borderRadius:"50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink:0 }} />
@@ -4933,12 +4933,12 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                   
                   {/* Non-neg hint */}
                   {!editingTasks && selectedNonNegs.length > 0 && (
-                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--warn)", marginTop:8, marginBottom:4 }}>
+                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:12, color:"var(--warn)", marginTop:8, marginBottom:4 }}>
                       ◆ {selectedNonNegs.length} non-negotiable{selectedNonNegs.length > 1 ? "s" : ""} selected
                     </div>
                   )}
                   {editingTasks && (
-                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:"var(--text-2)", marginTop:8, marginBottom:8 }}>
+                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:12, color:"var(--text-2)", marginTop:8, marginBottom:8 }}>
                       Click tasks to mark as non-negotiable. Missing a non-neg = 0% day.
                     </div>
                   )}
@@ -4969,7 +4969,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                         </span>
                         <span style={{ flex:1 }}>{k.label}</span>
                         {isNonNeg && (
-                          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".1em", color:"var(--warn)" }}>
+                          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".1em", color:"var(--warn)" }}>
                             NON-NEG
                           </span>
                         )}
@@ -5283,7 +5283,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }) => {
                   </div>
                   <div>
                     <div style={{fontSize:14, fontWeight:500, color:"var(--text-0)"}}>{opt.label}</div>
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-2)", marginTop:2}}>{opt.value}</div>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, color:"var(--text-2)", marginTop:2}}>{opt.value}</div>
                   </div>
                 </div>
               ))}
@@ -5613,31 +5613,31 @@ const Partners = ({ user, profile, challenges, sb }) => {
 
   if (partnersLoading) return (
     <div className="page partners-page" style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)"}}>Loading…</div>
+      <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)"}}>Loading…</div>
     </div>
   );
 
   if (!partners.length && !showAdd) return (
     <div className="page partners-page" style={{display:"flex",flexDirection:"column"}}>
       <div className="ow-no-partners">
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Spotter Protocol</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--accent)",marginBottom:10}}>Spotter Protocol</div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:".04em",marginBottom:8}}>Find Your Spotter.</div>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",lineHeight:1.65,textAlign:"center",maxWidth:340,marginBottom:32}}>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--text-2)",lineHeight:1.65,textAlign:"center",maxWidth:340,marginBottom:32}}>
           Share your invite code. Choose your protocol. Hold each other accountable.
         </div>
         <div className="ow-invite-box">
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Your invite code</div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>Your invite code</div>
           <div className="ow-invite-code">{myCode||"Loading…"}</div>
           <button className="btn btn-g" style={{marginTop:10,width:"100%",justifyContent:"center"}} onClick={copyCode}>{copied?"✓ Copied":"Copy Code"}</button>
         </div>
-        <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",marginBottom:14}}>— or enter their code —</div>
+        <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-3)",marginBottom:14}}>— or enter their code —</div>
         <div style={{display:"flex",gap:8,width:"100%",maxWidth:360}}>
           <input className="field" style={{textTransform:"uppercase",letterSpacing:".12em",textAlign:"center"}}
             value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
             placeholder="Enter invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&setShowProto(true)} />
           <button className="btn btn-a" onClick={()=>setShowProto(true)} disabled={!joinCode.trim()}>Connect →</button>
         </div>
-        {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:10}}>{joinError}</div>}
+        {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,marginTop:10}}>{joinError}</div>}
       </div>
       {showProto && renderProtoOverlay()}
     </div>
@@ -5675,7 +5675,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
           onClick={joinCode.trim() ? joinPartner : () => setJoinError("Enter an invite code first.")} 
           disabled={joinLoading}>
           </button>
-          {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,marginTop:10,textAlign:"center"}}>{joinError}</div>}
+          {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,marginTop:10,textAlign:"center"}}>{joinError}</div>}
         </div>
       </div>
     );
@@ -5713,7 +5713,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
               </div>
             </div>
             {lastRefresh && (
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-1)",marginTop:4,letterSpacing:".06em"}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-1)",marginTop:4,letterSpacing:".06em"}}>
                 Last updated: {lastRefresh.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
               </div>
             )}
@@ -5721,20 +5721,20 @@ const Partners = ({ user, profile, challenges, sb }) => {
               <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
                 {/* Your code — shown first */}
                 <div style={{background:"var(--bg-0)",border:"1px solid var(--border-accent)",borderRadius:7,padding:"10px 12px",textAlign:"center"}}>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".24em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:4}}>Your Code</div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".24em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:4}}>Your Code</div>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:".22em",color:"var(--accent)",lineHeight:1}}>{myCode||"…"}</div>
                   <button className="btn btn-g" style={{width:"100%",justifyContent:"center",marginTop:8,fontSize:10,padding:"5px 0"}} onClick={copyCode}>
                     {copied?"✓ Copied":"Copy Code"}
                   </button>
                 </div>
                 {/* Divider */}
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)",textAlign:"center"}}>— or enter theirs —</div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"var(--text-3)",textAlign:"center"}}>— or enter theirs —</div>
                 <input className="field" style={{textTransform:"uppercase",letterSpacing:".1em",textAlign:"center",fontSize:11}}
                   value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())}
                   placeholder="Their invite code…" maxLength={8} onKeyDown={e=>e.key==="Enter"&&joinCode.trim()&&setShowProto(true)} />
                 <button className="btn btn-a" style={{width:"100%",justifyContent:"center"}}
                   onClick={()=>joinCode.trim()&&setShowProto(true)} disabled={!joinCode.trim()}>Connect →</button>
-                {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:9,marginTop:2}}>{joinError}</div>}
+                {joinError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,marginTop:2}}>{joinError}</div>}
               </div>
             )}
           </div>
@@ -5752,7 +5752,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
               </div>
               <div style={{textAlign:"right",flexShrink:0}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:".06em",color:"#F5C842"}}>★ TARGET</div>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",marginTop:1,letterSpacing:".08em"}}>MET</div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,color:"var(--text-2)",marginTop:1,letterSpacing:".08em"}}>MET</div>
               </div>
             </div>
             {myChallenge && (
@@ -5909,7 +5909,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                           <div style={{background:"var(--accent-lo)",border:"1px solid var(--border-accent)",borderRadius:8,padding:"12px 14px"}}>
                             <div style={{fontSize:14,color:"var(--text-0)",fontStyle:"italic",marginBottom:8}}>"{postedNote.text}"</div>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)"}}>{postedNote.timestamp}</div>
+                              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-2)"}}>{postedNote.timestamp}</div>
                               <button className="btn btn-g" style={{fontSize:10,padding:"4px 10px"}} onClick={()=>{setEditingNote(true);setNoteText(postedNote.text);}}>Edit</button>
                             </div>
                           </div>
@@ -5940,7 +5940,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                   {/* Mode Switch Button */}
                   <div style={{background:"var(--bg-2)",border:"1px solid var(--border-0)",borderRadius:8,padding:"14px 16px"}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:".14em",textTransform:"uppercase",color:"var(--text-1)"}}>Current Mode</div>
+                      <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:12,letterSpacing:".14em",textTransform:"uppercase",color:"var(--text-1)"}}>Current Mode</div>
                       <div className={`proto-badge ${ap.protocol}`} style={{fontSize:10,padding:"3px 10px"}}>{ap.protocol==="spotter"?"◆ Spotter":"◈ Ally"}</div>
                     </div>
                     <div style={{fontSize:13,color:"var(--text-2)",marginBottom:12,lineHeight:1.5}}>
@@ -5972,7 +5972,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                       </div>
                     </>
                   ) : (
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".14em",textTransform:"uppercase",color:"#4A8FD4",textAlign:"center",padding:"4px 0"}}>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".14em",textTransform:"uppercase",color:"#4A8FD4",textAlign:"center",padding:"4px 0"}}>
                       ◈ Ally Mode · Use the note above to check in
                     </div>
                   )}
@@ -5983,7 +5983,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
               {/* HISTORY */}
               {activeTab==="history" && (
                 <div style={{flex:1,overflowY:"auto",padding:"18px 22px"}}>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8,letterSpacing:".22em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
                     Shared Execution — Last 30 Days
                   </div>
                   <div className="ow-h-grid">
@@ -6004,7 +6004,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                     })}
                   </div>
                   {(!ap.syncHistory || ap.syncHistory.length === 0) && (
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--text-2)",textAlign:"center",padding:"20px 0"}}>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--text-2)",textAlign:"center",padding:"20px 0"}}>
                       No shared history yet
                     </div>
                   )}
@@ -6015,7 +6015,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                       {color:"#D4922A22",op:1,label:"Only one executed"},
                       {color:"var(--bg-3)",op:1,label:"Neither executed"},
                     ].map(l=>(
-                      <div key={l.label} style={{display:"flex",alignItems:"center",gap:8,fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-1)"}}>
+                      <div key={l.label} style={{display:"flex",alignItems:"center",gap:8,fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,color:"var(--text-1)"}}>
                         <div style={{width:16,height:16,borderRadius:3,background:l.color,opacity:l.op,flexShrink:0}}></div>
                         {l.label}
                       </div>
@@ -6057,7 +6057,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
             </div>
             
             <div style={{background:"var(--bg-2)",border:"1px solid var(--border-0)",borderRadius:8,padding:"16px",marginBottom:20}}>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,letterSpacing:".14em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,letterSpacing:".14em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:8}}>
                 Enter {pName.split(" ")[0]}'s Invite Code to Confirm
               </div>
               <input 
@@ -6068,7 +6068,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                 placeholder="XXXXXXXX" 
                 maxLength={8} 
               />
-              {switchError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace",fontSize:11,marginTop:8}}>{switchError}</div>}
+              {switchError && <div style={{color:"var(--err)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,marginTop:8}}>{switchError}</div>}
             </div>
             
             <div style={{display:"flex",gap:10}}>
@@ -6170,7 +6170,7 @@ const Partners = ({ user, profile, challenges, sb }) => {
                     </div>
                   </div>
                 </div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-2)", textAlign:"center", marginTop:8 }}>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:11, color:"var(--text-2)", textAlign:"center", marginTop:8 }}>
                   You can switch modes anytime from the partner detail view.
                 </div>
               </>
@@ -6329,24 +6329,24 @@ const Tutorial = ({ onDone }) => {
       {spotStyle && <div style={spotStyle} />}
       {/* Tooltip */}
       <div style={tooltipStyle()}>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9.2, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9.2, letterSpacing:".3em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
           {step + 1} / {TUTORIAL_STEPS.length}
         </div>
         <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:25.3, letterSpacing:".04em", lineHeight:1, marginBottom:8 }}>
           {current.title}
         </div>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12.65, color:"var(--text-1)", lineHeight:1.6, marginBottom:16 }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:12.65, color:"var(--text-1)", lineHeight:1.6, marginBottom:16 }}>
           {current.body}
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           <button
             onClick={next}
-            style={{ background:"var(--accent)", border:"none", borderRadius:7, padding:"8px 18px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, letterSpacing:".14em", textTransform:"uppercase", color:"#080807", cursor:"pointer" }}>
+            style={{ background:"var(--accent)", border:"none", borderRadius:7, padding:"8px 18px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, letterSpacing:".14em", textTransform:"uppercase", color:"#080807", cursor:"pointer" }}>
             {isLast ? "Got it →" : "Next →"}
           </button>
           <button
             onClick={onDone}
-            style={{ background:"none", border:"none", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-2)", cursor:"pointer" }}>
+            style={{ background:"none", border:"none", fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-2)", cursor:"pointer" }}>
             Skip
           </button>
         </div>
@@ -6497,17 +6497,17 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
         display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexShrink:0,
       }}>
         <div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"var(--accent)", marginBottom:6 }}>
             Autonomous Agent
           </div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:38, letterSpacing:".06em", color:"var(--text-0)", lineHeight:1 }}>
             TALOS
           </div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9.5, color:"var(--text-2)", marginTop:5, letterSpacing:".06em" }}>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9.5, color:"var(--text-2)", marginTop:5, letterSpacing:".06em" }}>
             {challenge?.name ? `${challenge.name} · Day ${challenge.dayNum}` : "No active challenge"}
           </div>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:6, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em", color:"var(--ok)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".12em", color:"var(--ok)" }}>
           <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--ok)", animation:"pulse 2.5s ease infinite" }} />
           ONLINE
         </div>
@@ -6560,21 +6560,21 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
           {/* Confirm bar */}
           {pending && (
             <div style={{ margin:"0 20px 16px", padding:"14px 18px", background:"var(--ok)12", border:"1px solid var(--ok)40", borderRadius:12, flexShrink:0 }}>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".18em", textTransform:"uppercase", color:"var(--ok)", marginBottom:12 }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".18em", textTransform:"uppercase", color:"var(--ok)", marginBottom:12 }}>
                 ⚡ TALOS identified — confirm to apply
               </div>
               {pending.tasks.map(t => (
                 <div key={t.key} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 0", fontSize:13, color:"var(--text-0)", borderBottom:"1px solid var(--border-0)" }}>
                   <div style={{ width:20, height:20, borderRadius:"50%", background:"var(--ok)20", border:"1.5px solid var(--ok)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"var(--ok)", flexShrink:0 }}>✓</div>
                   {t.label}
-                  {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:7, color:"var(--warn)", letterSpacing:".1em" }}>◆ NON-NEG</span>}
+                  {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:7, color:"var(--warn)", letterSpacing:".1em" }}>◆ NON-NEG</span>}
                 </div>
               ))}
               <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                <button onClick={handleConfirm} style={{ flex:1, background:"var(--ok)", color:"#080807", border:"none", borderRadius:7, padding:"10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".14em", cursor:"pointer", fontWeight:600 }}>
+                <button onClick={handleConfirm} style={{ flex:1, background:"var(--ok)", color:"#080807", border:"none", borderRadius:7, padding:"10px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".14em", cursor:"pointer", fontWeight:600 }}>
                   ✓ Confirm & Tick
                 </button>
-                <button onClick={handleDeny} style={{ padding:"10px 18px", background:"transparent", color:"var(--text-2)", border:"1px solid var(--border-1)", borderRadius:7, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, cursor:"pointer" }}>
+                <button onClick={handleDeny} style={{ padding:"10px 18px", background:"transparent", color:"var(--text-2)", border:"1px solid var(--border-1)", borderRadius:7, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, cursor:"pointer" }}>
                   Cancel
                 </button>
               </div>
@@ -6617,11 +6617,11 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
 
         {/* Context panel — live task state */}
         <div className="talos-context" style={{ width:260, padding:"20px 18px", overflowY:"auto", flexShrink:0, borderLeft:"1px solid var(--border-0)" }}>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:14 }}>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:14 }}>
             Today's Tasks
           </div>
           {allTasks.length === 0 && (
-            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-3)", letterSpacing:".08em" }}>No active challenge</div>
+            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, color:"var(--text-3)", letterSpacing:".08em" }}>No active challenge</div>
           )}
 
           {/* Main challenge tasks */}
@@ -6634,14 +6634,14 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
             }}>
               <div style={{ width:8, height:8, borderRadius:"50%", flexShrink:0, transition:"all .2s", background: kpis[t.key] ? "var(--ok)" : "var(--border-1)" }} />
               <span style={{ fontSize:12, color: kpis[t.key] ? "var(--ok)" : "var(--text-1)", flex:1 }}>{t.label}</span>
-              {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:6.5, color:"var(--warn)", letterSpacing:".08em" }}>◆</span>}
+              {t.nonNeg && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:6.5, color:"var(--warn)", letterSpacing:".08em" }}>◆</span>}
             </div>
           ))}
 
           {/* Secondary challenge task sections */}
           {secChallenges.map(c => (
             <div key={c.id} style={{ marginTop:16 }}>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:7.5, letterSpacing:".18em", textTransform:"uppercase", color:"var(--text-3)", marginBottom:8, paddingBottom:6, borderBottom:"1px solid var(--border-0)" }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:7.5, letterSpacing:".18em", textTransform:"uppercase", color:"var(--text-3)", marginBottom:8, paddingBottom:6, borderBottom:"1px solid var(--border-0)" }}>
                 ◈ {c.name}
               </div>
               {c.kpis.map(t => (
@@ -6661,13 +6661,13 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
           {/* Progress bar */}
           {tasks.length > 0 && (
             <div style={{ marginTop:20 }}>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:10 }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".2em", textTransform:"uppercase", color:"var(--text-2)", marginBottom:10 }}>
                 Completion
               </div>
               <div style={{ height:4, background:"var(--bg-3)", borderRadius:2 }}>
                 <div style={{ height:"100%", borderRadius:2, background:"var(--ok)", transition:"width .4s ease", width:`${tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0}%` }} />
               </div>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"var(--text-2)", marginTop:6 }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, color:"var(--text-2)", marginTop:6 }}>
                 {doneTasks.length} / {tasks.length} tasks
               </div>
             </div>
@@ -6678,7 +6678,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
             <button onClick={onLogDay} style={{
               width:"100%", marginTop:20, padding:"10px", borderRadius:8,
               background:"var(--accent-lo)", border:"1px solid var(--border-accent)",
-              fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em",
+              fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".12em",
               textTransform:"uppercase", color:"var(--accent)", cursor:"pointer",
               transition:"all .15s",
             }}
@@ -6689,7 +6689,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
             </button>
           )}
           {loggedToday && (
-            <div style={{ marginTop:20, padding:"10px 12px", background:"var(--ok)12", border:"1px solid var(--ok)40", borderRadius:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".12em", color:"var(--ok)" }}>
+            <div style={{ marginTop:20, padding:"10px 12px", background:"var(--ok)12", border:"1px solid var(--ok)40", borderRadius:8, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".12em", color:"var(--ok)" }}>
               ✓ Day logged
             </div>
           )}
@@ -7045,7 +7045,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                     <div style={{width:22,height:22,borderRadius:"50%",background:t.swatch,border:on?"2px solid var(--text-0)":"2px solid transparent",flexShrink:0,transition:"all .18s",transform:on?"scale(1.12)":"scale(1)"}} />
                     <div style={{minWidth:0}}>
                       <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:".04em",color:on?"var(--text-0)":"var(--text-1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.label}</div>
-                      {on && <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:7,letterSpacing:".08em",color:"var(--accent)"}}>✓ ACTIVE</div>}
+                      {on && <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:7,letterSpacing:".08em",color:"var(--accent)"}}>✓ ACTIVE</div>}
                     </div>
                   </div>
                 );
@@ -7080,7 +7080,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           <div className="srow-desc">Daily reminders, partner nudges, and milestone alerts — sent to this browser.</div>
 
           {notifPerm === "denied" && (
-            <div style={{marginTop:12,padding:"10px 14px",background:"var(--err)18",border:"1px solid var(--err)44",borderRadius:8,fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--err)"}}>
+            <div style={{marginTop:12,padding:"10px 14px",background:"var(--err)18",border:"1px solid var(--err)44",borderRadius:8,fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--err)"}}>
               ✕ Notifications blocked in browser settings. Enable them in your browser's site permissions, then return here.
             </div>
           )}
@@ -7089,7 +7089,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14,padding:"12px 16px",background:"var(--bg-2)",borderRadius:10,border:"1px solid var(--border-1)"}}>
             <div>
               <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Push Notifications</div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".1em",color:"var(--text-2)",marginTop:2}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".1em",color:"var(--text-2)",marginTop:2}}>
                 {notifEnabled ? "ACTIVE — browser subscribed" : "INACTIVE"}
               </div>
             </div>
@@ -7106,7 +7106,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           {/* Timing options — only show when enabled */}
           {notifEnabled && (
             <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10}}>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".18em",textTransform:"uppercase",color:"var(--text-2)"}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".18em",textTransform:"uppercase",color:"var(--text-2)"}}>
                 Reminder Timing
               </div>
 
@@ -7130,7 +7130,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                 </div>
                 <div>
                   <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Smart Timing</div>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:3,lineHeight:1.5}}>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-2)",marginTop:3,lineHeight:1.5}}>
                     Learns when you usually check in and sends the reminder then.
                     {smartHourEst !== null
                       ? <span style={{color:"var(--accent)"}}> Estimated: {fmtHour(smartHourEst)}.</span>
@@ -7160,7 +7160,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Set a Time</div>
-                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",marginTop:3}}>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-2)",marginTop:3}}>
                     Pick exactly when you want the reminder each day.
                   </div>
                   {timingMode==="manual" && (
@@ -7186,7 +7186,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                         <option value="AM">AM</option>
                         <option value="PM">PM</option>
                       </select>
-                      <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)"}}>daily</span>
+                      <span style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-2)"}}>daily</span>
                     </div>
                   )}
                 </div>
@@ -7206,7 +7206,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           <div className="srow-desc">Suggest an improvement or report a bug. We read everything.</div>
           {fbDone ? (
             <div style={{marginTop:12,padding:"12px 16px",background:"var(--ok)15",border:"1px solid var(--ok)44",borderRadius:8}}>
-              <div style={{color:"var(--ok)",fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>✓ Sent. Thank you.</div>
+              <div style={{color:"var(--ok)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:12}}>✓ Sent. Thank you.</div>
             </div>
           ) : (
             <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10,maxWidth:440}}>
@@ -7273,7 +7273,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
                 <div key={ch.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--bg-2)",border:"1px solid var(--border-1)",borderRadius:7,padding:"10px 14px"}}>
                   <div>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:".04em",color:"var(--text-0)"}}>{ch.name}</div>
-                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,color:"var(--text-2)",letterSpacing:".1em"}}>Day {ch.dayNum} of {ch.totalDays}</div>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,color:"var(--text-2)",letterSpacing:".1em"}}>Day {ch.dayNum} of {ch.totalDays}</div>
                   </div>
                   <button className="btn btn-g" style={{borderColor:"var(--err)44",color:"var(--err)",fontSize:11}}
                     onClick={()=>setConfirmDelete({type:"challenge",id:ch.id,name:ch.name})}>
@@ -7304,7 +7304,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
         onClick={()=>setConfirmDelete(null)}>
         <div style={{background:"var(--bg-1)",border:"1px solid var(--err)44",borderRadius:12,padding:"32px 28px",maxWidth:400,width:"100%",textAlign:"center"}}
           onClick={e=>e.stopPropagation()}>
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--err)",marginBottom:12}}>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"var(--err)",marginBottom:12}}>
             {confirmDelete.type === "challenge" ? "Quit Challenge" : "Delete Account"}
           </div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:".04em",marginBottom:12,lineHeight:1.2}}>
@@ -7312,7 +7312,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
               ? `Are you sure you want to quit "${confirmDelete.name}"?`
               : "Are you sure you want to delete your account?"}
           </div>
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:"var(--text-2)",lineHeight:1.6,marginBottom:28}}>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,color:"var(--text-2)",lineHeight:1.6,marginBottom:28}}>
             {confirmDelete.type === "challenge"
               ? "All check-in data and progress for this challenge will be permanently deleted. This cannot be undone."
               : "Your account, all challenges, and all data will be permanently deleted. This cannot be undone."}
@@ -8232,19 +8232,18 @@ export default function App() {
             setChallenges(prev => ({ ...prev, main: updated }));
             // Persist to Supabase
             if (sb && user) {
-              sb.from("challenge_tasks").delete().eq("challenge_id", challenges.main.id).then(() => {
-                const rows = newTasks.map((t, i) => ({
-                  challenge_id: challenges.main.id,
-                  key: t.key,
-                  label: t.label,
-                  cat: t.cat || 'other',
-                  non_neg: t.nonNeg || false,
-                  sort_order: i,
-                }));
-                if (rows.length > 0) {
-                  sb.from("challenge_tasks").insert(rows).then(() => {});
-                }
-              });
+              if (newTasks.length === 0) return; // safety guard — never wipe all tasks
+              const rows = newTasks.map((t, i) => ({
+                challenge_id: challenges.main.id,
+                key: t.key,
+                label: t.label,
+                cat: t.cat || 'other',
+                non_neg: t.nonNeg || false,
+                sort_order: i,
+              }));
+              sb.from("challenge_tasks")
+                .upsert(rows, { onConflict: "challenge_id,key" })
+                .then(() => {});
             }
           }}
           regimen={regimen}

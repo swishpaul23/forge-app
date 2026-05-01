@@ -59,7 +59,7 @@ const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
         </div>
       )}
       {!isSecondaryMode && hasMain && mode === "main" && (
-        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".1em", color: "var(--warn)", marginTop: 10 }}>
+        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".1em", color: "var(--warn)", marginTop: 10 }}>
           ⚠ You have an active main challenge. Abandon it first to start a new one.
         </div>
       )}
@@ -96,11 +96,11 @@ const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                 </div>
                 <div className="tpl-desc">{t.kpis.length > 0 ? `${t.kpis.length} daily tasks` : "Define your own tasks"}</div>
                 {isSecondaryMode ? (
-                  <div style={{ marginTop: 8, fontFamily: "'IBM Plex Mono',monospace", fontSize: 9.5, color: "var(--text-2)", lineHeight: 1.55 }}>
+                  <div style={{ marginTop: 8, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9.5, color: "var(--text-2)", lineHeight: 1.55 }}>
                     {t.blurb}
                   </div>
                 ) : (
-                  <div style={{ marginTop: 10, fontFamily: "'IBM Plex Mono',monospace", fontSize: 8.5, letterSpacing: ".14em", textTransform: "uppercase", color: active === t.id ? "var(--text-0)" : "var(--accent)", opacity: .9, display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ marginTop: 10, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8.5, letterSpacing: ".14em", textTransform: "uppercase", color: active === t.id ? "var(--text-0)" : "var(--accent)", opacity: .9, display: "flex", alignItems: "center", gap: 6 }}>
                     {active === t.id ? "↑ Close" : isCustom ? "→ Create yours" : "→ Learn more"}
                   </div>
                 )}
@@ -119,7 +119,7 @@ const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
               alignItems: "center", justifyContent: "center", gap: 10,
             }}>
               <div style={{ fontSize: 28, color: "var(--text-3)", opacity: .4 }}>◆</div>
-              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: ".22em", textTransform: "uppercase", color: "var(--text-3)", opacity: .5 }}>
+              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: ".22em", textTransform: "uppercase", color: "var(--text-3)", opacity: .5 }}>
                 Select a challenge to preview
               </div>
             </div>
@@ -128,7 +128,7 @@ const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
               <div className="lib-detail-tag">{selected.tag} · {selected.duration} days</div>
               <div className="lib-detail-name">{selected.name}</div>
 
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, fontFamily: "'IBM Plex Mono',monospace", fontSize: 8.5, letterSpacing: ".14em", textTransform: "uppercase", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 10px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8.5, letterSpacing: ".14em", textTransform: "uppercase", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 10px" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: DIFF_COLOUR[selected.difficulty] || "var(--accent)", flexShrink: 0 }} />
                 <span style={{ color: DIFF_COLOUR[selected.difficulty] || "var(--accent)" }}>{selected.difficulty}</span>
               </div>
@@ -160,12 +160,12 @@ const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                   </div>
 
                   {!editingTasks && selectedNonNegs.length > 0 && (
-                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: "var(--warn)", marginTop: 8, marginBottom: 4 }}>
+                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 12, color: "var(--warn)", marginTop: 8, marginBottom: 4 }}>
                       ◆ {selectedNonNegs.length} non-negotiable{selectedNonNegs.length > 1 ? "s" : ""} selected
                     </div>
                   )}
                   {editingTasks && (
-                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: "var(--text-2)", marginTop: 8, marginBottom: 8 }}>
+                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 12, color: "var(--text-2)", marginTop: 8, marginBottom: 8 }}>
                       Click tasks to mark as non-negotiable. Missing a non-neg = 0% day.
                     </div>
                   )}
@@ -196,7 +196,7 @@ const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
                         </span>
                         <span style={{ flex: 1 }}>{k.label}</span>
                         {isNonNeg && (
-                          <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: ".1em", color: "var(--warn)" }}>
+                          <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 'var(--mono-weight)', fontSize: 8, letterSpacing: ".1em", color: "var(--warn)" }}>
                             NON-NEG
                           </span>
                         )}

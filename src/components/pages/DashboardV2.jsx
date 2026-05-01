@@ -258,7 +258,7 @@ const MissionModal = ({ mission, onSave, onClose }) => {
           padding: '20px 24px', borderBottom: '1px solid var(--border-0)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '.15em', color: 'var(--text-3)' }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.15em', color: 'var(--text-3)' }}>
             MISSION STATEMENT
           </div>
           <div onClick={onClose} style={{
@@ -355,11 +355,11 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-0)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '.12em', color: accentColor, marginBottom: 6 }}>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: accentColor, marginBottom: 6 }}>
                 ★ {type === 'main' ? 'CUSTOM' : 'SECONDARY'}
               </div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, lineHeight: 1 }}>{challenge.name.toUpperCase()}</div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--text-warm)', marginTop: 6 }}>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-warm)', marginTop: 6 }}>
                 DAY {challenge.dayNum} OF {challenge.totalDays} · {challenge.totalDays - challenge.dayNum} DAYS REMAINING
               </div>
             </div>
@@ -392,7 +392,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
           {/* YOUR OBJECTIVE (renamed from YOUR MISSION) */}
           {challenge.objective && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 8 }}>YOUR OBJECTIVE</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 8 }}>YOUR OBJECTIVE</div>
               <div style={{
                 padding: '12px 16px', background: 'var(--bg-2)', borderRadius: 10,
                 borderLeft: `3px solid ${accentColor}`,
@@ -404,11 +404,11 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
 
           {/* Daily Tasks */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)' }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)' }}>
               DAILY TASKS ({localKpis.length})
             </div>
             <button onClick={() => setIsEditing(!isEditing)} style={{
-              fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: accentColor,
+              fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: accentColor,
               background: 'transparent', border: 'none', cursor: 'pointer',
             }}>✎ EDIT TASKS</button>
           </div>
@@ -434,7 +434,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
                       }}
                     >
                       <NonNegIcon size={12} color={kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                     </div>
                     <div onClick={() => removeTask(kpi.key)} style={{
                       width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -460,13 +460,13 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
                     flex: 1, padding: '12px 14px',
                     background: 'var(--bg-0)', border: '1px solid var(--border-1)',
                     borderRadius: 8, color: 'var(--text-0)',
-                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, outline: 'none',
+                    fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 13, outline: 'none',
                   }}
                 />
                 <button onClick={addTask} style={{
                   padding: '12px 20px', background: accentColor,
                   border: 'none', borderRadius: 8,
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+                  fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11,
                   color: 'var(--bg-0)', cursor: 'pointer',
                 }}>ADD</button>
               </div>
@@ -523,13 +523,13 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'var(--accent)' }} />
         
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '.15em', color: 'var(--accent)', marginBottom: 8 }}>
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.15em', color: 'var(--accent)', marginBottom: 8 }}>
           ★ MAIN CHALLENGE
         </div>
         <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 42, lineHeight: 1, marginBottom: 4 }}>
           {main.name.toUpperCase()}
         </div>
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--text-warm)', letterSpacing: '.08em', marginBottom: 20 }}>
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-warm)', letterSpacing: '.08em', marginBottom: 20 }}>
           DAY {main.dayNum} OF {main.totalDays} · {main.totalDays - main.dayNum} DAYS REMAINING · STARTED {new Date(main.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}
         </div>
 
@@ -548,8 +548,8 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
           <div style={{ width: `${mainPct}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s ease' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: 'var(--text-3)' }}>DAY 1</div>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: 'var(--text-3)' }}>DAY {main.totalDays}</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-3)' }}>DAY 1</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-3)' }}>DAY {main.totalDays}</div>
         </div>
       </div>
 
@@ -573,9 +573,9 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
             >
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#7F77DD' }} />
               
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: '#7F77DD', marginBottom: 6 }}>SECONDARY</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: '#7F77DD', marginBottom: 6 }}>SECONDARY</div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, lineHeight: 1.1, marginBottom: 8 }}>{c.name.toUpperCase()}</div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--text-warm)', marginBottom: 12 }}>DAY {c.dayNum} · {c.totalDays - c.dayNum} LEFT</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-warm)', marginBottom: 12 }}>DAY {c.dayNum} · {c.totalDays - c.dayNum} LEFT</div>
               <div style={{ height: 3, background: 'var(--bg-3)', borderRadius: 2 }}>
                 <div style={{ width: `${pct(c.dayNum, c.totalDays)}%`, height: '100%', background: '#7F77DD', borderRadius: 2 }} />
               </div>
@@ -590,7 +590,7 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               minHeight: 90,
             }}>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--text-3)', letterSpacing: '.1em' }}>+ ADD SECONDARY</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-3)', letterSpacing: '.1em' }}>+ ADD SECONDARY</div>
             </div>
           ))}
         </div>
@@ -645,7 +645,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
           padding: '20px 24px', borderBottom: '1px solid var(--border-0)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '.15em', color: 'var(--text-3)' }}>EDIT WEEKLY REGIMEN</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.15em', color: 'var(--text-3)' }}>EDIT WEEKLY REGIMEN</div>
           <div onClick={onClose} style={{
             width: 28, height: 28, border: '1px solid var(--border-1)', borderRadius: 6,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -665,7 +665,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
                   border: isActive ? '1px solid var(--accent)' : '1px solid var(--border-1)',
                   borderRadius: 8, cursor: 'pointer',
                 }}>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: isActive ? 'var(--accent)' : 'var(--text-3)' }}>{DAY_LABELS[day]}</div>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: isActive ? 'var(--accent)' : 'var(--text-3)' }}>{DAY_LABELS[day]}</div>
                   <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, color: isActive ? 'var(--accent)' : count > 0 ? 'var(--text-2)' : 'var(--text-3)', marginTop: 2 }}>{count || '·'}</div>
                 </div>
               );
@@ -674,7 +674,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
         </div>
 
         <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px' }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 12 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 12 }}>
             {DAY_LABELS_FULL[editDay].toUpperCase()} TASKS
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -684,7 +684,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
                 padding: '12px 14px', background: 'var(--bg-2)',
                 border: '1px solid var(--border-1)', borderRadius: 8,
               }}>
-                <span style={{ flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 }}>{task.label}</span>
+                <span style={{ flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 13 }}>{task.label}</span>
                 <div
                   onClick={() => toggleNonNeg(task.id)}
                   style={{
@@ -696,7 +696,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
                   }}
                 >
                   <NonNegIcon size={12} color={task.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
-                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.05em', color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.05em', color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                 </div>
                 <div onClick={() => removeTask(task.id)} style={{
                   width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -705,7 +705,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
               </div>
             ))}
             {dayTasks.length === 0 && (
-              <div style={{ padding: 24, textAlign: 'center', fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: 'var(--text-3)' }}>
+              <div style={{ padding: 24, textAlign: 'center', fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-3)' }}>
                 No tasks for {DAY_LABELS_FULL[editDay]}
               </div>
             )}
@@ -720,13 +720,13 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
                 flex: 1, padding: '12px 14px',
                 background: 'var(--bg-0)', border: '1px solid var(--border-1)',
                 borderRadius: 8, color: 'var(--text-0)',
-                fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, outline: 'none',
+                fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 13, outline: 'none',
               }}
             />
             <button onClick={addTask} style={{
               padding: '12px 20px', background: 'var(--accent)',
               border: 'none', borderRadius: 8,
-              fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
+              fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11,
               color: 'var(--bg-0)', cursor: 'pointer',
             }}>ADD</button>
           </div>
@@ -818,7 +818,7 @@ const RegimenWeekBox = ({ regimen, today, onEdit }) => {
           zIndex: 50,
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
             {DAY_LABELS_FULL[hoveredDay].toUpperCase()}
           </div>
           {hoveredTasks.map((task, i) => (
@@ -918,7 +918,7 @@ const DashboardV2 = ({
       <div style={{ borderBottom: '1px solid var(--border-0)', paddingBottom: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, letterSpacing: '.25em', color: 'var(--text-warm)', marginBottom: 10 }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 12, letterSpacing: '.25em', color: 'var(--text-warm)', marginBottom: 10 }}>
               FORGE · {fmtDate().toUpperCase()}
             </div>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: '.01em', lineHeight: 0.9 }}>
@@ -995,7 +995,7 @@ const DashboardV2 = ({
             })}
           </div>
           {isScaled && (
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: 'var(--text-2)', marginLeft: 8, maxWidth: 280 }}>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-2)', marginLeft: 8, maxWidth: 280 }}>
               Complete non-negotiables to keep streak. Max 2 scaled days/week.
             </span>
           )}
@@ -1027,7 +1027,7 @@ const DashboardV2 = ({
         {regimenTotal === 0 && challengeKpis.length === 0 && (
           <div style={{ gridColumn: '1 / -1', background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 48, textAlign: 'center' }}>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, marginBottom: 8 }}>No tasks today</div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: 'var(--text-2)' }}>Start a challenge or set up your weekly regimen</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 12, color: 'var(--text-2)' }}>Start a challenge or set up your weekly regimen</div>
           </div>
         )}
       </div>
