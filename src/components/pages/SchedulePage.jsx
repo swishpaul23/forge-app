@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTimeBlocks, toLocalDateStr, getWeekDates } from "../../hooks/useTimeBlocks";
-import { useUserTags, SYSTEM_TAGS } from "../../hooks/useUserTags";
+import { useUserTags } from "../../hooks/useUserTags";
 
-// ── Constants ─────────────────────────────────────────────────
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const SLOT_H = 32; // px per 30min slot
+const SLOT_H = 32;
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const ALL_SLOTS = Array.from({ length: 48 }, (_, i) => i * 0.5);
+const DUR_OPTIONS = [0.5, 1, 1.5, 2, 2.5, 3];
 
 const fmtTime = (h) => {
   const hh = Math.floor(h), mm = h % 1 === 0.5 ? "30" : "00";
@@ -15,33 +15,47 @@ const fmtTime = (h) => {
 };
 
 const todayLocalStr = () => toLocalDateStr(new Date());
+const getTodayDowIdx = () => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; };
 
-const getTodayDowIdx = () => {
-  const d = new Date().getDay(); // 0=Sun
-  return d === 0 ? 6 : d - 1;   // Mon=0 … Sun=6
-};
+// ── Time/duration selects ─────────────────────────────────────
+const TimeSelect = ({ value, onChange, label }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751" }}>{label}</div>
+    <select value={value} onChange={e => onChange(parseFloat(e.target.value))}
+      style={{ background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#EDEAE3", fontFamily: "'IBM Plex Mono',monospace", outline: "none", cursor: "pointer" }}>
+      {ALL_SLOTS.map(s => <option key={s} value={s}>{fmtTime(s)}</option>)}
+    </select>
+  </div>
+);
 
-// ── Tag floating menu ─────────────────────────────────────────
-const TagMenu = ({ tags, block, slotInfo, onSave, onDelete, onClose, onAddTag }) => {
-  const [selTag, setSelTag] = useState(block?.tag_id || null);
-  const [label, setLabel] = useState(block?.label || "");
+// ── Floating block menu ───────────────────────────────────────
+const BlockMenu = ({ tags, block, slotInfo, slotHour, unscheduledTasks, onSave, onDelete, onClose, onAddTag }) => {
+  const [selTag,      setSelTag]      = useState(block?.tag_id || null);
+  const [label,       setLabel]       = useState("");
+  const [startTime,   setStartTime]   = useState(block?.start_time ?? slotHour ?? 8);
+  const [duration,    setDuration]    = useState(block?.duration || 1);
   const [customColor, setCustomColor] = useState("#8B5CF6");
   const [customLabel, setCustomLabel] = useState("");
   const ref = useRef(null);
 
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
-    setTimeout(() => document.addEventListener("mousedown", handler), 0);
-    return () => document.removeEventListener("mousedown", handler);
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    setTimeout(() => document.addEventListener("mousedown", h), 0);
+    return () => document.removeEventListener("mousedown", h);
   }, [onClose]);
 
   const handleSave = () => {
     if (!block && !label.trim()) return;
-    onSave({ tag_id: selTag, label: block ? undefined : label });
+    onSave({ tag_id: selTag, label: block ? block.label : label, start_time: startTime, duration });
     onClose();
   };
 
-  const handleAddCustom = () => {
+  const handleQuickAdd = (task) => {
+    onSave({ tag_id: selTag, label: task.label, start_time: startTime, duration: 1, task_key: task.key, is_regimen: task.is_regimen });
+    onClose();
+  };
+
+  const handleAddCustomTag = () => {
     if (!customLabel.trim()) return;
     onAddTag({ id: `custom_${Date.now()}`, label: customLabel.trim(), color: customColor, is_system: false });
     setCustomLabel("");
@@ -50,54 +64,74 @@ const TagMenu = ({ tags, block, slotInfo, onSave, onDelete, onClose, onAddTag })
   return (
     <div ref={ref} style={{
       position: "fixed", background: "#1C1C18", border: "1px solid #2A2A25",
-      borderRadius: 10, padding: 12, zIndex: 9999, minWidth: 200,
+      borderRadius: 10, padding: 12, zIndex: 9999, minWidth: 220,
       boxShadow: "0 8px 32px rgba(0,0,0,.6)",
       left: slotInfo.x, top: slotInfo.y,
+      maxHeight: "80vh", overflowY: "auto",
     }}>
       <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".14em", textTransform: "uppercase", color: "#5A5751", marginBottom: 8 }}>
         {block ? "Edit block" : "New block"}
       </div>
 
-      {/* Label input for new blocks */}
-      {!block && (
-        <input
-          autoFocus
-          value={label}
-          onChange={e => setLabel(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleSave()}
-          placeholder="Task name..."
-          style={{ width: "100%", background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "6px 8px", fontSize: 12, color: "#EDEAE3", fontFamily: "'DM Sans',sans-serif", marginBottom: 10, outline: "none" }}
-        />
+      {/* Unscheduled tasks quick-add */}
+      {!block && unscheduledTasks.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751", marginBottom: 6 }}>From your tasks</div>
+          {unscheduledTasks.map(t => (
+            <div key={t.key} onClick={() => handleQuickAdd(t)}
+              style={{ padding: "5px 8px", borderRadius: 6, background: "#2A2A25", fontSize: 11, color: "#B8B4AE", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}
+              onMouseEnter={e => e.currentTarget.style.background = "#D4922A18"}
+              onMouseLeave={e => e.currentTarget.style.background = "#2A2A25"}>
+              <span>{t.label}</span>
+              <span style={{ fontSize: 9, color: "#5A5751" }}>{t.source}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: "1px solid #2A2A25", margin: "8px 0" }} />
+        </div>
       )}
 
-      {/* Tag grid */}
+      {/* Custom label */}
+      {!block && (
+        <input autoFocus value={label} onChange={e => setLabel(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSave()}
+          placeholder="Or type a custom task..."
+          style={{ width: "100%", background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "6px 8px", fontSize: 12, color: "#EDEAE3", fontFamily: "'DM Sans',sans-serif", marginBottom: 10, outline: "none" }} />
+      )}
+
+      {/* Time + duration */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+        <TimeSelect value={startTime} onChange={setStartTime} label="Start" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751" }}>Duration</div>
+          <select value={duration} onChange={e => setDuration(parseFloat(e.target.value))}
+            style={{ background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#EDEAE3", fontFamily: "'IBM Plex Mono',monospace", outline: "none", cursor: "pointer" }}>
+            {DUR_OPTIONS.map(d => <option key={d} value={d}>{d === 0.5 ? "30 min" : `${d} hr${d > 1 ? "s" : ""}`}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Tags */}
       <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751", marginBottom: 6 }}>Tag</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 10 }}>
         {tags.map(t => (
-          <div key={t.id}
-            onClick={() => setSelTag(selTag === t.id ? null : t.id)}
-            style={{
-              padding: "5px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-              cursor: "pointer", textAlign: "center", color: "#fff",
-              background: t.color + "CC",
-              border: selTag === t.id ? "2px solid #fff4" : "2px solid transparent",
-              transition: "all .12s",
-            }}
-          >{t.label}</div>
+          <div key={t.id} onClick={() => setSelTag(selTag === t.id ? null : t.id)}
+            style={{ padding: "5px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", textAlign: "center", color: "#fff", background: t.color + "CC", border: selTag === t.id ? "2px solid #fff4" : "2px solid transparent", transition: "all .12s" }}>
+            {t.label}
+          </div>
         ))}
       </div>
 
       {/* Custom tag creator */}
-      <div style={{ borderTop: "1px solid #2A2A25", paddingTop: 8, marginBottom: 8 }}>
+      <div style={{ borderTop: "1px solid #2A2A25", paddingTop: 8, marginBottom: 10 }}>
         <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751", marginBottom: 6 }}>Custom tag</div>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           <input type="color" value={customColor} onChange={e => setCustomColor(e.target.value)}
             style={{ width: 28, height: 28, border: "1px solid #2A2A25", borderRadius: 4, background: "#161613", cursor: "pointer", padding: 2 }} />
           <input value={customLabel} onChange={e => setCustomLabel(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleAddCustom()}
+            onKeyDown={e => e.key === "Enter" && handleAddCustomTag()}
             placeholder="Tag name..."
             style={{ flex: 1, background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#EDEAE3", fontFamily: "'DM Sans',sans-serif", outline: "none" }} />
-          <button onClick={handleAddCustom}
+          <button onClick={handleAddCustomTag}
             style={{ padding: "5px 8px", background: "#D4922A18", border: "1px solid #D4922A40", borderRadius: 6, color: "#D4922A", fontSize: 12, cursor: "pointer" }}>+</button>
         </div>
       </div>
@@ -119,15 +153,15 @@ const TagMenu = ({ tags, block, slotInfo, onSave, onDelete, onClose, onAddTag })
   );
 };
 
-// ── Main component ────────────────────────────────────────────
+// ── Main ─────────────────────────────────────────────────────
 const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChecked, toggleRegimen }) => {
-  const { blocks, loading, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user);
-  const { tags, saveTag, deleteTag } = useUserTags(sb, user);
+  const { blocks, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user);
+  const { tags, saveTag } = useUserTags(sb, user);
 
-  const [view, setView] = useState("week");
-  const [weekRef, setWeekRef] = useState(new Date());
-  const [menuState, setMenuState] = useState(null); // { block, slotInfo, slotDay, slotHour }
-  const [tooltip, setTooltip] = useState(null);     // { text, x, y }
+  const [view,      setView]      = useState("week");
+  const [weekRef,   setWeekRef]   = useState(new Date());
+  const [menuState, setMenuState] = useState(null);
+  const [tooltip,   setTooltip]   = useState(null);
 
   const weekDates = getWeekDates(weekRef);
   const todayStr  = todayLocalStr();
@@ -135,27 +169,49 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
 
   useEffect(() => { loadBlocks(weekRef); }, [weekRef]);
 
+  // ── Issue 4: dynamic display range ───────────────────────
+  const getDisplayRange = () => {
+    const relevant = view === "week" ? blocks : blocks.filter(b => b.date === todayStr);
+    if (relevant.length === 0) return { start: 7, end: 22 };
+    const earliest = Math.min(...relevant.map(b => b.start_time));
+    const latest   = Math.max(...relevant.map(b => b.start_time + b.duration));
+    return { start: Math.max(0, Math.floor(earliest) - 1), end: Math.min(23, Math.ceil(latest) + 1) };
+  };
+
+  // ── Issue 3: unscheduled tasks for a date ────────────────
+  const getUnscheduledTasks = (dateStr) => {
+    const scheduled = new Set(blocks.filter(b => b.date === dateStr && b.task_key).map(b => b.task_key));
+    const tasks = [];
+    (challenges?.main?.kpis || []).forEach(t => {
+      if (!scheduled.has(t.key)) tasks.push({ key: t.key, label: t.label, source: "Challenge", is_regimen: false });
+    });
+    (challenges?.secondary || []).forEach(ch =>
+      (ch.kpis || []).forEach(t => {
+        if (!scheduled.has(t.key)) tasks.push({ key: t.key, label: t.label, source: ch.name, is_regimen: false });
+      })
+    );
+    const dow = new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+    (regimen?.days?.[dow] || []).forEach(t => {
+      if (!scheduled.has(t.id)) tasks.push({ key: t.id, label: t.label, source: "Regimen", is_regimen: true });
+    });
+    return tasks;
+  };
+
   const openMenu = (e, block, slotDay, slotHour) => {
     e.stopPropagation();
     const vw = window.innerWidth, vh = window.innerHeight;
     let x = e.clientX + 10, y = e.clientY + 10;
-    if (x + 220 > vw) x = e.clientX - 230;
-    if (y + 340 > vh) y = e.clientY - 350;
+    if (x + 240 > vw) x = e.clientX - 250;
+    if (y + 460 > vh) y = e.clientY - 470;
     setMenuState({ block, slotInfo: { x, y }, slotDay, slotHour });
   };
 
-  const handleSave = async ({ tag_id, label }) => {
-    const { block, slotDay, slotHour } = menuState;
+  const handleSave = async ({ tag_id, label, start_time, duration, task_key, is_regimen }) => {
+    const { block, slotDay } = menuState;
     if (block) {
-      await saveBlock({ ...block, tag_id: tag_id ?? block.tag_id });
+      await saveBlock({ ...block, tag_id: tag_id ?? block.tag_id, start_time, duration });
     } else {
-      await saveBlock({
-        date: slotDay,
-        start_time: slotHour,
-        duration: 1,
-        label,
-        tag_id,
-      });
+      await saveBlock({ date: slotDay, start_time, duration, label, tag_id, task_key: task_key || null, is_regimen: is_regimen || false });
     }
   };
 
@@ -163,20 +219,22 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
     if (menuState?.block) await deleteBlock(menuState.block.id);
   };
 
+  // ── Issue 1: complete syncs to dashboard ─────────────────
   const handleBlockClick = async (e, block) => {
     e.stopPropagation();
     if (e.shiftKey) {
-      // Shift+click = toggle complete, sync with challenge/regimen
-      const newVal = await toggleComplete(block.id);
-      if (block.task_key && toggle) toggle(block.task_key);
-      if (block.is_regimen && block.task_key && toggleRegimen) toggleRegimen(block.task_key);
+      await toggleComplete(block.id);
+      if (block.task_key && !block.is_regimen && toggle) toggle(block.task_key);
+      if (block.task_key && block.is_regimen && toggleRegimen) toggleRegimen(block.task_key);
     } else {
       openMenu(e, block, block.date, block.start_time);
     }
   };
 
-  const getTag = (tagId) => tags.find(t => t.id === tagId) || { color: "#555", label: "None" };
+  const getTag = (tagId) => tags.find(t => t.id === tagId) || { color: "#888", label: "None" };
 
+  const { start: rangeStart, end: rangeEnd } = getDisplayRange();
+  const displayHours = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i);
   const visibleDates = view === "week" ? weekDates : [todayStr];
   const visibleDows  = view === "week" ? [0,1,2,3,4,5,6] : [todayIdx];
 
@@ -187,7 +245,7 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
         <div>
           <div className="pg-tag">Schedule</div>
           <div className="pg-title">Time Blocks</div>
-          <div className="pg-sub">Plan your day. Tap shift+click a block to complete it.</div>
+          <div className="pg-sub">Click a slot to add. Shift+click a block to complete it.</div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {view === "week" && (
@@ -210,25 +268,30 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
       {/* Grid */}
       <div style={{ display: "flex", border: "1px solid var(--border-0)", borderRadius: 10, overflow: "hidden", background: "var(--bg-1)" }}>
 
-        {/* Time column */}
+        {/* Time column — dynamic range */}
         <div style={{ width: 52, flexShrink: 0, borderRight: "1px solid var(--border-0)" }}>
           <div style={{ height: SLOT_H, borderBottom: "1px solid var(--border-0)" }} />
-          {HOURS.map(h => (
+          {displayHours.map(h => (
             <div key={h} style={{ height: SLOT_H * 2, display: "flex", alignItems: "flex-start", justifyContent: "flex-end", paddingRight: 8, paddingTop: 3 }}>
               <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, color: "var(--text-3)", letterSpacing: ".04em" }}>
-                {h === 0 ? "" : h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h-12}pm`}
+                {h < 12 ? `${h === 0 ? "12" : h}am` : h === 12 ? "12pm" : `${h-12}pm`}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Days */}
+        {/* Day columns */}
         <div style={{ display: "flex", flex: 1, overflowY: "auto", maxHeight: "calc(100vh - 260px)" }}>
           {visibleDates.map((dateStr, colIdx) => {
-            const dowIdx  = visibleDows[colIdx];
-            const isToday = dateStr === todayStr;
-            const isDimmed = view === "week" && !isToday;
+            const dowIdx    = visibleDows[colIdx];
+            const isToday   = dateStr === todayStr;
+            const isDimmed  = view === "week" && !isToday;
             const dayBlocks = blocks.filter(b => b.date === dateStr);
+
+            const nowTop = (() => {
+              const now = new Date();
+              return ((now.getHours() + now.getMinutes() / 60) - rangeStart) * 2 * SLOT_H;
+            })();
 
             return (
               <div key={dateStr} style={{
@@ -246,39 +309,30 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
 
                 {/* Slots */}
                 <div style={{ position: "relative" }}>
-                  {HOURS.map(h => (
+                  {displayHours.map(h => (
                     <React.Fragment key={h}>
-                      {/* Full hour slot */}
                       <div onClick={e => openMenu(e, null, dateStr, h)}
                         style={{ height: SLOT_H, borderBottom: "1px solid var(--border-0)18", cursor: "pointer", transition: "background .1s" }}
                         onMouseEnter={e => e.currentTarget.style.background = "var(--accent)08"}
-                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                      />
-                      {/* Half hour slot */}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"} />
                       <div onClick={e => openMenu(e, null, dateStr, h + 0.5)}
                         style={{ height: SLOT_H, borderBottom: "1px dashed var(--border-0)10", cursor: "pointer", transition: "background .1s" }}
                         onMouseEnter={e => e.currentTarget.style.background = "var(--accent)08"}
-                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                      />
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"} />
                     </React.Fragment>
                   ))}
 
-                  {/* Now line */}
-                  {isToday && (() => {
-                    const now = new Date();
-                    const mins = now.getHours() * 60 + now.getMinutes();
-                    const top = (mins / 30) * SLOT_H;
-                    return (
-                      <div style={{ position: "absolute", left: 0, right: 0, top, height: 1, background: "var(--err)", zIndex: 3, pointerEvents: "none" }}>
-                        <div style={{ position: "absolute", left: -3, top: -3, width: 6, height: 6, borderRadius: "50%", background: "var(--err)" }} />
-                      </div>
-                    );
-                  })()}
+                  {/* Now line — offset by rangeStart */}
+                  {isToday && nowTop >= 0 && (
+                    <div style={{ position: "absolute", left: 0, right: 0, top: nowTop, height: 1, background: "var(--err)", zIndex: 3, pointerEvents: "none" }}>
+                      <div style={{ position: "absolute", left: -3, top: -3, width: 6, height: 6, borderRadius: "50%", background: "var(--err)" }} />
+                    </div>
+                  )}
 
-                  {/* Task blocks */}
+                  {/* Blocks — top offset by rangeStart */}
                   {dayBlocks.map(block => {
-                    const tag = getTag(block.tag_id);
-                    const topPx = block.start_time * 2 * SLOT_H;
+                    const tag      = getTag(block.tag_id);
+                    const topPx    = (block.start_time - rangeStart) * 2 * SLOT_H;
                     const heightPx = Math.max(block.duration * 2 * SLOT_H - 2, 22);
                     return (
                       <div key={block.id}
@@ -294,8 +348,7 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
                           overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
                           cursor: "pointer", zIndex: 1,
                           textDecoration: block.completed ? "line-through" : "none",
-                          opacity: block.completed ? 0.5 : 1,
-                          transition: "filter .15s",
+                          opacity: block.completed ? 0.5 : 1, transition: "filter .15s",
                         }}
                         onMouseOver={e => e.currentTarget.style.filter = "brightness(1.15)"}
                         onMouseOut={e => e.currentTarget.style.filter = "brightness(1)"}
@@ -327,10 +380,12 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
 
       {/* Floating menu */}
       {menuState && (
-        <TagMenu
+        <BlockMenu
           tags={tags}
           block={menuState.block}
           slotInfo={menuState.slotInfo}
+          slotHour={menuState.slotHour}
+          unscheduledTasks={getUnscheduledTasks(menuState.slotDay)}
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => setMenuState(null)}
@@ -338,7 +393,7 @@ const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChec
         />
       )}
 
-      {/* Hover tooltip */}
+      {/* Tooltip */}
       {tooltip && (
         <div style={{
           position: "fixed", left: tooltip.x, top: tooltip.y,

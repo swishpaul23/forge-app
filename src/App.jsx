@@ -7531,6 +7531,7 @@ export default function App() {
     return flag === "auth" ? "login" : "inapp";
   });
   const [page,        setPage]        = useState("home");
+  const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [dw,          setDW]          = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -7775,6 +7776,9 @@ export default function App() {
       // Reload everything fresh from DB
       await loadChallenges(user.id);
       if (m && !isSecondary) setMission(m);
+
+      // Prompt user to add tasks to timetable
+      if (!isSecondary) setShowSchedulePrompt(true);
 
     } catch(e) { console.warn("handleStartChallenge:", e); }
     setModal(null); setLibModal(false);
@@ -8271,7 +8275,7 @@ export default function App() {
       ? <LibraryMobile onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />
       : <LibraryDesktop onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
     if (page==="schedule") return isMobile
-      ? <ScheduleMobile sb={sb} user={user} toggle={toggle} toggleRegimen={toggleRegimen} />
+      ? <ScheduleMobile sb={sb} user={user} challenges={challenges} kpis={kpis} toggle={toggle} regimen={regimen} regimenChecked={regimenChecked} toggleRegimen={toggleRegimen} />
       : <SchedulePage sb={sb} user={user} challenges={challenges} kpis={kpis} toggle={toggle} regimen={regimen} regimenChecked={regimenChecked} toggleRegimen={toggleRegimen} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
     if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
@@ -8379,6 +8383,28 @@ export default function App() {
         {renderPage()}
       </div>
       {modal && <ChallengeWizard tpl={modal} isSecondary={modal._mode==="secondary"} maxDays={modal.maxDays} onClose={()=>setModal(null)} onStart={handleStartChallenge} />}
+
+      {/* Post-setup: add to timetable prompt */}
+      {showSchedulePrompt && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "var(--bg-1)", border: "1px solid var(--border-1)", borderRadius: 16, padding: 28, maxWidth: 360, width: "90%", textAlign: "center" }}>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: ".04em", color: "var(--text-0)", marginBottom: 8 }}>Challenge Started</div>
+            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "var(--text-1)", lineHeight: 1.5, marginBottom: 24 }}>
+              Would you like to add your tasks to the weekly timetable now?
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => { setShowSchedulePrompt(false); setPage("schedule"); }}
+                style={{ flex: 1, padding: "12px 0", background: "var(--accent)", border: "none", borderRadius: 10, fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, letterSpacing: ".06em", color: "#080807", cursor: "pointer" }}>
+                Add to Schedule
+              </button>
+              <button onClick={() => setShowSchedulePrompt(false)}
+                style={{ flex: 1, padding: "12px 0", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "var(--text-2)", cursor: "pointer" }}>
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showTutorial && <Tutorial onDone={handleTutorialDone} />}
       {libModal && (
         <div className="overlay" onClick={()=>setLibModal(false)}>
