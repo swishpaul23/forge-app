@@ -1,20 +1,64 @@
 import { useState, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
 import { getTodayStr } from '../utils/dates';
 import { buildWall } from '../utils/helpers';
+import type { Database } from '../types/supabase';
 
-const EMPTY_CHALLENGES = { main: null, secondary: [] };
+type ChallengeTaskRow = Database['public']['Tables']['challenge_tasks']['Row'];
+
+export interface ChallengeKpi {
+  key: string;
+  label: string;
+  cat: string;
+  nonNeg: boolean;
+}
+
+export interface ShapedChallenge {
+  id: string;
+  name: string;
+  tag: string;
+  dayNum: number;
+  totalDays: number;
+  streak: number;
+  consistency: number;
+  color: string;
+  mission: string;
+  is_main: boolean;
+  created_at: string | null;
+  start_date: string;
+  kpis: ChallengeKpi[];
+  wall?: unknown;
+}
+
+export interface ChallengesState {
+  main: ShapedChallenge | null;
+  secondary: ShapedChallenge[];
+}
+
+interface CreateChallengeInput {
+  tasks?: { key?: string; label: string; cat?: string; nonNeg?: boolean }[];
+  name: string;
+  tag?: string;
+  days?: number;
+  totalDays?: number;
+  color?: string;
+  mission?: string | null;
+  isMain?: boolean;
+}
+
+const EMPTY_CHALLENGES: ChallengesState = { main: null, secondary: [] };
 
 /**
  * Hook for managing challenge state
  * Handles loading, creating, updating challenges
  */
-export function useChallenge(user) {
-  const [challenges, setChallenges] = useState(EMPTY_CHALLENGES);
+export function useChallenge(user: User | null | undefined) {
+  const [challenges, setChallenges] = useState<ChallengesState>(EMPTY_CHALLENGES);
   const [loading, setLoading] = useState(false);
 
   // Load challenges from DB
-  const loadChallenges = useCallback(async (uid) => {
+  const loadChallenges = useCallback(async (uid: string) => {
     if (!uid || !supabase) return;
     setLoading(true);
     
@@ -39,7 +83,7 @@ export function useChallenge(user) {
       const shaped = chs.map(ch => {
         const startStr = ch.start_date || ch.created_at?.split("T")[0];
         const startDate = new Date(startStr + "T12:00:00");
-        const dayNum = Math.floor((todayForCalc - startDate) / msPerDay) + 1;
+        const dayNum = Math.floor((todayForCalc.getTime() - startDate.getTime()) / msPerDay) + 1;
 
         return {
           id: ch.id,
@@ -55,8 +99,8 @@ export function useChallenge(user) {
           created_at: ch.created_at,
           start_date: startStr,
           kpis: (ch.challenge_tasks || [])
-            .sort((a, b) => a.sort_order - b.sort_order)
-            .map(t => ({
+            .sort((a: ChallengeTaskRow, b: ChallengeTaskRow) => a.sort_order! - b.sort_order!)
+            .map((t: ChallengeTaskRow) => ({
               key: t.key,
               label: t.label,
               cat: t.cat || "other",
@@ -83,7 +127,7 @@ export function useChallenge(user) {
   }, []);
 
   // Create a new challenge
-  const createChallenge = useCallback(async (challengeData) => {
+  const createChallenge = useCallback(async (challengeData: CreateChallengeInput) => {
     if (!user?.id || !supabase) return null;
 
     const { tasks, ...cd } = challengeData;
@@ -138,7 +182,7 @@ export function useChallenge(user) {
   }, [user, loadChallenges]);
 
   // Archive/delete a challenge
-  const deleteChallenge = useCallback(async (challengeId) => {
+  const deleteChallenge = useCallback(async (challengeId: string) => {
     if (!user?.id || !supabase) return false;
 
     try {
@@ -156,7 +200,7 @@ export function useChallenge(user) {
   }, [user, loadChallenges]);
 
   // Update challenge fields
-  const updateChallenge = useCallback(async (challengeId, updates) => {
+  const updateChallenge = useCallback(async (challengeId: string, updates: Database['public']['Tables']['challenges']['Update']) => {
     if (!supabase) return false;
 
     try {

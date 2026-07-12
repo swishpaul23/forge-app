@@ -1,25 +1,63 @@
 import React, { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { useTimeBlocks, toLocalDateStr } from "../../hooks/useTimeBlocks";
 import { useUserTags } from "../../hooks/useUserTags";
+import type { SupabaseClientType } from "../../types";
+import type { Database } from "../../types/supabase";
+
+type TimeBlockRow = Database["public"]["Tables"]["time_blocks"]["Row"];
+
+interface ScheduleTask {
+  key: string;
+  label: string;
+}
+
+interface UnscheduledTask {
+  key: string;
+  label: string;
+  source: string;
+  is_regimen: boolean;
+}
+
+interface RegimenTask {
+  id: string;
+  label: string;
+}
+
+interface MenuState {
+  block: TimeBlockRow | null;
+  hour: number;
+}
+
+interface ScheduleMobileProps {
+  sb: SupabaseClientType | null;
+  user: User | null | undefined;
+  challenges?: { main?: { kpis?: ScheduleTask[] } | null } | null;
+  kpis?: Record<string, boolean>;
+  toggle?: (key: string) => void;
+  regimen?: { days?: Record<string, RegimenTask[]> } | null;
+  regimenChecked?: Record<string, boolean>;
+  toggleRegimen?: (key: string) => void;
+}
 
 const SLOT_H = 36;
 const ALL_SLOTS = Array.from({ length: 48 }, (_, i) => i * 0.5);
 const DUR_OPTIONS = [0.5, 1, 1.5, 2, 2.5, 3];
 
-const fmtTime = (h) => {
+const fmtTime = (h: number) => {
   const hh = Math.floor(h), mm = h % 1 === 0.5 ? "30" : "00";
   const ap = hh < 12 ? "am" : "pm";
   const disp = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
   return `${disp}:${mm}${ap}`;
 };
 
-const ScheduleMobile = ({ sb, user, challenges, kpis, toggle, regimen, regimenChecked, toggleRegimen }) => {
+const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen }: ScheduleMobileProps) => {
   const { blocks, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user);
   const { tags, saveTag } = useUserTags(sb, user);
 
-  const [menuState,    setMenuState]    = useState(null);
+  const [menuState,    setMenuState]    = useState<MenuState | null>(null);
   const [newLabel,     setNewLabel]     = useState("");
-  const [selTag,       setSelTag]       = useState(null);
+  const [selTag,       setSelTag]       = useState<string | null>(null);
   const [startTime,    setStartTime]    = useState(8);
   const [duration,     setDuration]     = useState(1);
   const [customColor,  setCustomColor]  = useState("#8B5CF6");
@@ -30,7 +68,7 @@ const ScheduleMobile = ({ sb, user, challenges, kpis, toggle, regimen, regimenCh
 
   useEffect(() => { loadBlocks(); }, []);
 
-  const getTag = (tagId) => tags.find(t => t.id === tagId) || { color: "#888", label: "" };
+  const getTag = (tagId: string | null) => tags.find(t => t.id === tagId) || { color: "#888", label: "" };
 
   // ── Issue 4: dynamic display range ───────────────────────
   const getDisplayRange = () => {
@@ -43,25 +81,25 @@ const ScheduleMobile = ({ sb, user, challenges, kpis, toggle, regimen, regimenCh
   // ── Issue 3: unscheduled tasks ────────────────────────────
   const getUnscheduledTasks = () => {
     const scheduled = new Set(todayBlocks.filter(b => b.task_key).map(b => b.task_key));
-    const tasks = [];
-    (challenges?.main?.kpis || []).forEach(t => {
+    const tasks: UnscheduledTask[] = [];
+    (challenges?.main?.kpis || []).forEach((t: ScheduleTask) => {
       if (!scheduled.has(t.key)) tasks.push({ key: t.key, label: t.label, source: "Challenge", is_regimen: false });
     });
     const dow = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
-    (regimen?.days?.[dow] || []).forEach(t => {
+    (regimen?.days?.[dow] || []).forEach((t: RegimenTask) => {
       if (!scheduled.has(t.id)) tasks.push({ key: t.id, label: t.label, source: "Regimen", is_regimen: true });
     });
     return tasks;
   };
 
   // ── Issue 1: tap block to complete, syncs dashboard ──────
-  const handleBlockTap = async (block) => {
+  const handleBlockTap = async (block: TimeBlockRow) => {
     await toggleComplete(block.id);
     if (block.task_key && !block.is_regimen && toggle) toggle(block.task_key);
     if (block.task_key && block.is_regimen && toggleRegimen) toggleRegimen(block.task_key);
   };
 
-  const handleSave = async (taskOverride) => {
+  const handleSave = async (taskOverride: UnscheduledTask | null) => {
     const task = taskOverride || null;
     if (menuState?.block) {
       await saveBlock({ ...menuState.block, tag_id: selTag ?? menuState.block.tag_id, start_time: startTime, duration });
@@ -82,12 +120,12 @@ const ScheduleMobile = ({ sb, user, challenges, kpis, toggle, regimen, regimenCh
     setCustomLabel("");
   };
 
-  const openSlotMenu = (hour) => {
+  const openSlotMenu = (hour: number) => {
     setSelTag(null); setNewLabel(""); setStartTime(hour); setDuration(1);
     setMenuState({ block: null, hour });
   };
 
-  const openBlockMenu = (e, block) => {
+  const openBlockMenu = (e: React.MouseEvent, block: TimeBlockRow) => {
     e.stopPropagation();
     setSelTag(block.tag_id); setStartTime(block.start_time); setDuration(block.duration);
     setMenuState({ block, hour: block.start_time });
@@ -256,7 +294,7 @@ const ScheduleMobile = ({ sb, user, challenges, kpis, toggle, regimen, regimenCh
                 Save
               </button>
               {menuState.block && (
-                <button onClick={async () => { await deleteBlock(menuState.block.id); setMenuState(null); }}
+                <button onClick={async () => { await deleteBlock(menuState.block!.id); setMenuState(null); }}
                   style={{ padding: "13px 16px", background: "#BF5D5D18", border: "1px solid #BF5D5D40", borderRadius: 10, fontSize: 13, color: "#BF5D5D", cursor: "pointer" }}>
                   Remove
                 </button>
