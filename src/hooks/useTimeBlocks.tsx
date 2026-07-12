@@ -1,10 +1,15 @@
 import { useState, useCallback } from "react";
+import type { SupabaseClientType, User } from "../types";
+import type { Database } from "../types/supabase";
 
-const toLocalDateStr = (d = new Date()) => {
+type TimeBlock = Database["public"]["Tables"]["time_blocks"]["Row"];
+type TimeBlockInput = Database["public"]["Tables"]["time_blocks"]["Insert"] & { id?: string };
+
+const toLocalDateStr = (d: Date = new Date()): string => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 };
 
-const getWeekDates = (referenceDate = new Date()) => {
+const getWeekDates = (referenceDate: Date = new Date()): string[] => {
   const d = new Date(referenceDate);
   const day = d.getDay(); // 0=Sun
   const diff = day === 0 ? -6 : 1 - day; // adjust to Monday
@@ -16,11 +21,11 @@ const getWeekDates = (referenceDate = new Date()) => {
   });
 };
 
-export const useTimeBlocks = (sb, user) => {
-  const [blocks, setBlocks] = useState([]);
+export const useTimeBlocks = (sb: SupabaseClientType | null, user: User | null | undefined) => {
+  const [blocks, setBlocks] = useState<TimeBlock[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadBlocks = useCallback(async (referenceDate = new Date()) => {
+  const loadBlocks = useCallback(async (referenceDate: Date = new Date()) => {
     if (!sb || !user) return;
     setLoading(true);
     const dates = getWeekDates(referenceDate);
@@ -35,7 +40,7 @@ export const useTimeBlocks = (sb, user) => {
     setLoading(false);
   }, [sb, user]);
 
-  const saveBlock = useCallback(async (block) => {
+  const saveBlock = useCallback(async (block: TimeBlockInput) => {
     if (!sb || !user) return null;
     const row = {
       user_id: user.id,
@@ -61,13 +66,13 @@ export const useTimeBlocks = (sb, user) => {
     }
   }, [sb, user]);
 
-  const deleteBlock = useCallback(async (blockId) => {
+  const deleteBlock = useCallback(async (blockId: string) => {
     if (!sb || !user) return;
     await sb.from("time_blocks").delete().eq("id", blockId).eq("user_id", user.id);
     setBlocks(prev => prev.filter(b => b.id !== blockId));
   }, [sb, user]);
 
-  const toggleComplete = useCallback(async (blockId) => {
+  const toggleComplete = useCallback(async (blockId: string) => {
     if (!sb || !user) return;
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;

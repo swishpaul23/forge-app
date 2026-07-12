@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import { TEMPLATES } from "../../constants/templates";
+import { useState } from "react";
+import { TEMPLATES, type Template } from "../../constants/templates";
 
-const DIFF_COLOUR = {
+type LibraryMode = "main" | "secondary";
+type OnPick = (template: Template, isSecondary: boolean, nonNegs?: string[]) => void;
+
+const DIFF_COLOUR: Record<string, string> = {
   "Hard": "var(--err)",
   "Intense": "var(--warn)",
   "Moderate": "var(--ok)",
@@ -9,18 +12,27 @@ const DIFF_COLOUR = {
 };
 
 // ── Bottom Drawer ─────────────────────────────────────────────
-const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
-  const [selectedNonNegs, setSelectedNonNegs] = useState([]);
+type DetailDrawerProps = {
+  template: Template | null;
+  mode: LibraryMode;
+  isOpen: boolean;
+  onClose: () => void;
+  onPick: OnPick;
+};
+const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }: DetailDrawerProps) => {
+  const [selectedNonNegs, setSelectedNonNegs] = useState<string[]>([]);
   const [editingTasks, setEditingTasks] = useState(false);
 
-  const toggleNonNeg = (key) => {
+  const toggleNonNeg = (key: string) => {
     setSelectedNonNegs(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
   };
 
   const handlePick = () => {
-    onPick(template, mode === "secondary", selectedNonNegs);
+    // template is guaranteed non-null here: the early return below bails
+    // out before this can be invoked from JSX when template is null.
+    onPick(template!, mode === "secondary", selectedNonNegs);
     onClose();
   };
 
@@ -193,11 +205,12 @@ const DetailDrawer = ({ template, mode, isOpen, onClose, onPick }) => {
 };
 
 // ── Main Component ────────────────────────────────────────────
-const LibraryMobile = ({ onPick, hasMain }) => {
-  const [mode, setMode] = useState(hasMain ? "secondary" : "main");
-  const [drawerTemplate, setDrawerTemplate] = useState(null);
+type LibraryMobileProps = { onPick: OnPick; hasMain: boolean };
+const LibraryMobile = ({ onPick, hasMain }: LibraryMobileProps) => {
+  const [mode, setMode] = useState<LibraryMode>(hasMain ? "secondary" : "main");
+  const [drawerTemplate, setDrawerTemplate] = useState<Template | null>(null);
 
-  const handleCardTap = (t) => {
+  const handleCardTap = (t: Template) => {
     if (t.id === "custom") {
       // Custom goes straight to wizard — no detail to show
       onPick(t, mode === "secondary", []);
@@ -258,7 +271,7 @@ const LibraryMobile = ({ onPick, hasMain }) => {
 
       {/* Cards grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        {TEMPLATES.map((t, i) => {
+        {TEMPLATES.map((t) => {
           const isCustom = t.id === "custom";
           return (
             <div

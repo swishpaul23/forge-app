@@ -1,14 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
+import type { SupabaseClientType, User } from "../types";
 
-export const SYSTEM_TAGS = [
+export type UserTag = {
+  id: string;
+  label: string;
+  color: string;
+  is_system?: boolean | null;
+  user_id?: string;
+};
+
+export const SYSTEM_TAGS: UserTag[] = [
   { id: "fitness", label: "Fitness", color: "#C0604A", is_system: true },
   { id: "mindset", label: "Mindset", color: "#7A6BBF", is_system: true },
   { id: "work",    label: "Work",    color: "#4A8ABF", is_system: true },
   { id: "rest",    label: "Rest",    color: "#4A8A6A", is_system: true },
 ];
 
-export const useUserTags = (sb, user) => {
-  const [tags, setTags] = useState(SYSTEM_TAGS);
+export const useUserTags = (sb: SupabaseClientType | null, user: User | null | undefined) => {
+  const [tags, setTags] = useState<UserTag[]>(SYSTEM_TAGS);
   const [loading, setLoading] = useState(false);
 
   const loadTags = useCallback(async () => {
@@ -31,7 +40,7 @@ export const useUserTags = (sb, user) => {
 
   useEffect(() => { loadTags(); }, [loadTags]);
 
-  const saveTag = useCallback(async (tag) => {
+  const saveTag = useCallback(async (tag: UserTag) => {
     if (!sb || !user) return;
     const row = { ...tag, user_id: user.id };
     await sb.from("user_tags").upsert(row, { onConflict: "id,user_id" });
@@ -41,7 +50,7 @@ export const useUserTags = (sb, user) => {
     });
   }, [sb, user]);
 
-  const deleteTag = useCallback(async (tagId) => {
+  const deleteTag = useCallback(async (tagId: string) => {
     if (!sb || !user) return;
     // Don't allow deleting system tags
     if (SYSTEM_TAGS.find(t => t.id === tagId)) return;

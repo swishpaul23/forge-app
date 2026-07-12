@@ -1,7 +1,9 @@
 // Level progression system
 // Based on cumulative total days forged across all challenges
 
-export const LEVELS = [
+export type Level = { id: string; label: string; minDays: number; color: string };
+
+export const LEVELS: Level[] = [
   { id: "initiate",    label: "INITIATE",    minDays: 0,   color: "#56524D" },
   { id: "committed",   label: "COMMITTED",   minDays: 7,   color: "#CD7F32" },
   { id: "consistent",  label: "CONSISTENT",  minDays: 21,  color: "#2E8B57" },
@@ -11,30 +13,18 @@ export const LEVELS = [
   { id: "legendary",   label: "LEGENDARY",   minDays: 150, color: "#FFC125" },
 ];
 
-/**
- * Get the level for a given number of days
- * @param {number} days - Total days forged
- * @returns {Object} Level object with id, label, minDays, color
- */
-export const getLevel = (days) => {
+/** Get the level for a given number of days */
+export const getLevel = (days: number): Level => {
   return [...LEVELS].reverse().find(l => days >= l.minDays) || LEVELS[0];
 };
 
-/**
- * Get the next level after the current one
- * @param {number} days - Total days forged
- * @returns {Object|null} Next level object or null if at max
- */
-export const getNextLevel = (days) => {
+/** Get the next level after the current one */
+export const getNextLevel = (days: number): Level | null => {
   return LEVELS.find(l => l.minDays > days) || null;
 };
 
-/**
- * Get days remaining until next level
- * @param {number} days - Total days forged
- * @returns {number} Days until next level, 0 if at max
- */
-export const getDaysToNextLevel = (days) => {
+/** Get days remaining until next level */
+export const getDaysToNextLevel = (days: number): number => {
   const next = getNextLevel(days);
   return next ? next.minDays - days : 0;
 };
