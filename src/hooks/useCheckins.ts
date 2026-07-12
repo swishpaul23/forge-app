@@ -1,16 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
 import { getTodayStr } from '../utils/dates';
+
+interface CheckinChallenge {
+  id: string;
+  kpis?: { key: string }[];
+  start_date?: string | null;
+  streak?: number;
+}
+
+interface ChallengeHistoryEntry {
+  id: string;
+  name: string;
+  tag: string;
+  totalDays: number;
+  startDate: string | null;
+  streak: number;
+  consistency: number;
+  isMain: boolean;
+  archived: boolean;
+  completedAt: string | null;
+  checkinCount: number;
+}
 
 /**
  * Hook for managing checkins and daily task state
  * Handles loading checkins, toggling tasks, logging days
  */
-export function useCheckins(user, challenge) {
-  const [kpis, setKpis] = useState({});
-  const [checkins, setCheckins] = useState({}); // { "YYYY-MM-DD": score }
-  const [allCheckins, setAllCheckins] = useState({}); // { challengeId: { "YYYY-MM-DD": score } }
-  const [challengeHistory, setChallengeHistory] = useState([]);
+export function useCheckins(user: User | null | undefined, challenge: CheckinChallenge | null | undefined) {
+  const [kpis, setKpis] = useState<Record<string, boolean>>({});
+  const [checkins, setCheckins] = useState<Record<string, number>>({}); // { "YYYY-MM-DD": score }
+  const [allCheckins, setAllCheckins] = useState<Record<string, Record<string, number>>>({}); // { challengeId: { "YYYY-MM-DD": score } }
+  const [challengeHistory, setChallengeHistory] = useState<ChallengeHistoryEntry[]>([]);
   const [totalDaysForged, setTotalDaysForged] = useState(0);
   const [loggedToday, setLoggedToday] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,13 +52,13 @@ export function useCheckins(user, challenge) {
         .maybeSingle();
 
       // Build kpi state - start all as false
-      const kpiState = {};
+      const kpiState: Record<string, boolean> = {};
       (challenge.kpis || []).forEach(k => {
         kpiState[k.key] = false;
       });
 
       if (todayCheckin?.completed_keys) {
-        todayCheckin.completed_keys.forEach(key => {
+        todayCheckin.completed_keys.forEach((key: string) => {
           if (kpiState.hasOwnProperty(key)) kpiState[key] = true;
         });
         setLoggedToday(true);
@@ -61,8 +83,8 @@ export function useCheckins(user, challenge) {
         .select("date, score")
         .eq("challenge_id", challenge.id);
 
-      const map = {};
-      (rows || []).forEach(r => {
+      const map: Record<string, number> = {};
+      (rows || []).forEach((r: { date: string; score: number }) => {
         map[r.date] = r.score;
       });
 
@@ -71,7 +93,7 @@ export function useCheckins(user, challenge) {
       const startDate = challenge.start_date;
       
       if (startDate) {
-        const missedDays = [];
+        const missedDays: string[] = [];
         const start = new Date(startDate + "T12:00:00");
         const todayDate = new Date(today + "T12:00:00");
 
@@ -132,9 +154,9 @@ export function useCheckins(user, challenge) {
         .in("challenge_id", challengeIds);
 
       // Group checkins by challenge_id
-      const checkinsByChallenge = {};
+      const checkinsByChallenge: Record<string, Record<string, number>> = {};
       let totalForgedDays = 0;
-      (allCheckinRows || []).forEach(c => {
+      (allCheckinRows || []).forEach((c: { challenge_id: string; date: string; score: number }) => {
         if (!checkinsByChallenge[c.challenge_id]) checkinsByChallenge[c.challenge_id] = {};
         checkinsByChallenge[c.challenge_id][c.date] = c.score;
         if (c.score > 0) totalForgedDays++;
@@ -170,7 +192,7 @@ export function useCheckins(user, challenge) {
   }, [user]);
 
   // Toggle a task on/off
-  const toggle = useCallback(async (key) => {
+  const toggle = useCallback(async (key: string) => {
     if (!challenge?.id || !supabase) return;
 
     setKpis(prev => {
@@ -182,7 +204,7 @@ export function useCheckins(user, challenge) {
       const total = (challenge.kpis || []).length;
       const score = total > 0 ? Math.round((completed.length / total) * 100) : 0;
 
-      supabase.from("checkins").upsert({
+      supabase!.from("checkins").upsert({
         challenge_id: challenge.id,
         date: today,
         score,
@@ -195,7 +217,7 @@ export function useCheckins(user, challenge) {
   }, [challenge]);
 
   // Log the day (finalize checkin)
-  const logDay = useCallback(async (done, total) => {
+  const logDay = useCallback(async (done: number, total: number) => {
     if (!challenge?.id || !supabase) return false;
 
     const today = getTodayStr();
