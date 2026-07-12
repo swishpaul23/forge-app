@@ -1,28 +1,37 @@
-import React, { useState } from "react";
-import { TEMPLATES } from "../../constants/templates";
+import { useState } from "react";
+import { TEMPLATES, type Template } from "../../constants/templates";
 
-const DIFF_COLOUR = {
+type OnPick = (template: Template, isSecondary?: boolean, nonNegs?: string[]) => void;
+
+type LibraryDesktopProps = {
+  onPick: OnPick;
+  isSecondaryMode?: boolean;
+  onClose?: () => void;
+  hasMain: boolean;
+};
+
+const DIFF_COLOUR: Record<string, string> = {
   "Hard": "var(--err)",
   "Intense": "var(--warn)",
   "Moderate": "var(--ok)",
   "You decide": "var(--text-2)"
 };
 
-const LibraryDesktop = ({ onPick, isSecondaryMode, onClose, hasMain }) => {
+const LibraryDesktop = ({ onPick, isSecondaryMode, hasMain }: LibraryDesktopProps) => {
   const [mode, setMode] = useState(isSecondaryMode || hasMain ? "secondary" : "main");
-  const [active, setActive] = useState(null);
-  const [selectedNonNegs, setSelectedNonNegs] = useState([]);
+  const [active, setActive] = useState<string | null>(null);
+  const [selectedNonNegs, setSelectedNonNegs] = useState<string[]>([]);
   const [editingTasks, setEditingTasks] = useState(false);
 
   const selected = TEMPLATES.find(t => t.id === active);
   const isSecMode = mode === "secondary" || isSecondaryMode;
 
-  const handleSelectTemplate = (id) => {
+  const handleSelectTemplate = (id: string) => {
     if (active !== id) setSelectedNonNegs([]);
     setActive(prev => prev === id ? null : id);
   };
 
-  const toggleNonNeg = (key) => {
+  const toggleNonNeg = (key: string) => {
     setSelectedNonNegs(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );

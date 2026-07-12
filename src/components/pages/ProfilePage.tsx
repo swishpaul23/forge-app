@@ -1,17 +1,21 @@
-import React, { useState, useMemo } from 'react';
-import { getLevel } from '../../constants/levels';
+import { useState, useMemo } from 'react';
+import { getLevel, type Level } from '../../constants/levels';
+
+type ProfileCheckin = { date?: string; created_at?: string; score?: number; pct?: number };
+type ProfileChallenge = { name: string; dayNum: number; totalDays: number };
+type Badge = { icon: string };
 
 // ============================================================
 // HELPERS
 // ============================================================
-const fmtMemberSince = (dateStr) => {
+const fmtMemberSince = (dateStr?: string | null) => {
   if (!dateStr) return 'MEMBER';
   const d = new Date(dateStr);
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   return `MEMBER SINCE ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
 
-const getInitials = (name) => {
+const getInitials = (name?: string | null) => {
   if (!name) return 'U';
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 };
@@ -19,12 +23,13 @@ const getInitials = (name) => {
 // ============================================================
 // HEATMAP COMPONENT (compact for mobile)
 // ============================================================
-const ActivityHeatmap = ({ checkins = [], weeks = 10 }) => {
+type ActivityHeatmapProps = { checkins?: ProfileCheckin[]; weeks?: number };
+const ActivityHeatmap = ({ checkins = [], weeks = 10 }: ActivityHeatmapProps) => {
   const today = new Date();
-  const cells = [];
-  
+  const cells: { key: string; bg: string; isToday: boolean; level: number }[] = [];
+
   const checkinMap = useMemo(() => {
-    const map = {};
+    const map: Record<string, number> = {};
     checkins.forEach(c => {
       const dateKey = c.date || c.created_at?.split('T')[0];
       if (dateKey) {
@@ -110,6 +115,20 @@ const ActivityHeatmap = ({ checkins = [], weeks = 10 }) => {
 // ============================================================
 // MAIN PROFILE PAGE (MOBILE)
 // ============================================================
+type ProfilePageProps = {
+  onBack: () => void;
+  userName?: string | null;
+  memberSince?: string | null;
+  mission?: string | null;
+  challenge?: ProfileChallenge | null;
+  checkins?: ProfileCheckin[];
+  longestStreak?: number;
+  consistency?: number;
+  daysForged?: number;
+  badges?: Badge[];
+  levels?: Level[];
+};
+
 const ProfilePage = ({
   onBack,
   userName,
@@ -122,13 +141,13 @@ const ProfilePage = ({
   daysForged = 0,
   badges = [],
   levels,
-}) => {
+}: ProfilePageProps) => {
   const [activeTab, setActiveTab] = useState('overview');
   const currentLevel = getLevel(daysForged);
-  const nextLevel = levels?.find(l => l.min > daysForged);
-  const daysToNext = nextLevel ? nextLevel.min - daysForged : 0;
-  const progress = nextLevel 
-    ? ((daysForged - (currentLevel?.min || 0)) / (nextLevel.min - (currentLevel?.min || 0))) * 100
+  const nextLevel = levels?.find(l => l.minDays > daysForged);
+  const daysToNext = nextLevel ? nextLevel.minDays - daysForged : 0;
+  const progress = nextLevel
+    ? ((daysForged - (currentLevel?.minDays || 0)) / (nextLevel.minDays - (currentLevel?.minDays || 0))) * 100
     : 100;
 
   return (
@@ -194,7 +213,7 @@ const ProfilePage = ({
           <div style={{
             fontFamily: "'Bebas Neue', sans-serif", fontSize: 16,
             color: 'var(--accent)', lineHeight: 1, marginBottom: 4,
-          }}>{currentLevel?.title?.toUpperCase() || 'INITIATE'}</div>
+          }}>{currentLevel?.label?.toUpperCase() || 'INITIATE'}</div>
           <div style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 9, fontWeight: 500,
             color: 'var(--text-2)', letterSpacing: '.06em',
@@ -319,7 +338,7 @@ const ProfilePage = ({
               </div>
               {nextLevel && (
                 <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500, color: 'var(--text-2)' }}>
-                  {daysToNext} days to <span style={{ color: 'var(--accent)' }}>{nextLevel.title.toUpperCase()}</span>
+                  {daysToNext} days to <span style={{ color: 'var(--accent)' }}>{nextLevel.label.toUpperCase()}</span>
                 </div>
               )}
             </div>

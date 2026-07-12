@@ -1,6 +1,8 @@
 // Challenge templates and task categories
 
-export const TASK_CATEGORIES = {
+export type TaskCategory = "body" | "mind" | "diet" | "build" | "other";
+
+export const TASK_CATEGORIES: Record<TaskCategory, { label: string; color: string }> = {
   body:  { label: "Body",  color: "#D4922A" },
   mind:  { label: "Mind",  color: "#4A8FD4" },
   diet:  { label: "Diet",  color: "#5DBF8A" },
@@ -8,7 +10,22 @@ export const TASK_CATEGORIES = {
   other: { label: "Other", color: "var(--text-2)" },
 };
 
-export const TEMPLATES = [
+export type TemplateKpi = { key: string; label: string; cat: TaskCategory };
+
+export type Template = {
+  id: string;
+  name: string;
+  duration: number;
+  tag: string;
+  kpis: TemplateKpi[];
+  blurb: string;
+  about: string;
+  benefits: string[];
+  bestFor: string;
+  difficulty: string;
+};
+
+export const TEMPLATES: Template[] = [
   {
     id: "75hard",
     name: "75 HARD",
@@ -116,14 +133,12 @@ export const TEMPLATES = [
 
 /**
  * Get a template by ID
- * @param {string} id - Template ID
- * @returns {Object|undefined} Template object
  */
-export const getTemplateById = (id) => TEMPLATES.find(t => t.id === id);
+export const getTemplateById = (id: string): Template | undefined => TEMPLATES.find(t => t.id === id);
 
 /**
- * Get category color for a task
- * @param {string} cat - Category key
- * @returns {string} CSS color value
+ * Get category color for a task. Accepts any string since custom challenges
+ * can define arbitrary category keys — falls back to "other" if unrecognized.
  */
-export const getCategoryColor = (cat) => TASK_CATEGORIES[cat]?.color || TASK_CATEGORIES.other.color;
+export const getCategoryColor = (cat: string): string =>
+  TASK_CATEGORIES[cat as TaskCategory]?.color || TASK_CATEGORIES.other.color;
