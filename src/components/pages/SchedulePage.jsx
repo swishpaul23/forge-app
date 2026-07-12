@@ -154,8 +154,8 @@ const BlockMenu = ({ tags, block, slotInfo, slotHour, unscheduledTasks, onSave, 
 };
 
 // ── Main ─────────────────────────────────────────────────────
-const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChecked, toggleRegimen }) => {
-  const { blocks, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user);
+const SchedulePage = ({ sb, user, challenges, kpis, toggle, regimen, regimenChecked, toggleRegimen, googleSync }) => {
+  const { blocks, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user, googleSync);
   const { tags, saveTag } = useUserTags(sb, user);
 
   const [view,      setView]      = useState("week");

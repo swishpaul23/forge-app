@@ -40,6 +40,7 @@ import SchedulePage from "./components/pages/SchedulePage";
 import ScheduleMobile from "./components/pages/ScheduleMobile";
 import Avatar from "./components/ui/Avatar";
 import { useIsMobile } from "./hooks/useIsMobile";
+import { useGoogleSync } from "./hooks/useGoogleSync";
 
 // ============================================================
 // APP-SPECIFIC CONSTANTS (not extracted - used only here)
@@ -6812,7 +6813,7 @@ const AuthScreen = ({ onAuthed }) => {
 // ============================================================
 // SETTINGS SCREEN (Supabase-wired: email, password, themes)
 // ============================================================
-const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile, challenges, onDeleteChallenge, onDeleteAccount, sb }) => {
+const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile, challenges, onDeleteChallenge, onDeleteAccount, sb, googleSync }) => {
   const tones = ["Stoic","Coach","Drill Sergeant"];
   const [nameVal,     setNameVal]     = useState(userName);
   const [emailVal,    setEmailVal]    = useState("");
@@ -7202,6 +7203,33 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
           )}
         </div>
 
+        {/* Integrations */}
+        <div className="srow a5">
+          <div className="srow-title">Integrations</div>
+          <div className="srow-desc">Sync your daily schedule and challenge tasks with Google Calendar and Google Tasks.</div>
+
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14,padding:"12px 16px",background:"var(--bg-2)",borderRadius:10,border:"1px solid var(--border-1)"}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:500,color:"var(--text-0)"}}>Google Calendar & Tasks</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,letterSpacing:".1em",color:"var(--text-2)",marginTop:2}}>
+                {googleSync.isConnected ? `CONNECTED — ${googleSync.email || "unknown account"}` : "NOT CONNECTED"}
+              </div>
+              {googleSync.isConnected && googleSync.lastSyncedAt && (
+                <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:9,color:"var(--text-3)",marginTop:2}}>
+                  Last synced {new Date(googleSync.lastSyncedAt).toLocaleString()}
+                </div>
+              )}
+            </div>
+            <button
+              className={`btn ${googleSync.isConnected ? "btn-g" : "btn-a"}`}
+              style={{padding:"8px 18px",fontSize:12}}
+              onClick={googleSync.isConnected ? googleSync.disconnect : googleSync.connect}
+            >
+              {googleSync.isConnected ? "Disconnect" : "Connect Google Calendar & Tasks"}
+            </button>
+          </div>
+        </div>
+
         {/* Feedback */}
         <div className="srow a5">
           <div className="srow-title">Feedback</div>
@@ -7350,6 +7378,11 @@ export default function App() {
   const [user,    setUser]    = useState(undefined); // undefined = still loading
   const [profile, setProfile] = useState(null);
 
+  // Google Calendar / Tasks sync — connection state, OAuth, and all outbound
+  // API calls live in this hook. Everything below treats it as a side
+  // effect, never the source of truth for challenges/time_blocks.
+  const googleSync = useGoogleSync(sb, user);
+
   // Generate a random 8-char uppercase invite code
   const genInviteCode = () => Math.random().toString(36).substring(2,10).toUpperCase();
 
@@ -7421,6 +7454,7 @@ export default function App() {
           is_main:    ch.is_main,
           created_at: ch.created_at,
           start_date: startStr,
+          gtask_list_id: ch.gtask_list_id || null,
           kpis: (ch.challenge_tasks || [])
             .sort((a,b) => a.sort_order - b.sort_order)
             .map(t => ({
@@ -7428,6 +7462,7 @@ export default function App() {
               label:  t.label,
               cat:    t.cat || "other",
               nonNeg: t.non_neg || false,
+              gtask_id: t.gtask_id || null,
             })),
         };
       });
@@ -7531,6 +7566,17 @@ export default function App() {
     return flag === "auth" ? "login" : "inapp";
   });
   const [page,        setPage]        = useState("home");
+
+  // If we just returned from the Google OAuth redirect, bounce back to
+  // Settings (connect() stashed this flag before leaving the app).
+  useEffect(() => {
+    const target = sessionStorage.getItem("forge_post_oauth_page");
+    if (target) {
+      sessionStorage.removeItem("forge_post_oauth_page");
+      setPage(target);
+    }
+  }, []);
+
   const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [dw,          setDW]          = useState(false);
@@ -7708,6 +7754,12 @@ export default function App() {
             completed_keys: secCompleted,
             updated_at:     new Date().toISOString(),
           }, { onConflict: "challenge_id,date" }).then(() => {});
+
+          // Google Tasks sync — fire-and-forget, only on newly-completed tasks
+          if (next[key] && googleSync.isConnected && secChallenge.gtask_list_id) {
+            const task = (secChallenge.kpis || []).find(k => k.key === key);
+            if (task) void googleSync.pushTaskCompletion(task, secChallenge.gtask_list_id);
+          }
         } else if (challenges.main) {
           // Persist main challenge ticks
           const completed = (challenges.main.kpis || []).filter(k => next[k.key]).map(k => k.key);
@@ -7720,11 +7772,39 @@ export default function App() {
             completed_keys: completed,
             updated_at:     new Date().toISOString(),
           }, { onConflict: "challenge_id,date" }).then(() => {});
+
+          // Google Tasks sync — fire-and-forget, only on newly-completed tasks
+          if (next[key] && googleSync.isConnected && challenges.main.gtask_list_id) {
+            const task = (challenges.main.kpis || []).find(k => k.key === key);
+            if (task) void googleSync.pushTaskCompletion(task, challenges.main.gtask_list_id);
+          }
         }
       }
       return next;
     });
   };
+
+  // ── Phase 2: poll Google Tasks completion once on load ──────
+  // Only fires once per session (guarded by the ref, not the effect's own
+  // dependency array, since challenges/kpis change on every checkin) and
+  // only once a Google connection + the main challenge's task list are
+  // actually available.
+  const googleTasksPolledRef = useRef(false);
+  useEffect(() => {
+    if (googleTasksPolledRef.current) return;
+    if (!googleSync.isConnected || !challenges.main?.gtask_list_id) return;
+    googleTasksPolledRef.current = true;
+
+    googleSync.pollTaskCompletions(challenges, kpis).then(updates => {
+      // toggle() re-pushes completion back to Google — a harmless no-op
+      // PATCH for tasks that got us here in the first place, but it keeps
+      // toggle() as the single source of truth for "mark this done" rather
+      // than duplicating its checkin-persist logic here.
+      Object.keys(updates).forEach(key => {
+        if (updates[key]) toggle(key);
+      });
+    });
+  }, [googleSync.isConnected, challenges, kpis]);
 
   const handleAuthed = (name) => {
     if (name) setUserName(name);
@@ -7772,6 +7852,26 @@ export default function App() {
         sort_order:   i,
       }));
       if (kpis.length > 0) await sb.from("challenge_tasks").insert(kpis);
+
+      // Google Tasks sync — fire-and-forget, never blocks challenge creation.
+      // Runs after the Supabase writes above so Forge's own state is never
+      // waiting on a string of sequential Google API round-trips (one per
+      // task). gtask_list_id/gtask_id show up on the *next* loadChallenges,
+      // not this one.
+      if (googleSync.isConnected && kpis.length > 0) {
+        void (async () => {
+          const listId = await googleSync.createTaskList(name);
+          if (!listId) return;
+          await sb.from("challenges").update({ gtask_list_id: listId }).eq("id", chRow.id);
+          for (const kpi of kpis) {
+            const taskId = await googleSync.createTask(listId, kpi.label);
+            if (taskId) {
+              await sb.from("challenge_tasks").update({ gtask_id: taskId })
+                .eq("challenge_id", chRow.id).eq("key", kpi.key);
+            }
+          }
+        })();
+      }
 
       // Reload everything fresh from DB
       await loadChallenges(user.id);
@@ -8275,10 +8375,10 @@ export default function App() {
       ? <LibraryMobile onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />
       : <LibraryDesktop onPick={(t,isSec)=>handleLibPick(t,isSec)} hasMain={!!challenges.main} />;
     if (page==="schedule") return isMobile
-      ? <ScheduleMobile sb={sb} user={user} challenges={challenges} kpis={kpis} toggle={toggle} regimen={regimen} regimenChecked={regimenChecked} toggleRegimen={toggleRegimen} />
-      : <SchedulePage sb={sb} user={user} challenges={challenges} kpis={kpis} toggle={toggle} regimen={regimen} regimenChecked={regimenChecked} toggleRegimen={toggleRegimen} />;
+      ? <ScheduleMobile sb={sb} user={user} challenges={challenges} kpis={kpis} toggle={toggle} regimen={regimen} regimenChecked={regimenChecked} toggleRegimen={toggleRegimen} googleSync={googleSync} />
+      : <SchedulePage sb={sb} user={user} challenges={challenges} kpis={kpis} toggle={toggle} regimen={regimen} regimenChecked={regimenChecked} toggleRegimen={toggleRegimen} googleSync={googleSync} />;
     if (page==="partners") return <Partners user={user} profile={profile} challenges={challenges} sb={sb} />;
-    if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} />;
+    if (page==="settings") return <SettingsScreen theme={theme} setTheme={setTheme} tone={tone} setTone={setTone} userName={userName} setUserName={setUserName} onSaveProfile={saveProfile} profile={profile} challenges={challenges} onDeleteChallenge={handleDeleteChallenge} onDeleteAccount={handleDeleteAccount} sb={sb} googleSync={googleSync} />;
     if (page==="talos") return (
       <div className="page talos-page">
         <Talos
