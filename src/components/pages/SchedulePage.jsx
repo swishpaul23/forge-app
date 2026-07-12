@@ -20,9 +20,9 @@ const getTodayDowIdx = () => { const d = new Date().getDay(); return d === 0 ? 6
 // ── Time/duration selects ─────────────────────────────────────
 const TimeSelect = ({ value, onChange, label }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751" }}>{label}</div>
+    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-sub)" }}>{label}</div>
     <select value={value} onChange={e => onChange(parseFloat(e.target.value))}
-      style={{ background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#EDEAE3", fontFamily: "'IBM Plex Mono',monospace", outline: "none", cursor: "pointer" }}>
+      style={{ background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "var(--text-primary)", fontFamily: "'IBM Plex Mono',monospace", outline: "none", cursor: "pointer" }}>
       {ALL_SLOTS.map(s => <option key={s} value={s}>{fmtTime(s)}</option>)}
     </select>
   </div>
@@ -69,21 +69,21 @@ const BlockMenu = ({ tags, block, slotInfo, slotHour, unscheduledTasks, onSave, 
       left: slotInfo.x, top: slotInfo.y,
       maxHeight: "80vh", overflowY: "auto",
     }}>
-      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".14em", textTransform: "uppercase", color: "#5A5751", marginBottom: 8 }}>
+      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--text-sub)", marginBottom: 8 }}>
         {block ? "Edit block" : "New block"}
       </div>
 
       {/* Unscheduled tasks quick-add */}
       {!block && unscheduledTasks.length > 0 && (
         <div style={{ marginBottom: 10 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751", marginBottom: 6 }}>From your tasks</div>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-sub)", marginBottom: 6 }}>From your tasks</div>
           {unscheduledTasks.map(t => (
             <div key={t.key} onClick={() => handleQuickAdd(t)}
               style={{ padding: "5px 8px", borderRadius: 6, background: "#2A2A25", fontSize: 11, color: "#B8B4AE", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}
               onMouseEnter={e => e.currentTarget.style.background = "#D4922A18"}
               onMouseLeave={e => e.currentTarget.style.background = "#2A2A25"}>
               <span>{t.label}</span>
-              <span style={{ fontSize: 9, color: "#5A5751" }}>{t.source}</span>
+              <span style={{ fontSize: 9, color: "var(--text-sub)" }}>{t.source}</span>
             </div>
           ))}
           <div style={{ borderTop: "1px solid #2A2A25", margin: "8px 0" }} />
@@ -95,23 +95,23 @@ const BlockMenu = ({ tags, block, slotInfo, slotHour, unscheduledTasks, onSave, 
         <input autoFocus value={label} onChange={e => setLabel(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleSave()}
           placeholder="Or type a custom task..."
-          style={{ width: "100%", background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "6px 8px", fontSize: 12, color: "#EDEAE3", fontFamily: "'DM Sans',sans-serif", marginBottom: 10, outline: "none" }} />
+          style={{ width: "100%", background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "6px 8px", fontSize: 12, color: "var(--text-primary)", fontFamily: "'DM Sans',sans-serif", marginBottom: 10, outline: "none" }} />
       )}
 
       {/* Time + duration */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
         <TimeSelect value={startTime} onChange={setStartTime} label="Start" />
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751" }}>Duration</div>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-sub)" }}>Duration</div>
           <select value={duration} onChange={e => setDuration(parseFloat(e.target.value))}
-            style={{ background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#EDEAE3", fontFamily: "'IBM Plex Mono',monospace", outline: "none", cursor: "pointer" }}>
+            style={{ background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "var(--text-primary)", fontFamily: "'IBM Plex Mono',monospace", outline: "none", cursor: "pointer" }}>
             {DUR_OPTIONS.map(d => <option key={d} value={d}>{d === 0.5 ? "30 min" : `${d} hr${d > 1 ? "s" : ""}`}</option>)}
           </select>
         </div>
       </div>
 
       {/* Tags */}
-      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751", marginBottom: 6 }}>Tag</div>
+      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-sub)", marginBottom: 6 }}>Tag</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 10 }}>
         {tags.map(t => (
           <div key={t.id} onClick={() => setSelTag(selTag === t.id ? null : t.id)}
@@ -123,14 +123,14 @@ const BlockMenu = ({ tags, block, slotInfo, slotHour, unscheduledTasks, onSave, 
 
       {/* Custom tag creator */}
       <div style={{ borderTop: "1px solid #2A2A25", paddingTop: 8, marginBottom: 10 }}>
-        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "#5A5751", marginBottom: 6 }}>Custom tag</div>
+        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-sub)", marginBottom: 6 }}>Custom tag</div>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           <input type="color" value={customColor} onChange={e => setCustomColor(e.target.value)}
             style={{ width: 28, height: 28, border: "1px solid #2A2A25", borderRadius: 4, background: "#161613", cursor: "pointer", padding: 2 }} />
           <input value={customLabel} onChange={e => setCustomLabel(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleAddCustomTag()}
             placeholder="Tag name..."
-            style={{ flex: 1, background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "#EDEAE3", fontFamily: "'DM Sans',sans-serif", outline: "none" }} />
+            style={{ flex: 1, background: "#111110", border: "1px solid #2A2A25", borderRadius: 6, padding: "5px 8px", fontSize: 11, color: "var(--text-primary)", fontFamily: "'DM Sans',sans-serif", outline: "none" }} />
           <button onClick={handleAddCustomTag}
             style={{ padding: "5px 8px", background: "#D4922A18", border: "1px solid #D4922A40", borderRadius: 6, color: "#D4922A", fontSize: 12, cursor: "pointer" }}>+</button>
         </div>

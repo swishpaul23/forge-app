@@ -57,7 +57,7 @@ const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }) => {
     position: 'relative', overflow: 'hidden',
     background: isFlow
       ? 'linear-gradient(135deg,#2C3540 0%,#3E4E5E 25%,#5A6E80 50%,#3E4E5E 75%,#2C3540 100%)'
-      : 'var(--bg-1)',
+      : 'var(--bg-card)',
     border: `1px solid ${isFlow ? '#A0BDD0' : 'var(--border-0)'}`,
     borderRadius: 10,
     padding: compact ? '12px' : '12px 16px',
@@ -88,7 +88,10 @@ const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }) => {
         @keyframes mFlowPulse{0%,100%{opacity:1}50%{opacity:0.55}}
         @keyframes mShine{0%{transform:translateX(-80%)}50%{transform:translateX(80%)}100%{transform:translateX(-80%)}}
       `}</style>
+      <div style={{ padding: '1.5px', borderRadius: 11, background: 'linear-gradient(135deg, var(--accent)50, #1E1E1A 55%)' }}>
       <div style={boxStyle}>
+        {/* Top edge accent line */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--accent)60, transparent)' }} />
         {/* Shine overlay for flow state */}
         {isFlow && (
           <div style={{
@@ -102,12 +105,12 @@ const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }) => {
         </div>
         {!compact && (
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize: 52, lineHeight: 1, color: state.color, transition:'color .6s' }}>{v}</div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize: 52, lineHeight: 1, color: state.color, transition:'color .6s', textShadow: '0 0 16px var(--accent)44' }}>{v}</div>
             <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize: 9, letterSpacing:'.1em', textTransform:'uppercase', color: state.color, transition:'color .6s', textAlign:'right', maxWidth: 100 }}>{state.label}</div>
           </div>
         )}
         {compact && (
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize: 28, lineHeight: 1, color: state.color, transition:'color .6s' }}>{v}</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize: 28, lineHeight: 1, color: state.color, transition:'color .6s', textShadow: '0 0 16px var(--accent)44' }}>{v}</div>
         )}
         <div style={{ display:'flex', gap: 3, marginTop: compact ? 4 : 6 }}>
           {segments}
@@ -115,6 +118,7 @@ const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }) => {
         {compact && (
           <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize: 8, letterSpacing:'.1em', textTransform:'uppercase', color: state.color, marginTop: 4 }}>{state.label}</div>
         )}
+      </div>
       </div>
     </>
   );
@@ -508,11 +512,13 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: visibleSecondary.length > 0 ? '1.6fr 1fr' : '1fr', gap: 14, marginBottom: 20 }}>
       
-      {/* Main Challenge Hero Card */}
+      {/* Main Challenge Hero Card — gradient border wrap, inner div keeps its
+          own border + hover handlers so existing interactivity is untouched */}
+      <div style={{ padding: '1.5px', borderRadius: 15, background: 'linear-gradient(135deg, var(--accent)50, #1E1E1A 55%)' }}>
       <div
         onClick={() => onViewChallenge(main, 'main')}
         style={{
-          background: 'var(--bg-1)',
+          background: 'var(--bg-card)',
           border: '1px solid var(--border-0)',
           borderRadius: 14, padding: '22px 24px', cursor: 'pointer',
           transition: 'border-color .15s',
@@ -521,8 +527,8 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
         onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
         onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-0)'}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'var(--accent)' }} />
-        
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--accent)60, transparent)' }} />
+
         <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.15em', color: 'var(--accent)', marginBottom: 8 }}>
           ★ MAIN CHALLENGE
         </div>
@@ -535,11 +541,11 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
 
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, marginBottom: 14 }}>
           <div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, lineHeight: 1, color: 'var(--accent)' }}>{mainPct}%</div>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, lineHeight: 1, color: 'var(--accent)', textShadow: '0 0 16px var(--accent)44' }}>{mainPct}%</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em' }}>COMPLETE</div>
           </div>
           <div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, lineHeight: 1, color: 'var(--ok)' }}>{main.consistency || 0}%</div>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, lineHeight: 1, color: 'var(--ok)', textShadow: '0 0 16px var(--accent)44' }}>{main.consistency || 0}%</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em' }}>CONSISTENCY</div>
           </div>
         </div>
@@ -551,6 +557,7 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-3)' }}>DAY 1</div>
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-3)' }}>DAY {main.totalDays}</div>
         </div>
+      </div>
       </div>
 
       {/* Secondary Cards - max 2 */}
@@ -928,11 +935,11 @@ const DashboardV2 = ({
           <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
             <MomentumMeter momentum={momentum} minWidth={260} />
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--ok)' }}>{challenge?.consistency || 0}%</div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--ok)', textShadow: '0 0 16px var(--accent)44' }}>{challenge?.consistency || 0}%</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>CONSISTENCY</div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)' }}>{challenge ? pct(challenge.dayNum, challenge.totalDays) : 0}%</div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)', textShadow: '0 0 16px var(--accent)44' }}>{challenge ? pct(challenge.dayNum, challenge.totalDays) : 0}%</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>COMPLETE</div>
             </div>
           </div>

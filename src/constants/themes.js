@@ -1,6 +1,30 @@
 // Theme color definitions
 // Each theme provides CSS custom properties for the app
 
+// Elevation + typography vars, additive to the per-theme palette below.
+// Only two variants exist (dark / light) rather than one per theme, since
+// that's what DynamicBackground's card-transparency spec actually defined —
+// see LIGHT_THEMES in DynamicBackground.tsx for which theme ids get which.
+const ELEVATION_DARK = {
+  "--bg-page":       "rgba(5,5,4,0.60)",
+  "--bg-card":       "rgba(12,12,10,0.75)",
+  "--bg-card-inner": "rgba(17,17,16,0.80)",
+  "--text-label":    "#6A6560",
+  "--text-sub":      "#8A8580",
+  "--text-body":     "#B8B4AE",
+  "--text-primary":  "#EDEAE3",
+};
+
+const ELEVATION_LIGHT = {
+  "--bg-page":       "rgba(245,244,240,0.65)",
+  "--bg-card":       "rgba(255,253,248,0.78)",
+  "--bg-card-inner": "rgba(248,246,240,0.82)",
+  "--text-label":    "#6A6560",
+  "--text-sub":      "#4A4744",
+  "--text-body":     "#2A2A26",
+  "--text-primary":  "#0A0A08",
+};
+
 export const THEMES = {
   forge: {
     "--bg-0": "#080807",
@@ -21,6 +45,7 @@ export const THEMES = {
     "--ok": "#5DBF8A",
     "--warn": "#D4B22A",
     "--err": "#BF5D5D",
+    ...ELEVATION_DARK,
   },
   slate: {
     "--bg-0": "#F2F0EC",
@@ -41,6 +66,7 @@ export const THEMES = {
     "--ok": "#2A6644",
     "--warn": "#7A5C1A",
     "--err": "#7A2A2A",
+    ...ELEVATION_LIGHT,
   },
   iron: {
     "--bg-0": "#060810",
@@ -61,6 +87,7 @@ export const THEMES = {
     "--ok": "#4AD48A",
     "--warn": "#D4B24A",
     "--err": "#D44A4A",
+    ...ELEVATION_DARK,
   },
 };
 
@@ -93,6 +120,7 @@ export const ALL_THEMES = {
       "--text-0": "#1A1816", "--text-1": "#605A52", "--text-2": "#706A62", "--text-3": "#C8C2BA",
       "--border-0": "#E0DCD4", "--border-1": "#CECAC2", "--border-accent": "#8C735530",
       "--ok": "#4A7C59", "--warn": "#B8880A", "--err": "#A03030",
+      ...ELEVATION_LIGHT,
     },
   },
   digital: {
@@ -105,6 +133,7 @@ export const ALL_THEMES = {
       "--text-0": "#DFF4F0", "--text-1": "#6FA8A0", "--text-2": "#3A6860", "--text-3": "#1E3C38",
       "--border-0": "#162A38", "--border-1": "#1E3844", "--border-accent": "#0DBEAA30",
       "--ok": "#2DD4AA", "--warn": "#F0C040", "--err": "#E05050",
+      ...ELEVATION_DARK,
     },
   },
   dusk: {
@@ -117,6 +146,7 @@ export const ALL_THEMES = {
       "--text-0": "#EDE8FF", "--text-1": "#8A80B0", "--text-2": "#4A4268", "--text-3": "#2C2648",
       "--border-0": "#1E1636", "--border-1": "#2A2048", "--border-accent": "#8B5CF630",
       "--ok": "#6EE7B7", "--warn": "#FBBF24", "--err": "#F87171",
+      ...ELEVATION_DARK,
     },
   },
   pastel: {
@@ -129,6 +159,7 @@ export const ALL_THEMES = {
       "--text-0": "#2A1A10", "--text-1": "#7A5040", "--text-2": "#7A5848", "--text-3": "#D8C0B0",
       "--border-0": "#F5DDD0", "--border-1": "#EAC8B4", "--border-accent": "#E07B4A30",
       "--ok": "#3DA870", "--warn": "#E0A020", "--err": "#D04040",
+      ...ELEVATION_LIGHT,
     },
   },
   mono: {
@@ -141,6 +172,7 @@ export const ALL_THEMES = {
       "--text-0": "#F8F8F8", "--text-1": "#888888", "--text-2": "#444444", "--text-3": "#282828",
       "--border-0": "#222222", "--border-1": "#2E2E2E", "--border-accent": "#F0F0F025",
       "--ok": "#70C070", "--warn": "#C0A030", "--err": "#C04040",
+      ...ELEVATION_DARK,
     },
   },
   orbit: {
@@ -153,6 +185,7 @@ export const ALL_THEMES = {
       "--text-0": "#E8EEFF", "--text-1": "#7A9ACC", "--text-2": "#3A5A88", "--text-3": "#1A2A50",
       "--border-0": "#182040", "--border-1": "#1E2A50", "--border-accent": "#0066FF35",
       "--ok": "#3DD68C", "--warn": "#F5C542", "--err": "#FF4D4D",
+      ...ELEVATION_DARK,
     },
   },
   mars: {
@@ -165,6 +198,7 @@ export const ALL_THEMES = {
       "--text-0": "#F0EAE8", "--text-1": "#9A8A88", "--text-2": "#504848", "--text-3": "#2C2828",
       "--border-0": "#1C1E28", "--border-1": "#282A38", "--border-accent": "#FF3B3B35",
       "--ok": "#4AD48A", "--warn": "#F0C040", "--err": "#FF3B3B",
+      ...ELEVATION_DARK,
     },
   },
   plasma: {
@@ -177,6 +211,7 @@ export const ALL_THEMES = {
       "--text-0": "#F2EDE8", "--text-1": "#9A8878", "--text-2": "#504438", "--text-3": "#2C2620",
       "--border-0": "#18181F", "--border-1": "#242026", "--border-accent": "#FF5E0035",
       "--ok": "#4AD48A", "--warn": "#F5C040", "--err": "#FF4444",
+      ...ELEVATION_DARK,
     },
   },
 };

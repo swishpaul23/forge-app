@@ -39,6 +39,7 @@ import LibraryMobile from "./components/pages/LibraryMobile";
 import SchedulePage from "./components/pages/SchedulePage";
 import ScheduleMobile from "./components/pages/ScheduleMobile";
 import Avatar from "./components/ui/Avatar";
+import DynamicBackground from "./components/ui/DynamicBackground";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { useGoogleSync } from "./hooks/useGoogleSync";
 
@@ -7371,6 +7372,24 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
 };
 
 // ============================================================
+// ACCENT COLOUR — parsed from the CSS var the current theme sets, for
+// DynamicBackground's canvas gradients (which need raw RGB, not a CSS string)
+// ============================================================
+const getAccentRGB = () => {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  if (raw.startsWith("#")) {
+    const hex = raw.slice(1);
+    return [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16),
+    ];
+  }
+  const m = raw.match(/(\d+),\s*(\d+),\s*(\d+)/);
+  return m ? [+m[1], +m[2], +m[3]] : [212, 146, 42];
+};
+
+// ============================================================
 // ROOT APP — Supabase auth + all state
 // ============================================================
 export default function App() {
@@ -7693,6 +7712,12 @@ export default function App() {
   // Apply theme vars whenever theme changes
   const setTheme = (id) => { setThemeState(id); applyThemeVars(id); };
   useEffect(() => { applyThemeVars(theme); }, [theme]);
+
+  // Re-parse --accent into RGB for DynamicBackground's canvas gradients.
+  // Declared after the applyThemeVars effect above so it always reads the
+  // CSS custom properties after they've been updated for the new theme.
+  const [accentRGB, setAccentRGB] = useState(getAccentRGB);
+  useEffect(() => { setAccentRGB(getAccentRGB()); }, [theme]);
 
   // Sync profile into local state
   useEffect(() => {
@@ -8432,7 +8457,9 @@ export default function App() {
   if (dw && stage==="app") return <DeepWorkBoundary onExit={()=>setDW(false)}><DeepWork challenge={activeChallenge} kpis={kpis} toggle={toggle} onExit={()=>setDW(false)} sb={sb} user={user} onSessionSaved={loadFocusSessions} /></DeepWorkBoundary>;
 
   return (
-    <div className="shell">
+    <>
+      <DynamicBackground theme={theme} accentRGB={accentRGB} />
+      <div className="shell" style={{ position: "relative", zIndex: 1 }}>
       <nav className="rail">
         <Avatar name={userName} size={39} onClick={handleAvatarClick} imageUrl={profileImageUrl} />
         <div className="rail-nav">
@@ -8532,6 +8559,7 @@ export default function App() {
         onUploadImage={handleProfileImageUpload}
       />
       <SparkCanvas trigger={sparkTrigger} />
-    </div>
+      </div>
+    </>
   );
 }
