@@ -1,20 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
+import type { Database } from '../types/supabase';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 /**
  * Hook for managing authentication state
  * Handles user session, profile loading, and auth state changes
  */
 export function useAuth() {
-  const [user, setUser] = useState(undefined); // undefined = still loading
-  const [profile, setProfile] = useState(null);
+  const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = still loading
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Generate a random 8-char uppercase invite code
   const genInviteCode = () => Math.random().toString(36).substring(2, 10).toUpperCase();
 
   // Load profile from DB — auto-generate invite_code if missing
-  const loadProfile = useCallback(async (uid) => {
+  const loadProfile = useCallback(async (uid: string) => {
     if (!uid || !supabase) return null;
     try {
       const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
@@ -34,7 +38,7 @@ export function useAuth() {
   }, []);
 
   // Save/update profile
-  const saveProfile = useCallback(async (updates) => {
+  const saveProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!user?.id || !supabase) return null;
     try {
       const { data } = await supabase

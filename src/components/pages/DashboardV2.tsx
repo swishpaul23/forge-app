@@ -3,18 +3,53 @@ import useIsMobile from '../../hooks/useIsMobile';
 import DashboardMobile from './DashboardMobile';
 
 // ============================================================
+// SHARED TYPES
+// ============================================================
+interface Task {
+  id?: string;
+  key?: string;
+  label: string;
+  nonNeg?: boolean;
+  cat?: string;
+}
+interface TempTask extends Task {
+  days: string[];
+}
+interface Regimen {
+  days?: Record<string, Task[]>;
+  temp_items?: TempTask[];
+}
+interface DashChallenge {
+  id?: string;
+  name?: string;
+  dayNum?: number;
+  totalDays?: number;
+  streak?: number;
+  consistency?: number;
+  start_date?: string;
+  objective?: string;
+  kpis?: Task[];
+}
+interface ChallengesShape {
+  main?: DashChallenge | null;
+  secondary?: DashChallenge[];
+}
+type CheckedMap = Record<string, boolean>;
+type ViewType = 'main' | 'secondary';
+
+// ============================================================
 // CONSTANTS & HELPERS
 // ============================================================
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const DAY_LABELS = { monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun' };
-const DAY_LABELS_FULL = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
+const DAY_LABELS: Record<string, string> = { monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun' };
+const DAY_LABELS_FULL: Record<string, string> = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
 
 const getTodayName = () => {
   const d = new Date().getDay();
   return DAYS[d === 0 ? 6 : d - 1];
 };
 
-const pct = (n, d) => d === 0 ? 0 : Math.round((n / d) * 100);
+const pct = (n: number, d: number) => d === 0 ? 0 : Math.round((n / d) * 100);
 
 const fmtDate = () => {
   const d = new Date();
@@ -32,13 +67,13 @@ const getTimeOfDay = () => {
 // MOMENTUM METER
 // ============================================================
 const MOMENTUM_SEGMENTS = 20;
-const getMomentumState = (v) => {
+const getMomentumState = (v: number) => {
   if (v <= 30)  return { color: '#4A6A8A', label: 'Building initial inertia', vibrate: false };
   if (v <= 70)  return { color: '#5DBF8A', label: 'Consistency established',  vibrate: false };
   if (v <= 89)  return { color: '#D4922A', label: 'High momentum detected',   vibrate: true  };
   return              { color: '#E8F2FA', label: 'Flow state achieved',        vibrate: false };
 };
-const getMomentumSegColor = (i, filled, v) => {
+const getMomentumSegColor = (i: number, filled: number, v: number) => {
   if (i >= filled) return '#2A2A25';
   if (v >= 90) return '#7A9DB5';
   const r = i / (MOMENTUM_SEGMENTS - 1);
@@ -47,13 +82,13 @@ const getMomentumSegColor = (i, filled, v) => {
   return `rgb(${Math.round(93+r*119)},${Math.round(191-r*46)},${Math.round(138-r*138)})`;
 };
 
-const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }) => {
+const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }: { momentum?: number; compact?: boolean; minWidth?: number }) => {
   const v      = Math.round(momentum);
   const state  = getMomentumState(v);
   const isFlow = v >= 90;
   const filled = Math.round((v / 100) * MOMENTUM_SEGMENTS);
 
-  const boxStyle = {
+  const boxStyle: React.CSSProperties = {
     position: 'relative', overflow: 'hidden',
     background: isFlow
       ? 'linear-gradient(135deg,#2C3540 0%,#3E4E5E 25%,#5A6E80 50%,#3E4E5E 75%,#2C3540 100%)'
@@ -125,7 +160,7 @@ const MomentumMeter = ({ momentum = 0, compact = false, minWidth = 180 }) => {
 };
 
 // Non-negotiable icon component
-const NonNegIcon = ({ size = 14, color = "var(--ok)" }) => (
+const NonNegIcon = ({ size = 14, color = "var(--ok)" }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
     <path d="M5.5,5.5h37l-37,37h37Z" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
@@ -134,7 +169,7 @@ const NonNegIcon = ({ size = 14, color = "var(--ok)" }) => (
 // ============================================================
 // COMPLETION RING
 // ============================================================
-const CompletionRing = ({ done, total, size = 44 }) => {
+const CompletionRing = ({ done, total, size = 44 }: { done: number; total: number; size?: number }) => {
   const pctVal = total > 0 ? (done / total) * 100 : 0;
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
@@ -166,7 +201,7 @@ const CompletionRing = ({ done, total, size = 44 }) => {
 // ============================================================
 // TASK CARD
 // ============================================================
-const TaskCard = ({ task, checked, onToggle, color = "var(--accent)" }) => (
+const TaskCard = ({ task, checked, onToggle, color = "var(--accent)" }: { task: Task; checked?: boolean; onToggle: () => void; color?: string }) => (
   <div
     onClick={onToggle}
     style={{
@@ -200,7 +235,7 @@ const TaskCard = ({ task, checked, onToggle, color = "var(--accent)" }) => (
 // ============================================================
 // TASK COLUMN
 // ============================================================
-const TaskColumn = ({ title, tasks, color, done, total, checked, onToggle }) => (
+const TaskColumn = ({ title, tasks, color, done, total, checked, onToggle }: { title: string; tasks: Task[]; color: string; done: number; total: number; checked: CheckedMap; onToggle: (key: string) => void }) => (
   <div style={{
     background: 'var(--bg-1)',
     border: '1px solid var(--border-1)',
@@ -219,8 +254,8 @@ const TaskColumn = ({ title, tasks, color, done, total, checked, onToggle }) => 
         <TaskCard
           key={task.id || task.key}
           task={task}
-          checked={checked[task.id || task.key]}
-          onToggle={() => onToggle(task.id || task.key)}
+          checked={checked[(task.id || task.key)!]}
+          onToggle={() => onToggle((task.id || task.key)!)}
           color={color}
         />
       ))}
@@ -237,7 +272,7 @@ const TaskColumn = ({ title, tasks, color, done, total, checked, onToggle }) => 
 // ============================================================
 // MISSION EDIT MODAL
 // ============================================================
-const MissionModal = ({ mission, onSave, onClose }) => {
+const MissionModal = ({ mission, onSave, onClose }: { mission?: string; onSave?: (mission: string) => void; onClose: () => void }) => {
   const [val, setVal] = useState(mission || '');
 
   const handleSave = () => {
@@ -315,8 +350,8 @@ const MissionModal = ({ mission, onSave, onClose }) => {
 // ============================================================
 // CHALLENGE DETAIL MODAL (with YOUR OBJECTIVE + task editor)
 // ============================================================
-const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
-  const [localKpis, setLocalKpis] = useState(challenge?.kpis || []);
+const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }: { challenge: DashChallenge | null; type: ViewType; onClose: () => void; onUpdateTasks?: (challengeId: string | null | undefined, tasks: Task[]) => void }) => {
+  const [localKpis, setLocalKpis] = useState<Task[]>(challenge?.kpis || []);
   const [newTaskLabel, setNewTaskLabel] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -324,16 +359,16 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
 
   const addTask = () => {
     if (!newTaskLabel.trim()) return;
-    const newTask = { key: `kpi_${Date.now()}`, label: newTaskLabel.trim(), nonNeg: false };
+    const newTask: Task = { key: `kpi_${Date.now()}`, label: newTaskLabel.trim(), nonNeg: false };
     setLocalKpis([...localKpis, newTask]);
     setNewTaskLabel('');
   };
 
-  const removeTask = (key) => {
+  const removeTask = (key: string) => {
     setLocalKpis(localKpis.filter(k => k.key !== key));
   };
 
-  const toggleNonNeg = (key) => {
+  const toggleNonNeg = (key: string) => {
     setLocalKpis(localKpis.map(k => k.key === key ? { ...k, nonNeg: !k.nonNeg } : k));
   };
 
@@ -362,9 +397,9 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
               <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: accentColor, marginBottom: 6 }}>
                 ★ {type === 'main' ? 'CUSTOM' : 'SECONDARY'}
               </div>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, lineHeight: 1 }}>{challenge.name.toUpperCase()}</div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, lineHeight: 1 }}>{challenge.name!.toUpperCase()}</div>
               <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-warm)', marginTop: 6 }}>
-                DAY {challenge.dayNum} OF {challenge.totalDays} · {challenge.totalDays - challenge.dayNum} DAYS REMAINING
+                DAY {challenge.dayNum} OF {challenge.totalDays} · {challenge.totalDays! - challenge.dayNum!} DAYS REMAINING
               </div>
             </div>
             <div onClick={onClose} style={{
@@ -385,7 +420,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: 'var(--text-2)' }}>CONSISTENCY</div>
             </div>
             <div>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: accentColor }}>{pct(challenge.dayNum, challenge.totalDays)}%</div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: accentColor }}>{pct(challenge.dayNum!, challenge.totalDays!)}%</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: 'var(--text-2)' }}>COMPLETE</div>
             </div>
           </div>
@@ -428,7 +463,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
                 {isEditing ? (
                   <>
                     <div
-                      onClick={() => toggleNonNeg(kpi.key)}
+                      onClick={() => toggleNonNeg(kpi.key!)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6,
                         padding: '4px 10px',
@@ -440,7 +475,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
                       <NonNegIcon size={12} color={kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
                       <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                     </div>
-                    <div onClick={() => removeTask(kpi.key)} style={{
+                    <div onClick={() => removeTask(kpi.key!)} style={{
                       width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', color: 'var(--text-3)', fontSize: 16,
                     }}>×</div>
@@ -501,11 +536,11 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }) => {
 // ============================================================
 // CHALLENGE CARDS (max 2 secondary)
 // ============================================================
-const ChallengeCards = ({ challenges, onViewChallenge }) => {
+const ChallengeCards = ({ challenges, onViewChallenge }: { challenges: ChallengesShape; onViewChallenge: (c: DashChallenge, type: ViewType) => void }) => {
   const { main, secondary } = challenges;
   if (!main) return null;
 
-  const mainPct = pct(main.dayNum, main.totalDays);
+  const mainPct = pct(main.dayNum!, main.totalDays!);
   // Limit to 2 secondary challenges
   const visibleSecondary = (secondary || []).slice(0, 2);
 
@@ -533,10 +568,10 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
           ★ MAIN CHALLENGE
         </div>
         <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 42, lineHeight: 1, marginBottom: 4 }}>
-          {main.name.toUpperCase()}
+          {main.name!.toUpperCase()}
         </div>
         <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-warm)', letterSpacing: '.08em', marginBottom: 20 }}>
-          DAY {main.dayNum} OF {main.totalDays} · {main.totalDays - main.dayNum} DAYS REMAINING · STARTED {new Date(main.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}
+          DAY {main.dayNum} OF {main.totalDays} · {main.totalDays! - main.dayNum!} DAYS REMAINING · STARTED {new Date(main.start_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, marginBottom: 14 }}>
@@ -581,10 +616,10 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#7F77DD' }} />
               
               <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: '#7F77DD', marginBottom: 6 }}>SECONDARY</div>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, lineHeight: 1.1, marginBottom: 8 }}>{c.name.toUpperCase()}</div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-warm)', marginBottom: 12 }}>DAY {c.dayNum} · {c.totalDays - c.dayNum} LEFT</div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, lineHeight: 1.1, marginBottom: 8 }}>{c.name!.toUpperCase()}</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-warm)', marginBottom: 12 }}>DAY {c.dayNum} · {c.totalDays! - c.dayNum!} LEFT</div>
               <div style={{ height: 3, background: 'var(--bg-3)', borderRadius: 2 }}>
-                <div style={{ width: `${pct(c.dayNum, c.totalDays)}%`, height: '100%', background: '#7F77DD', borderRadius: 2 }} />
+                <div style={{ width: `${pct(c.dayNum!, c.totalDays!)}%`, height: '100%', background: '#7F77DD', borderRadius: 2 }} />
               </div>
             </div>
           ))}
@@ -609,15 +644,15 @@ const ChallengeCards = ({ challenges, onViewChallenge }) => {
 // ============================================================
 // REGIMEN EDITOR MODAL
 // ============================================================
-const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) => {
-  const [localRegimen, setLocalRegimen] = useState(() => JSON.parse(JSON.stringify(regimen || { days: {} })));
+const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }: { regimen?: Regimen | null; editDay: string; setEditDay: (day: string) => void; onSave: (regimen: Regimen) => void; onClose: () => void }) => {
+  const [localRegimen, setLocalRegimen] = useState<Regimen>(() => JSON.parse(JSON.stringify(regimen || { days: {} })));
   const [newTaskLabel, setNewTaskLabel] = useState('');
 
   const dayTasks = localRegimen.days?.[editDay] || [];
 
   const addTask = () => {
     if (!newTaskLabel.trim()) return;
-    const newTask = { id: `reg_${Date.now()}`, label: newTaskLabel.trim(), nonNeg: false };
+    const newTask: Task = { id: `reg_${Date.now()}`, label: newTaskLabel.trim(), nonNeg: false };
     setLocalRegimen(prev => ({
       ...prev,
       days: { ...prev.days, [editDay]: [...(prev.days?.[editDay] || []), newTask] },
@@ -625,14 +660,14 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
     setNewTaskLabel('');
   };
 
-  const removeTask = (taskId) => {
+  const removeTask = (taskId: string) => {
     setLocalRegimen(prev => ({
       ...prev,
       days: { ...prev.days, [editDay]: (prev.days?.[editDay] || []).filter(t => t.id !== taskId) },
     }));
   };
 
-  const toggleNonNeg = (taskId) => {
+  const toggleNonNeg = (taskId: string) => {
     setLocalRegimen(prev => ({
       ...prev,
       days: { ...prev.days, [editDay]: (prev.days?.[editDay] || []).map(t => t.id === taskId ? { ...t, nonNeg: !t.nonNeg } : t) },
@@ -693,7 +728,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
               }}>
                 <span style={{ flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 13 }}>{task.label}</span>
                 <div
-                  onClick={() => toggleNonNeg(task.id)}
+                  onClick={() => toggleNonNeg(task.id!)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '4px 10px',
@@ -705,7 +740,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
                   <NonNegIcon size={12} color={task.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
                   <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.05em', color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                 </div>
-                <div onClick={() => removeTask(task.id)} style={{
+                <div onClick={() => removeTask(task.id!)} style={{
                   width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', color: 'var(--text-3)', fontSize: 16,
                 }}>×</div>
@@ -761,11 +796,11 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }) =
 // ============================================================
 // REGIMEN WEEK BOX WITH HOVER TOOLTIP
 // ============================================================
-const RegimenWeekBox = ({ regimen, today, onEdit }) => {
-  const [hoveredDay, setHoveredDay] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+const RegimenWeekBox = ({ regimen, today, onEdit }: { regimen?: Regimen | null; today: string; onEdit: () => void }) => {
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  const handleMouseEnter = (day, e) => {
+  const handleMouseEnter = (day: string, e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredDay(day);
     setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
@@ -855,18 +890,53 @@ const RegimenWeekBox = ({ regimen, today, onEdit }) => {
 // ============================================================
 // MAIN DASHBOARD
 // ============================================================
+interface DashboardV2Props {
+  challenge?: DashChallenge | null;
+  challenges: ChallengesShape;
+  kpis: CheckedMap;
+  toggle: (key: string) => void;
+  checkins?: Record<string, number>;
+  userName: string;
+  onLogDay?: (done: number, total: number) => void;
+  loggedToday?: boolean;
+  onAddSecondary?: () => void;
+  onViewChallenge?: (c: DashChallenge, type: ViewType) => void;
+  onStartChallenge?: (...args: unknown[]) => void;
+  onUpdateChallengeTasks?: (challengeId: string | null | undefined, tasks: Task[]) => void;
+  regimen?: Regimen | null;
+  onUpdateRegimen: (regimen: Regimen) => void;
+  regimenChecked: CheckedMap;
+  toggleRegimen: (id: string) => void;
+  tempChecked: CheckedMap;
+  toggleTemp: (id: string) => void;
+  dayType?: string;
+  onSetDayType?: (type: string) => void;
+  secondaryKpis?: Record<string, CheckedMap>;
+  toggleSecondary?: (challengeId: string, key: string) => void;
+  talosInsight?: string | null;
+  onRefreshTalos?: () => void;
+  mission?: string;
+  onSaveMission?: (mission: string) => void;
+  momentum?: number;
+}
+
+interface ViewingChallenge {
+  challenge: DashChallenge;
+  type: ViewType;
+}
+
 const DashboardV2 = ({
-  challenge, challenges, kpis, toggle, checkins, userName, onLogDay, loggedToday,
-  onAddSecondary, onViewChallenge, onStartChallenge, onUpdateChallengeTasks,
+  challenge, challenges, kpis, toggle, userName, onLogDay, loggedToday,
+  onUpdateChallengeTasks,
   regimen, onUpdateRegimen, regimenChecked, toggleRegimen,
   tempChecked, toggleTemp, dayType, onSetDayType,
   secondaryKpis, toggleSecondary, talosInsight, onRefreshTalos, mission, onSaveMission, momentum = 0,
-}) => {
+}: DashboardV2Props) => {
   const isMobile = useIsMobile();
   const [showRegimenEditor, setShowRegimenEditor] = useState(false);
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [editDay, setEditDay] = useState(getTodayName());
-  const [viewingChallenge, setViewingChallenge] = useState(null);
+  const [viewingChallenge, setViewingChallenge] = useState<ViewingChallenge | null>(null);
 
   if (isMobile) {
     return (
@@ -899,22 +969,22 @@ const DashboardV2 = ({
 
   const secondary = challenges?.secondary || [];
   const secondaryTaskList = secondary[0]?.kpis || [];
-  const secondaryCheckedState = secondaryKpis?.[secondary[0]?.id] || {};
+  const secondaryCheckedState = secondaryKpis?.[secondary[0]?.id!] || {};
 
   const regimenTotal = todayTasks.length + todayTemp.length;
-  const regimenDone = todayTasks.filter(t => regimenChecked[t.id]).length + todayTemp.filter(t => tempChecked[t.id]).length;
-  const challengeDone = challengeKpis.filter(k => kpis[k.key]).length;
-  const secondaryDone = secondaryTaskList.filter(k => secondaryCheckedState[k.key]).length;
+  const regimenDone = todayTasks.filter(t => regimenChecked[t.id!]).length + todayTemp.filter(t => tempChecked[t.id!]).length;
+  const challengeDone = challengeKpis.filter(k => kpis[k.key!]).length;
+  const secondaryDone = secondaryTaskList.filter(k => secondaryCheckedState[k.key!]).length;
   const totalTasks = regimenTotal + challengeKpis.length + secondaryTaskList.length;
   const totalDone = regimenDone + challengeDone + secondaryDone;
 
   const regimenCheckedCombined = { ...regimenChecked, ...tempChecked };
-  const toggleRegimenCombined = (id) => {
+  const toggleRegimenCombined = (id: string) => {
     if (todayTasks.find(t => t.id === id)) toggleRegimen(id);
     else toggleTemp(id);
   };
 
-  const handleViewChallenge = (c, type) => {
+  const handleViewChallenge = (c: DashChallenge, type: ViewType) => {
     setViewingChallenge({ challenge: c, type });
   };
 
@@ -939,7 +1009,11 @@ const DashboardV2 = ({
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>CONSISTENCY</div>
             </div>
             <div style={{ textAlign: 'center' }}>
+<<<<<<< HEAD:src/components/pages/DashboardV2.jsx
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)', textShadow: '0 0 16px var(--accent)44' }}>{challenge ? pct(challenge.dayNum, challenge.totalDays) : 0}%</div>
+=======
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)' }}>{challenge ? pct(challenge.dayNum!, challenge.totalDays!) : 0}%</div>
+>>>>>>> 52f070282fa500026a05d9f7d4ccd807b6731df9:src/components/pages/DashboardV2.tsx
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>COMPLETE</div>
             </div>
           </div>
@@ -1026,10 +1100,10 @@ const DashboardV2 = ({
           <TaskColumn title={`REGIMEN · ${DAY_LABELS[today].toUpperCase()}`} tasks={[...todayTasks, ...todayTemp]} color="var(--ok)" done={regimenDone} total={regimenTotal} checked={regimenCheckedCombined} onToggle={toggleRegimenCombined} />
         )}
         {challengeKpis.length > 0 && (
-          <TaskColumn title={challenge.name.toUpperCase()} tasks={challengeKpis.map(k => ({ id: k.key, key: k.key, label: k.label, nonNeg: k.nonNeg }))} color="var(--accent)" done={challengeDone} total={challengeKpis.length} checked={kpis} onToggle={toggle} />
+          <TaskColumn title={challenge!.name!.toUpperCase()} tasks={challengeKpis.map(k => ({ id: k.key, key: k.key, label: k.label, nonNeg: k.nonNeg }))} color="var(--accent)" done={challengeDone} total={challengeKpis.length} checked={kpis} onToggle={toggle} />
         )}
         {secondary.length > 0 && secondary[0] && (
-          <TaskColumn title={secondary[0].name.toUpperCase()} tasks={secondaryTaskList.map(k => ({ id: k.key, key: k.key, label: k.label, nonNeg: k.nonNeg }))} color="#7F77DD" done={secondaryDone} total={secondaryTaskList.length} checked={secondaryCheckedState} onToggle={(key) => toggleSecondary && toggleSecondary(secondary[0].id, key)} />
+          <TaskColumn title={secondary[0].name!.toUpperCase()} tasks={secondaryTaskList.map(k => ({ id: k.key, key: k.key, label: k.label, nonNeg: k.nonNeg }))} color="#7F77DD" done={secondaryDone} total={secondaryTaskList.length} checked={secondaryCheckedState} onToggle={(key) => toggleSecondary && toggleSecondary(secondary[0].id!, key)} />
         )}
         {regimenTotal === 0 && challengeKpis.length === 0 && (
           <div style={{ gridColumn: '1 / -1', background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 48, textAlign: 'center' }}>
