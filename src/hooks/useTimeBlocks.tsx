@@ -1,9 +1,18 @@
 import { useState, useCallback } from "react";
-import type { SupabaseClientType, User } from "../types";
+import type { SupabaseClientType, SupabaseClientUntyped, User } from "../types";
 import type { Database } from "../types/supabase";
+import type { GoogleSyncHook } from "./useGoogleSync";
 
-type TimeBlock = Database["public"]["Tables"]["time_blocks"]["Row"];
-type TimeBlockInput = Database["public"]["Tables"]["time_blocks"]["Insert"] & { id?: string };
+// TODO(google-sync): gcal_event_id is added by supabase/google_schema.sql —
+// once that's applied and `supabase.ts` is regenerated, drop this
+// intersection and rely on the generated Row type directly.
+export type TimeBlock = Database["public"]["Tables"]["time_blocks"]["Row"] & {
+  gcal_event_id?: string | null;
+};
+type TimeBlockInput = Database["public"]["Tables"]["time_blocks"]["Insert"] & {
+  id?: string;
+  gcal_event_id?: string | null;
+};
 
 const toLocalDateStr = (d: Date = new Date()): string => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -21,9 +30,23 @@ const getWeekDates = (referenceDate: Date = new Date()): string[] => {
   });
 };
 
-export const useTimeBlocks = (sb: SupabaseClientType | null, user: User | null | undefined) => {
+export const useTimeBlocks = (
+  sb: SupabaseClientType | null,
+  user: User | null | undefined,
+  googleSync?: GoogleSyncHook
+) => {
   const [blocks, setBlocks] = useState<TimeBlock[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Persists a newly-created GCal event id both to the DB and local state,
+  // so a later edit within the same session sees it and PATCHes instead of
+  // creating a duplicate event. Fire-and-forget from the caller's side —
+  // never awaited by saveBlock, never blocks the UI.
+  const persistGcalEventId = useCallback(async (blockId: string, gcalEventId: string) => {
+    if (!sb) return;
+    await (sb as SupabaseClientUntyped).from("time_blocks").update({ gcal_event_id: gcalEventId }).eq("id", blockId);
+    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, gcal_event_id: gcalEventId } : b));
+  }, [sb]);
 
   const loadBlocks = useCallback(async (referenceDate: Date = new Date()) => {
     if (!sb || !user) return;
@@ -42,6 +65,7 @@ export const useTimeBlocks = (sb: SupabaseClientType | null, user: User | null |
 
   const saveBlock = useCallback(async (block: TimeBlockInput) => {
     if (!sb || !user) return null;
+    const wasUpdate = !!block.id;
     const row = {
       user_id: user.id,
       date: block.date || toLocalDateStr(),
@@ -53,24 +77,45 @@ export const useTimeBlocks = (sb: SupabaseClientType | null, user: User | null |
       is_regimen: block.is_regimen || false,
       completed: block.completed || false,
     };
+    let saved: TimeBlock | null;
     if (block.id) {
       // Update existing
       const { data } = await sb.from("time_blocks").update(row).eq("id", block.id).select().single();
       if (data) setBlocks(prev => prev.map(b => b.id === block.id ? data : b));
-      return data;
+      saved = data;
     } else {
       // Insert new
       const { data } = await sb.from("time_blocks").insert(row).select().single();
       if (data) setBlocks(prev => [...prev, data]);
-      return data;
+      saved = data;
     }
-  }, [sb, user]);
+
+    // Google Calendar sync is a fire-and-forget side effect — Supabase
+    // remains the source of truth and this call is never awaited here, so
+    // it can't slow down or block saveBlock's caller.
+    if (saved && googleSync?.isConnected) {
+      if (wasUpdate) {
+        void googleSync.updateCalendarEvent(saved);
+      } else {
+        void googleSync.pushBlockToCalendar(saved).then(eventId => {
+          if (eventId) void persistGcalEventId(saved!.id, eventId);
+        });
+      }
+    }
+
+    return saved;
+  }, [sb, user, googleSync, persistGcalEventId]);
 
   const deleteBlock = useCallback(async (blockId: string) => {
     if (!sb || !user) return;
+    const block = blocks.find(b => b.id === blockId);
     await sb.from("time_blocks").delete().eq("id", blockId).eq("user_id", user.id);
     setBlocks(prev => prev.filter(b => b.id !== blockId));
-  }, [sb, user]);
+
+    if (block?.gcal_event_id && googleSync?.isConnected) {
+      void googleSync.deleteCalendarEvent(block.gcal_event_id);
+    }
+  }, [sb, user, blocks, googleSync]);
 
   const toggleComplete = useCallback(async (blockId: string) => {
     if (!sb || !user) return;
@@ -78,9 +123,15 @@ export const useTimeBlocks = (sb: SupabaseClientType | null, user: User | null |
     if (!block) return;
     const newVal = !block.completed;
     await sb.from("time_blocks").update({ completed: newVal }).eq("id", blockId);
-    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, completed: newVal } : b));
+    const updated = { ...block, completed: newVal };
+    setBlocks(prev => prev.map(b => b.id === blockId ? updated : b));
+
+    if (googleSync?.isConnected) {
+      void googleSync.updateCalendarEvent(updated);
+    }
+
     return newVal;
-  }, [sb, user, blocks]);
+  }, [sb, user, blocks, googleSync]);
 
   return { blocks, loading, loadBlocks, saveBlock, deleteBlock, toggleComplete, getWeekDates };
 };
