@@ -32,3 +32,6 @@ npm-debug.log*
 
 #
 App.jsx.backup
+
+#Claude file
+CLAUDE.md

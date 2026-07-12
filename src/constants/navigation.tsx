@@ -52,7 +52,8 @@ export const IconTalos = () => (
 );
 
 // Generic icon component for custom paths
-export const NavIcon = ({ d, d2, size = 20, strokeW = 1.5 }) => (
+type NavIconProps = { d: string; d2?: string; size?: number; strokeW?: number };
+export const NavIcon = ({ d, d2, size = 20, strokeW = 1.5 }: NavIconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round">
     <path d={d} />{d2 && <path d={d2} />}
@@ -74,7 +75,8 @@ export const IconSchedule = () => (
 );
 
 // Navigation items
-export const NAV = [
+export type NavItem = { id: string; icon: React.ReactElement; tip: string };
+export const NAV: NavItem[] = [
   { id: "home",     icon: <IconDashboard />, tip: "Dashboard" },
   { id: "wall",     icon: <IconTracking />,  tip: "The Wall" },
   { id: "library",  icon: <IconLibrary />,   tip: "Library" },
