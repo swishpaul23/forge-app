@@ -2023,20 +2023,17 @@ const makeCSS = () => `
 // SPARK CELEBRATION (completion animation)
 // ============================================================
 const SparkCanvas = ({ trigger }: { trigger: boolean }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const particlesRef = useRef<any[]>([]);
-  const frameRef = useRef<number | null>(null);
+  const canvasRef = useRef(null);
+  const particlesRef = useRef([]);
+  const frameRef = useRef(null);
   const prevTrigger = useRef(false);
 
-  const burst = (canvas: any) => {
+  const burst = (canvas) => {
     const W = canvas.width, H = canvas.height;
     const ctx = canvas.getContext("2d");
 
     class Spark {
-      x: number; y: number; vx: number; vy: number; gravity: number;
-      isStreak: boolean; size: number; life: number; maxLife: number;
-      px: number; py: number; color: string;
-      constructor(x: any, y: any, fromSide: any) {
+      constructor(x, y, fromSide) {
         this.x = x; this.y = y;
         // From sides: angle toward center-up; from bottom: spread upward
         let angle, speed;
@@ -2067,7 +2064,7 @@ const SparkCanvas = ({ trigger }: { trigger: boolean }) => {
         this.x += this.vx; this.y += this.vy;
         this.life++;
       }
-      draw(ctx: any) {
+      draw(ctx) {
         const t = this.life / this.maxLife;
         const alpha = t < 0.15 ? t / 0.15 : 1 - ((t - 0.15) / 0.85);
         ctx.globalAlpha = Math.max(0, alpha * 0.95);
@@ -2086,7 +2083,7 @@ const SparkCanvas = ({ trigger }: { trigger: boolean }) => {
       get dead() { return this.life >= this.maxLife || this.y > H + 30; }
     }
 
-    const add = (x: any, y: any, side: any, count: any) => {
+    const add = (x, y, side, count) => {
       for (let i = 0; i < count; i++) particlesRef.current.push(new Spark(x, y, side));
     };
 
@@ -2150,10 +2147,10 @@ const SparkCanvas = ({ trigger }: { trigger: boolean }) => {
 
 // ── Welding-sparks canvas (landing only) ──────────────────
 const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
-  const canvasRef  = useRef<HTMLCanvasElement | null>(null);
-  const particles  = useRef<any[]>([]);
-  const rafRef     = useRef<number | null>(null);
-  const intervalsRef = useRef<any[]>([]);
+  const canvasRef  = useRef(null);
+  const particles  = useRef([]);
+  const rafRef     = useRef(null);
+  const intervalsRef = useRef([]);
 
   const SPEED = 0.75; // 25% faster than original
 
@@ -2162,10 +2159,10 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
     if (!canvas) return;
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d");
 
     // ── particle helpers ──
-    function spawnStream(x: any, y: any, count: any, intensity: any) {
+    function spawnStream(x, y, count, intensity) {
       intensity = intensity || 1;
       for (let i = 0; i < count; i++) {
         const fanW  = 0.65 + intensity * 0.25;
@@ -2188,7 +2185,7 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
       }
     }
 
-    function streamSparks(getPos: any, totalMs: any, pps: any) {
+    function streamSparks(getPos, totalMs, pps) {
       pps = pps || 60;
       const interval = 1000/pps;
       const end = performance.now()+totalMs;
@@ -2202,7 +2199,7 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
     }
 
     function drawFrame() {
-      ctx.clearRect(0,0,canvas?.width,canvas?.height);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
       const arr = particles.current;
       for (let i=arr.length-1;i>=0;i--) {
         const p=arr[i];
@@ -2247,17 +2244,17 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
     // Letters are rendered in a hidden div; we measure their positions
     const letterEls = Array.from(document.querySelectorAll(".forge-stamp-letter"));
 
-    function getBase(idx: any) {
+    function getBase(idx) {
       const el=letterEls[idx];
       if (!el) return {x:window.innerWidth/2,y:window.innerHeight/2};
       const r=el.getBoundingClientRect();
       return {x:r.left+r.width/2, y:r.top+r.height*0.78};
     }
 
-    function forgeLetter(idx: any, startDelay: any) {
+    function forgeLetter(idx, startDelay) {
       return new Promise(resolve => {
         setTimeout(() => {
-          const el=letterEls[idx] as HTMLElement;
+          const el=letterEls[idx];
           if (!el) { resolve(); return; }
           el.style.transition="none";
           el.style.opacity="1";
@@ -2279,13 +2276,13 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
 
     // bar fill
     const barEl = document.getElementById("forge-landing-bar");
-    function fillBar(duration: any) {
+    function fillBar(duration) {
       if (!barEl) return;
       barEl.style.width="0%";
       const start=performance.now();
-      function tick(now: any) {
+      function tick(now) {
         const t=Math.min((now-start)/duration,1);
-        barEl!.style.width=(Math.pow(t,0.55)*100)+"%";
+        barEl.style.width=(Math.pow(t,0.55)*100)+"%";
         if(t<1) requestAnimationFrame(tick);
       }
       requestAnimationFrame(tick);
@@ -2370,7 +2367,7 @@ const MIN_LOGIN_MS = 1400;
 const LoginLoader = ({ onDone, authReady }: { onDone: () => void; authReady: boolean }) => {
   const [minElapsed, setMinElapsed] = useState(false);
   const [visible,    setVisible]    = useState(false);
-  const barRef = useRef<HTMLDivElement | null>(null);
+  const barRef = useRef(null);
 
   useEffect(() => {
     // Fade in text
@@ -2380,7 +2377,7 @@ const LoginLoader = ({ onDone, authReady }: { onDone: () => void; authReady: boo
       if (!barRef.current) return;
       const start = performance.now();
       const dur = 1000;
-      function tick(now: any) {
+      function tick(now) {
         const prog = Math.min((now-start)/dur,1);
         const e = 1-Math.pow(1-prog,2.2);
         if (barRef.current) barRef.current.style.width=(e*100)+"%";
@@ -2608,17 +2605,17 @@ const OnboardInduct = ({ onDone, userName }: { onDone: () => void; userName: str
 const DIFF_COLOR = { Hard:"#BF5D5D", Intense:"#D4B22A", Moderate:"#5DBF8A", "You decide":"#4A8FD4" };
 
 const OnboardChallenge = ({ onStart, onSkip }: { onStart: (tpl: any, customTasks?: any) => void; onSkip: () => void }) => {
-  const [selected,   setSelected]   = useState<any>(null);
+  const [selected,   setSelected]   = useState(null);
   const [editTasks,  setEditTasks]  = useState(false);
-  const [tasks,      setTasks]      = useState<any[]>([]);
-  const [nonNegs,    setNonNegs]    = useState<string[]>([]); // task ids that are non-negotiable
+  const [tasks,      setTasks]      = useState([]);
+  const [nonNegs,    setNonNegs]    = useState([]); // task ids that are non-negotiable
   const templates = TEMPLATES.filter(t => t.id !== "custom");
   const t = selected || templates[0];
 
   // Sync tasks when selection changes
-  const selectTemplate = (tmpl: any) => {
+  const selectTemplate = (tmpl) => {
     setSelected(tmpl);
-    setTasks(tmpl.kpis.map((k: any,i: any) => ({ id:i, label:k.label, cat:k.cat })));
+    setTasks(tmpl.kpis.map((k,i) => ({ id:i, label:k.label, cat:k.cat })));
     setNonNegs([]); // reset non-negs on template change
     setEditTasks(false);
   };
@@ -2629,9 +2626,9 @@ const OnboardChallenge = ({ onStart, onSkip }: { onStart: (tpl: any, customTasks
   }, []);
 
   const addTask    = () => setTasks(ts => [...ts, { id:Date.now(), label:"", cat:"other" }]);
-  const removeTask = (id: any) => { setTasks(ts => ts.filter(x => x.id !== id)); setNonNegs(ns => ns.filter(n => n !== id)); };
-  const updateTask = (id: any, val: any) => setTasks(ts => ts.map(x => x.id===id ? {...x, label:val} : x));
-  const toggleNonNeg = (id: any) => setNonNegs(ns => ns.includes(id) ? ns.filter(n => n !== id) : [...ns, id]);
+  const removeTask = (id) => { setTasks(ts => ts.filter(x => x.id !== id)); setNonNegs(ns => ns.filter(n => n !== id)); };
+  const updateTask = (id, val) => setTasks(ts => ts.map(x => x.id===id ? {...x, label:val} : x));
+  const toggleNonNeg = (id) => setNonNegs(ns => ns.includes(id) ? ns.filter(n => n !== id) : [...ns, id]);
   const validTasks = tasks.filter(t => t.label.trim());
 
   return (
@@ -2812,7 +2809,7 @@ const OnboardChallenge = ({ onStart, onSkip }: { onStart: (tpl: any, customTasks
             <div style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:8.5,letterSpacing:".28em",textTransform:"uppercase",color:"var(--text-2)",marginBottom:12}}>
               What you'll build
             </div>
-            {t.benefits.map((b: any) =>(
+            {t.benefits.map(b=>(
               <div key={b} style={{display:"flex",gap:10,marginBottom:8,alignItems:"flex-start"}}>
                 <span style={{color:"var(--accent)",fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:10,marginTop:1}}>◆</span>
                 <span style={{fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)',fontSize:11,color:"var(--text-1)",lineHeight:1.6}}>{b}</span>
@@ -2859,10 +2856,10 @@ const OnboardChallenge = ({ onStart, onSkip }: { onStart: (tpl: any, customTasks
 // ============================================================
 // DEEP WORK ERROR BOUNDARY
 // ============================================================
-class DeepWorkBoundary extends React.Component<any, any> {
-  constructor(props: any) { super(props); this.state = { crashed: false, error: null }; }
-  static getDerivedStateFromError(error: any) { return { crashed: true, error }; }
-  componentDidCatch(error: any, info: any) { console.error("[DeepWork crash]", error, info); }
+class DeepWorkBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { crashed: false, error: null }; }
+  static getDerivedStateFromError(error) { return { crashed: true, error }; }
+  componentDidCatch(error, info) { console.error("[DeepWork crash]", error, info); }
   render() {
     if (this.state.crashed) return (
       <div style={{position:"fixed",inset:0,background:"#080807",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:24}}>
@@ -2884,7 +2881,7 @@ const TIMER_PRESETS = [
   { label:"Custom",     work:25, brk:5  },
 ];
 
-const fmt = (s: any) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
 const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }: { challenge: Challenge; kpis: KpiMap; toggle: (key: string) => void; onExit: () => void; sb: Sb; user: User | null | undefined; onSessionSaved: () => void }) => {
   const safeKpis = (challenge && challenge.kpis) ? challenge.kpis : [];
@@ -2896,19 +2893,19 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
   const [customBrk,   setCustomBrk]  = useState(5);
   const [phase,       setPhase]       = useState("idle");   // idle | work | break | paused | summary
   const [timeLeft,    setTimeLeft]    = useState(0);
-  const [pausedPhase, setPausedPhase] = useState<string | null>(null);  // remembers work|break when paused
+  const [pausedPhase, setPausedPhase] = useState(null);  // remembers work|break when paused
   const [cycle,       setCycle]       = useState(0);
   const [totalFocused,setTotalFocused]= useState(0);
   const [sessionTasks,setSessionTasks]= useState(doneTasks);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSaved, setSessionSaved] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sessionStartRef = useRef<number | null>(null);
+  const timerRef = useRef(null);
+  const sessionStartRef = useRef(null);
 
   const workSecs = () => preset === 3 ? customWork * 60 : TIMER_PRESETS[preset].work * 60;
   const brkSecs  = () => preset === 3 ? customBrk  * 60 : TIMER_PRESETS[preset].brk  * 60;
 
-  const saveSession = async (duration: any, cycles: any, tasks: any) => {
+  const saveSession = async (duration, cycles, tasks) => {
     if (!sb || !user || sessionSaved) return;
     if (duration < 30) {
       // Don't save, but let user know why
@@ -2930,7 +2927,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
 
   const playBeep = () => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       // Resume context — required by autoplay policy in production
@@ -2971,7 +2968,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
     setPausedPhase(null);
   };
 
-  const [saveStatus, setSaveStatus] = useState<string | null>(null); // null | "saved" | "min_time" | "error"
+  const [saveStatus, setSaveStatus] = useState(null); // null | "saved" | "min_time" | "error"
 
   const endSession = async () => {
     clearInterval(timerRef.current);
@@ -3297,7 +3294,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }: { tasks: Kpi[]; taskSt
             {getSubMessage()}
           </div>
           <div className="ring-cats">
-            {catSummary.map(([cat, s]: [any, any]) => {
+            {catSummary.map(([cat, s]) => {
               const info = TASK_CATEGORIES[cat] || TASK_CATEGORIES.other;
               return (
                 <div key={cat} style={{
@@ -3479,7 +3476,7 @@ const CheckInBar = ({ mode, setMode, recoveryUsed, onRecoveryClick, scaledDaysTh
 // ============================================================
 const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { challenges: ChallengesState; onAddSecondary: () => void; onViewChallenge: (c: Challenge, type: string) => void }) => {
   const { main, secondary } = challenges;
-  const mainPct   = pct(main?.dayNum, main?.totalDays);
+  const mainPct   = pct(main.dayNum, main.totalDays);
   const remaining = 3 - secondary.length;
 
   return (
@@ -3490,11 +3487,11 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { chall
         <div className="arena-main" onClick={() => onViewChallenge(main, "main")}>
           <div style={{ position:"absolute", top:8, right:12, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".14em", color:"var(--accent)", zIndex:2, opacity:.7 }}>TAP TO VIEW ↗</div>
           <div className="arena-main-crown">Main Challenge</div>
-          <div className="arena-main-name">{main?.name}</div>
+          <div className="arena-main-name">{main.name}</div>
           <div className="arena-main-meta">
-            {main?.dayNum < 1
-              ? <>STARTS {main?.created_at ? new Date(main?.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase() : "SOON"}</>
-              : <>DAY {main?.dayNum} OF {main?.totalDays} &nbsp;·&nbsp; {main?.totalDays - main?.dayNum} DAYS REMAINING{main?.created_at && <>&nbsp;·&nbsp; STARTED {new Date(main?.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase()}</>}</>
+            {main.dayNum < 1
+              ? <>STARTS {main.created_at ? new Date(main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase() : "SOON"}</>
+              : <>DAY {main.dayNum} OF {main.totalDays} &nbsp;·&nbsp; {main.totalDays - main.dayNum} DAYS REMAINING{main.created_at && <>&nbsp;·&nbsp; STARTED {new Date(main.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }).toUpperCase()}</>}</>
             }
           </div>
 
@@ -3509,7 +3506,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { chall
             <div className="fill" style={{ width:`${mainPct}%` }} />
           </div>
           <div className="flex between mt8 f-mono c-2" style={{ fontSize:9, letterSpacing:".06em" }}>
-            <span>DAY 1</span><span>{mainPct}%</span><span>DAY {main?.totalDays}</span>
+            <span>DAY 1</span><span>{mainPct}%</span><span>DAY {main.totalDays}</span>
           </div>
 
           <div style={{
@@ -3518,7 +3515,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { chall
             fontSize:"clamp(80px,10vw,130px)",
             color:"var(--text-3)", letterSpacing:".02em", lineHeight:.85,
             pointerEvents:"none", userSelect:"none", opacity:.5,
-          }}>{main?.dayNum}</div>
+          }}>{main.dayNum}</div>
         </div>
 
         {/* SECONDARY + SLOTS — right column */}
@@ -3546,7 +3543,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { chall
             <div key={`slot-${i}`} className="arena-slot" onClick={onAddSecondary}>
               <div className="arena-slot-icon">+</div>
               <div className="arena-slot-label">Add Secondary</div>
-              <div className="arena-slot-hint">Must end within {main?.totalDays} days</div>
+              <div className="arena-slot-hint">Must end within {main.totalDays} days</div>
             </div>
           ))}
         </div>
@@ -3574,7 +3571,7 @@ const MOCK_INSIGHTS = {
 const AIInsight = ({ tone, mission, challenge, kpis, checkins }: { tone: string; mission: string; challenge: Challenge; kpis: KpiMap; checkins: ScoreMap }) => {
   const [loading,    setLoading]    = useState(false);
   const [insight,    setInsight]    = useState("");
-  const [lastUpdate, setLastUpdate] = useState<any>(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   // Build a data snapshot from real state
   const buildContext = () => {
@@ -3849,7 +3846,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
             {/* Section header with inline progress */}
             <div style={{ marginBottom:12, paddingBottom:10, borderBottom:"1px solid var(--border-0)" }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-1)", display:"flex", alignItems:"center", gap:8, fontWeight:500 }}>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:11, letterSpacing:".12em", textTransform:"uppercase", color:"var(--text-1)", display:"flex", alignItems:"center", gap:8, fontWeight:500 }}>
                   <span style={{ color:"var(--accent)", opacity:.7 }}>◈</span> {c.name}
                 </div>
                 <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:10, color: secDone === secTotal && secTotal > 0 ? "var(--ok)" : "var(--text-2)", letterSpacing:".08em" }}>
@@ -4002,10 +3999,10 @@ const LogDayBar = ({ done, total, logged, onLog }: { done: number; total: number
 const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; loading?: boolean }) => {
   const [range, setRange] = useState("1W"); // 1D, 1W, 1M
   const [showAll, setShowAll] = useState(false);
-  const [hoveredBar, setHoveredBar] = useState<any>(null);
+  const [hoveredBar, setHoveredBar] = useState(null);
 
   // Format duration
-  const fmtDur = (secs: any) => {
+  const fmtDur = (secs) => {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
     if (h > 0) return `${h}:${String(m).padStart(2,"0")}`;
@@ -4013,13 +4010,13 @@ const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; l
   };
 
   // Format date for session list
-  const fmtSessionDate = (dateStr: any) => {
+  const fmtSessionDate = (dateStr) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
   };
 
   // Format date for chart tooltip
-  const fmtChartDate = (dateStr: any) => {
+  const fmtChartDate = (dateStr) => {
     const d = new Date(dateStr + "T00:00:00");
     return d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
   };
@@ -4056,7 +4053,7 @@ const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; l
   const maxMins = Math.max(...graphData.map(d => d.minutes), 10); // Min 10 for scale
 
   // Calculate Y-axis ticks (auto-scale)
-  const getYTicks = (max: any) => {
+  const getYTicks = (max) => {
     if (max <= 15) return [0, 5, 10, 15];
     if (max <= 30) return [0, 10, 20, 30];
     if (max <= 60) return [0, 15, 30, 45, 60];
@@ -4261,9 +4258,9 @@ const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; l
 // ============================================================
 // WALL
 // ============================================================
-const groupByMonth = (wall: any) => {
+const groupByMonth = (wall) => {
   const months = {};
-  wall.forEach((d: any) => {
+  wall.forEach(d => {
     const key = d.date.slice(0, 7);
     const label = new Date(d.date + "T00:00:00").toLocaleString("en-US", { month: "long", year: "numeric" });
     if (!months[key]) months[key] = { label, days: [] };
@@ -4308,17 +4305,17 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
   }, [challenges.main, challengeHistory, selectedId]);
 
   // Format date range
-  const fmtDateRange = (startDate: any, totalDays: any) => {
+  const fmtDateRange = (startDate, totalDays) => {
     if (!startDate) return "";
     const start = new Date(startDate + "T12:00:00");
     const end = new Date(start);
     end.setDate(end.getDate() + totalDays - 1);
-    const fmt = (d: any) => d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
+    const fmt = (d) => d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
     return `${fmt(start)} - ${fmt(end)}`;
   };
 
   // Get challenge status
-  const getStatus = (ch: any) => {
+  const getStatus = (ch) => {
     if (!ch.archived) return { label:"Active", color:"var(--ok)" };
     if (ch.completedAt) return { label:"Completed", color:"var(--accent)" };
     return { label:"Quit", color:"var(--text-2)" };
@@ -4330,9 +4327,9 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
     const list = [];
     // Active challenges first
     [challenges.main, ...(challenges.secondary || [])].filter(Boolean).forEach(c => {
-      if (!seen.has(c?.id)) {
-        seen.add(c?.id);
-        list.push({ ...c, startDate: c?.start_date, archived: false });
+      if (!seen.has(c.id)) {
+        seen.add(c.id);
+        list.push({ ...c, startDate: c.start_date, archived: false });
       }
     });
     // Then history
@@ -4711,8 +4708,8 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }: { challen
   const [tasks, setTasks] = useState((challenge.kpis || []).map(k => ({ ...k })));
 
   const addTask    = () => setTasks(t => [...t, { key:`task_${Date.now()}`, label:"", cat:"other" }]);
-  const removeTask = (key: any) => setTasks(t => t.filter(x => x.key !== key));
-  const updateTask = (key: any, val: any) => setTasks(t => t.map(x => x.key === key ? { ...x, label:val } : x));
+  const removeTask = (key) => setTasks(t => t.filter(x => x.key !== key));
+  const updateTask = (key, val) => setTasks(t => t.map(x => x.key === key ? { ...x, label:val } : x));
 
   const saveEdits = () => {
     onEdit({ ...challenge, kpis: tasks.filter(t => t.label.trim()) });
@@ -4817,20 +4814,20 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }: { challen
 // ============================================================
 const Library = ({ onPick, isSecondaryMode, onClose, hasMain }: { onPick: (tpl: any, isSecondary?: boolean, nonNegs?: any) => void; isSecondaryMode?: boolean; onClose?: () => void; hasMain?: boolean }) => {
   const [mode,   setMode]   = useState(isSecondaryMode || hasMain ? "secondary" : "main");
-  const [active, setActive] = useState<string | null>(null); // selected template for detail panel
-  const [selectedNonNegs, setSelectedNonNegs] = useState<string[]>([]); // non-negotiable task keys
+  const [active, setActive] = useState(null); // selected template for detail panel
+  const [selectedNonNegs, setSelectedNonNegs] = useState([]); // non-negotiable task keys
   const [editingTasks, setEditingTasks] = useState(false);
 
   const selected = TEMPLATES.find(t => t.id === active);
   const isSecMode = mode === "secondary" || isSecondaryMode;
 
   // Reset non-negs when template changes
-  const handleSelectTemplate = (id: any) => {
+  const handleSelectTemplate = (id) => {
     if (active !== id) setSelectedNonNegs([]);
     setActive(prev => prev === id ? null : id);
   };
 
-  const toggleNonNeg = (key: any) => {
+  const toggleNonNeg = (key) => {
     setSelectedNonNegs(prev => 
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
@@ -5123,16 +5120,16 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
   const [mission,   setMission]   = useState("");
   const [tasks,     setTasks]     = useState(
     tpl?.kpis?.length > 0
-      ? tpl.kpis.map((k: any,i: any) => ({ id: i, label: k.label }))
+      ? tpl.kpis.map((k,i) => ({ id: i, label: k.label }))
       : [{ id: 0, label: "" }]
   );
-  const [nonNeg,    setNonNeg]    = useState<string[]>([]);
+  const [nonNeg,    setNonNeg]    = useState([]);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split("T")[0]);
 
-  const addTask      = () => setTasks((t: any) => [...t, { id: Date.now(), label: "" }]);
-  const removeTask   = (id: any) => setTasks((t: any) => t.filter((x: any) => x.id !== id));
-  const updateTask   = (id: any, val: any) => setTasks((t: any) => t.map((x: any) => x.id === id ? { ...x, label: val } : x));
-  const toggleNonNeg = (id: any) => setNonNeg(n => n.includes(id) ? n.filter(x => x !== id) : [...n, id]);
+  const addTask      = () => setTasks(t => [...t, { id: Date.now(), label: "" }]);
+  const removeTask   = (id) => setTasks(t => t.filter(x => x.id !== id));
+  const updateTask   = (id, val) => setTasks(t => t.map(x => x.id === id ? { ...x, label: val } : x));
+  const toggleNonNeg = (id) => setNonNeg(n => n.includes(id) ? n.filter(x => x !== id) : [...n, id]);
 
   const STEPS = isSecondary
     ? ["Setup", "Tasks", "Start Date", "Confirm"]
@@ -5143,11 +5140,11 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
     if (step === 1) return name.trim().length > 0 && (!maxDays || parseInt(days) <= maxDays);
     if (!isSecondary && step === 2) return mission.trim().length > 0;
     const taskStep = isSecondary ? 2 : 3;
-    if (step === taskStep) return tasks.some((t: any) => t.label.trim().length > 0);
+    if (step === taskStep) return tasks.some(t => t.label.trim().length > 0);
     return true;
   };
 
-  const validTasks = tasks.filter((t: any) => t.label.trim());
+  const validTasks = tasks.filter(t => t.label.trim());
 
   const handleStart = () => {
     onStart({ name, days, mission, nonNeg, tasks: validTasks, isSecondary, startDate });
@@ -5244,7 +5241,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
               </div>
             </div>
             <div className="flex col g6">
-              {tasks.map((t: any, i: any) => (
+              {tasks.map((t, i) => (
                 <div key={t.id} className="task-row">
                   <span className="task-drag">⠿</span>
                   <input
@@ -5274,7 +5271,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
               {validTasks.length === 0 && (
                 <div className="f-mono c-2" style={{ fontSize:12 }}>No tasks defined — go back and add tasks first.</div>
               )}
-              {validTasks.map((t: any) => {
+              {validTasks.map(t => {
                 const isNN = nonNeg.includes(t.id);
                 return (
                   <div key={t.id} className="task-row" onClick={() => toggleNonNeg(t.id)}
@@ -5372,7 +5369,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
               )}
               <div style={{ padding:"12px 14px", background:"var(--bg-2)", borderRadius:7 }}>
                 <div className="f-mono c-2 mb8" style={{ fontSize:9, letterSpacing:".12em", textTransform:"uppercase" }}>Daily Tasks ({validTasks.length})</div>
-                {validTasks.map((t: any) => (
+                {validTasks.map(t => (
                   <div key={t.id} style={{ fontSize:14, color:"var(--text-1)", padding:"4px 0", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
                     <span style={{ color: nonNeg.includes(t.id) ? "var(--warn)" : "var(--text-2)" }}>
                       {nonNeg.includes(t.id) ? "◆" : "—"}
@@ -5422,8 +5419,8 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
 // PARTNERS PAGE
 // ============================================================
 const Partners = ({ user, profile, challenges, sb }: { user: User | null | undefined; profile: any; challenges: ChallengesState; sb: Sb }) => {
-  const [partners,        setPartners]     = useState<any[]>([]);
-  const [activePartner,   setActivePartner]= useState<any>(null);
+  const [partners,        setPartners]     = useState([]);
+  const [activePartner,   setActivePartner]= useState(null);
   const [partnersLoading, setPartnersLoading] = useState(true);
   const [copied,          setCopied]       = useState(false);
   const [joinCode,        setJoinCode]     = useState("");
@@ -5437,28 +5434,28 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
   const [flareUsedMap,    setFlareUsedMap] = useState({});
   const [rxnSent,         setRxnSent]      = useState({});
   const [noteText,        setNoteText]     = useState("");
-  const [postedNote,      setPostedNote]   = useState<any>(null); // { text, timestamp }
+  const [postedNote,      setPostedNote]   = useState(null); // { text, timestamp }
   const [editingNote,     setEditingNote]  = useState(false);
   const [showModeSwitch,  setShowModeSwitch] = useState(false);
   const [switchCode,      setSwitchCode]   = useState("");
   const [switchError,     setSwitchError]  = useState("");
   const [autoRefresh,     setAutoRefresh]  = useState(false);
-  const [lastRefresh,     setLastRefresh]  = useState<any>(null);
+  const [lastRefresh,     setLastRefresh]  = useState(null);
   const [showTutorial,    setShowTutorial] = useState(false);
   const [tutorialStep,    setTutorialStep] = useState(0);
-  const cdIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cdIntervalRef = useRef(null);
+  const autoRefreshRef = useRef(null);
   const [cdStr,           setCdStr]        = useState("--:--:--");
   const [cdUrgent,        setCdUrgent]     = useState(false);
 
   const myCode = profile?.invite_code || "";
 
   // Helpers
-  const avatarColor = (name: any) => {
+  const avatarColor = (name) => {
     const colors = ["#D4922A","#5DBF8A","#4A8FD4","#8B5CF6","#BF5D5D","#0DBEAA","#E07B4A","#D4B22A"];
     return name ? colors[name.charCodeAt(0) % colors.length] : colors[0];
   };
-  const initials = (name: any) => {
+  const initials = (name) => {
     if (!name) return "?";
     const parts = name.trim().split(" ");
     return parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
@@ -5598,12 +5595,12 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
     try {
       if (!joinCode.trim()) throw new Error("Enter an invite code.");
       if (joinCode.trim().toUpperCase() === myCode) throw new Error("That's your own code.");
-      const { data: tp, error: pErr } = await sb!.from("profiles").select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
+      const { data: tp, error: pErr } = await sb.from("profiles").select("id,full_name").eq("invite_code", joinCode.trim().toUpperCase()).maybeSingle();
       if (pErr) throw new Error(pErr.message);
       if (!tp) throw new Error("No user found with that code.");
-      const { data: ex } = await sb!.from("partnerships").select("id,status").or(`and(user_id.eq.${user?.id},partner_id.eq.${tp.id}),and(user_id.eq.${tp.id},partner_id.eq.${user?.id})`).maybeSingle();
+      const { data: ex } = await sb.from("partnerships").select("id,status").or(`and(user_id.eq.${user.id},partner_id.eq.${tp.id}),and(user_id.eq.${tp.id},partner_id.eq.${user.id})`).maybeSingle();
       if (ex) throw new Error(ex.status === "active" ? "Already partners." : "Request already sent.");
-      const { error: iErr } = await sb!.from("partnerships").insert({ user_id:user?.id, partner_id:tp.id, invite_code:`${user?.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status:"active", protocol:selectedProto });
+      const { error: iErr } = await sb.from("partnerships").insert({ user_id:user.id, partner_id:tp.id, invite_code:`${user.id.slice(0,8)}${tp.id.slice(0,8)}`.toUpperCase(), status:"active", protocol:selectedProto });
       if (iErr) throw new Error(iErr.message);
       const shouldShowTutorial = !profile?.partner_tutorial_seen;
       setJoinCode(""); setShowAdd(false); setShowProto(false);
@@ -5617,9 +5614,9 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
     finally { setJoinLoading(false); }
   };
 
-  const removePartner = async (id: any) => {
+  const removePartner = async (id) => {
     if (!window.confirm("Remove this partner?")) return;
-    await sb?.from("partnerships").delete().eq("id", id);
+    await sb.from("partnerships").delete().eq("id", id);
     setActivePartner(null); await loadPartners();
   };
 
@@ -5630,11 +5627,11 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
   const myStatus = "gold"; // placeholder — real impl reads kpis from parent
 
   // Get partner status dot color
-  const statusColor = (s: any) => s==="gold" ? "#F5C842" : s==="ember" ? "var(--accent)" : "#2E2C28";
-  const statusLabel = (s: any) => s==="gold" ? "Target Met" : s==="ember" ? "Baseline Met" : "Awaiting Execution";
-  const statusSince = (s: any) => s==="gold" ? "Logged 45m ago" : s==="ember" ? "Logged 2h ago" : "Not logged yet today";
-  const statusBorder = (s: any) => s==="gold" ? "#F5C84230" : s==="ember" ? "var(--border-accent)" : "var(--border-0)";
-  const statusBg = (s: any) => s==="gold" ? "#F5C84210" : s==="ember" ? "var(--accent-lo)" : "var(--bg-2)";
+  const statusColor = (s) => s==="gold" ? "#F5C842" : s==="ember" ? "var(--accent)" : "#2E2C28";
+  const statusLabel = (s) => s==="gold" ? "Target Met" : s==="ember" ? "Baseline Met" : "Awaiting Execution";
+  const statusSince = (s) => s==="gold" ? "Logged 45m ago" : s==="ember" ? "Logged 2h ago" : "Not logged yet today";
+  const statusBorder = (s) => s==="gold" ? "#F5C84230" : s==="ember" ? "var(--border-accent)" : "var(--border-0)";
+  const statusBg = (s) => s==="gold" ? "#F5C84210" : s==="ember" ? "var(--accent-lo)" : "var(--bg-2)";
 
   const ap = activePartner;
   const pName = ap?.partnerProfile?.full_name || "Partner";
@@ -6032,7 +6029,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
                     Shared Execution — Last 30 Days
                   </div>
                   <div className="ow-h-grid">
-                    {(ap.syncHistory || []).map((c: any,i: any)=>{
+                    {(ap.syncHistory || []).map((c,i)=>{
                       // Calculate date for this cell (30 days ago + i)
                       const cellDate = new Date();
                       cellDate.setDate(cellDate.getDate() - 29 + i);
@@ -6138,7 +6135,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
                   // Update protocol in DB
                   const newProto = isSpotter ? "ally" : "spotter";
                   try {
-                    await sb?.from("partnerships").update({ protocol: newProto }).eq("id", ap.id);
+                    await sb.from("partnerships").update({ protocol: newProto }).eq("id", ap.id);
                     await loadPartners();
                     setShowModeSwitch(false);
                     setSwitchCode("");
@@ -6305,7 +6302,7 @@ const TUTORIAL_STEPS = [
 
 const Tutorial = ({ onDone }: { onDone: () => void }) => {
   const [step, setStep] = useState(0);
-  const [targetRect, setTargetRect] = useState<any>(null);
+  const [targetRect, setTargetRect] = useState(null);
   const current = TUTORIAL_STEPS[step];
   const isLast = step === TUTORIAL_STEPS.length - 1;
 
@@ -6421,11 +6418,11 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
   ]);
   const [input,       setInput]       = useState("");
   const [loading,     setLoading]     = useState(false);
-  const [pending,     setPending]     = useState<any>(null);  // { tasks:[{key,label}], raw:string }
+  const [pending,     setPending]     = useState(null);  // { tasks:[{key,label}], raw:string }
   const [listening,   setListening]   = useState(false);
-  const feedRef  = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const recogRef = useRef<any>(null);
+  const feedRef  = useRef(null);
+  const inputRef = useRef(null);
+  const recogRef = useRef(null);
 
   const tasks        = challenge?.kpis || [];
   const secChallenges = (challenges?.secondary || []).filter(c => c.kpis?.length > 0);
@@ -6441,9 +6438,9 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
     if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
   }, [messages, pending]);
 
-  const addMsg = (role: any, text: any) => setMessages(m => [...m, { role, text }]);
+  const addMsg = (role, text) => setMessages(m => [...m, { role, text }]);
 
-  const callGemini = async (userText: any) => {
+  const callGemini = async (userText) => {
     if (!tasks.length) {
       addMsg("talos", "No tasks found for your active challenge. Set up a challenge first.");
       return;
@@ -6490,7 +6487,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
 
   const handleConfirm = () => {
     if (!pending) return;
-    const keys = pending.tasks.map((t: any) => t.key);
+    const keys = pending.tasks.map(t => t.key);
     onTickTasks(keys);
     addMsg("talos", `✓ Ticked ${pending.tasks.length} task${pending.tasks.length > 1 ? "s" : ""}. ${doneTasks.length + pending.tasks.length >= totalTasks ? "All done — logging your day." : `${totalTasks - doneTasks.length - pending.tasks.length} remaining.`}`);
     // Auto-log if all tasks now done
@@ -6507,7 +6504,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
 
   // Voice input via Web Speech API
   const toggleVoice = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       addMsg("talos", "Voice input not supported in this browser. Try Chrome.");
       return;
@@ -6521,7 +6518,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
     recog.continuous = false;
     recog.interimResults = false;
     recog.lang = "en-US";
-    recog.onresult = (e: any) => {
+    recog.onresult = (e) => {
       const transcript = e.results[0][0].transcript;
       setInput(transcript);
       setListening(false);
@@ -6608,7 +6605,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
               <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".18em", textTransform:"uppercase", color:"var(--ok)", marginBottom:12 }}>
                 ⚡ TALOS identified — confirm to apply
               </div>
-              {pending.tasks.map((t: any) => (
+              {pending.tasks.map(t => (
                 <div key={t.key} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 0", fontSize:13, color:"var(--text-0)", borderBottom:"1px solid var(--border-0)" }}>
                   <div style={{ width:20, height:20, borderRadius:"50%", background:"var(--ok)20", border:"1.5px solid var(--ok)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"var(--ok)", flexShrink:0 }}>✓</div>
                   {t.label}
@@ -6616,7 +6613,7 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
                 </div>
               ))}
               <div style={{ display:"flex", gap:10, marginTop:14 }}>
-                <button onClick={handleConfirm} style={{ flex:1, background:"var(--ok)", color:"#080807", border:"none", borderRadius:7, padding:"10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:".14em", cursor:"pointer", fontWeight:600 }}>
+                <button onClick={handleConfirm} style={{ flex:1, background:"var(--ok)", color:"#080807", border:"none", borderRadius:7, padding:"10px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, letterSpacing:".14em", cursor:"pointer", fontWeight:600 }}>
                   ✓ Confirm & Tick
                 </button>
                 <button onClick={handleDeny} style={{ padding:"10px 18px", background:"transparent", color:"var(--text-2)", border:"1px solid var(--border-1)", borderRadius:7, fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:9, cursor:"pointer" }}>
@@ -6727,8 +6724,8 @@ const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, 
               textTransform:"uppercase", color:"var(--accent)", cursor:"pointer",
               transition:"all .15s",
             }}
-            onMouseOver={e => (e.target as any).style.background = "var(--accent)"}
-            onMouseOut={e => (e.target as any).style.background = "var(--accent-lo)"}
+            onMouseOver={e => e.target.style.background = "var(--accent)"}
+            onMouseOut={e => e.target.style.background = "var(--accent-lo)"}
             >
               Log Day →
             </button>
@@ -6862,8 +6859,8 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [pwNew,       setPwNew]       = useState("");
   const [pwConfirm,   setPwConfirm]   = useState("");
   const [saving,      setSaving]      = useState(false);
-  const [msg,         setMsg]         = useState<any>(null);
-  const [confirmDelete, setConfirmDelete] = useState<any>(null); // { type:"challenge"|"account", id, name }
+  const [msg,         setMsg]         = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { type:"challenge"|"account", id, name }
   // Feedback
   const [fbType,      setFbType]      = useState("suggestion");
   const [fbText,      setFbText]      = useState("");
@@ -6877,7 +6874,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
   const [timingMode,    setTimingMode]    = useState("smart");   // "smart" | "manual"
   const [manualHour,    setManualHour]    = useState(20);
   const [manualMinute,  setManualMinute]  = useState(0);
-  const [smartHourEst,  setSmartHourEst]  = useState<number | null>(null);     // estimated smart hour shown to user
+  const [smartHourEst,  setSmartHourEst]  = useState(null);     // estimated smart hour shown to user
   const [notifSaved,    setNotifSaved]    = useState(false);
 
   // Load existing notif prefs on mount
@@ -6893,13 +6890,13 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
         // Compute smart hour estimate from checkin_hours
         const hours = data.checkin_hours || [];
         if (hours.length >= 3) {
-          const avg = Math.round(hours.slice(-14).reduce((a: any,b: any) => a+b, 0) / Math.min(hours.length, 14));
+          const avg = Math.round(hours.slice(-14).reduce((a,b) => a+b, 0) / Math.min(hours.length, 14));
           setSmartHourEst(avg);
         }
       });
   }, [profile?.id]);
 
-  const fmtHour = (h: any, m=0) => {
+  const fmtHour = (h, m=0) => {
     const ampm = h >= 12 ? "PM" : "AM";
     const h12  = h % 12 === 0 ? 12 : h % 12;
     const mm   = String(m).padStart(2,"0");
@@ -6976,7 +6973,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
     setNotifSaved(true); setTimeout(() => setNotifSaved(false), 2500);
   };
 
-  const flash = (type: any,text: any) => { setMsg({type,text}); setTimeout(()=>setMsg(null),4000); };
+  const flash = (type,text) => { setMsg({type,text}); setTimeout(()=>setMsg(null),4000); };
 
   const saveName = async () => {
     if (!nameVal.trim()) return;
@@ -7015,7 +7012,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
     finally { setSaving(false); }
   };
 
-  const handleTheme = (id: any) => {
+  const handleTheme = (id) => {
     setTheme(id);
     onSaveProfile({ theme: id });
   };
@@ -7447,7 +7444,7 @@ export default function App() {
   const genInviteCode = () => Math.random().toString(36).substring(2,10).toUpperCase();
 
   // Load profile from DB — auto-generate invite_code if missing
-  const loadProfile = useCallback(async (uid: any) => {
+  const loadProfile = useCallback(async (uid) => {
     if (!uid || !sb) return;
     try {
       const { data } = await sb.from("profiles").select("*").eq("id", uid).single();
@@ -7473,7 +7470,7 @@ export default function App() {
   }, []);
 
   // Load challenges + today's kpi state from Supabase
-  const loadChallenges = useCallback(async (uid: any) => {
+  const loadChallenges = useCallback(async (uid) => {
     if (!uid || !sb) return;
     try {
       // Load challenges
@@ -7516,8 +7513,8 @@ export default function App() {
           start_date: startStr,
           gtask_list_id: ch.gtask_list_id || null,
           kpis: (ch.challenge_tasks || [])
-            .sort((a: any,b: any) => a.sort_order - b.sort_order)
-            .map((t: any) => ({
+            .sort((a,b) => a.sort_order - b.sort_order)
+            .map(t => ({
               key:    t.key,
               label:  t.label,
               cat:    t.cat || "other",
@@ -7544,11 +7541,11 @@ export default function App() {
 
         // Build kpi state - start all as false, then apply today's completed keys
         const kpiState = {};
-        main.kpis.forEach((k: any) => { kpiState[k.key] = false; });
+        main.kpis.forEach(k => { kpiState[k.key] = false; });
         
         if (todayCheckin?.completed_keys) {
           // Only mark as complete if there's a checkin for TODAY with these keys
-          todayCheckin.completed_keys.forEach((key: any) => {
+          todayCheckin.completed_keys.forEach(key => {
             if (kpiState.hasOwnProperty(key)) kpiState[key] = true;
           });
           setLoggedToday(true);
@@ -7568,7 +7565,7 @@ export default function App() {
           (secCheckins || []).forEach(ci => {
             const sec = secondary.find(c => c.id === ci.challenge_id);
             if (sec && ci.completed_keys) {
-              sec.kpis.forEach((k: any) => { kpiState[k.key] = ci.completed_keys.includes(k.key); });
+              sec.kpis.forEach(k => { kpiState[k.key] = ci.completed_keys.includes(k.key); });
             }
           });
         }
@@ -7580,7 +7577,7 @@ export default function App() {
     } catch(e) { console.warn("loadChallenges:", e); }
   }, []);
 
-  const saveProfile = useCallback(async (updates: any) => {
+  const saveProfile = useCallback(async (updates) => {
     if (!user?.id || !sb) return;
     try {
       const { data } = await sb.from("profiles")
@@ -7590,7 +7587,7 @@ export default function App() {
     } catch(e) { console.warn("profile save:", e); }
   }, [user]);
   
-  const handleSaveMission = useCallback(async (newMission: any) => {
+  const handleSaveMission = useCallback(async (newMission) => {
     setMission(newMission);
     await saveProfile({ mission: newMission });
   }, [saveProfile]);
@@ -7661,17 +7658,17 @@ export default function App() {
   const [secondaryKpis, setSecondaryKpis] = useState<Record<string, KpiMap>>({}); // { challengeId: { taskKey: boolean } }
   const [challenges,  setChallenges]  = useState<ChallengesState>(EMPTY_CHALLENGES);
 
-  const handleProfileImageUpload = (file: any) => {
+  const handleProfileImageUpload = (file) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target?.result;
+      const dataUrl = e.target.result;
       setProfileImageUrl(dataUrl);
       localStorage.setItem('forge_profile_image', dataUrl);
     };
     reader.readAsDataURL(file);
   };
 
-  const toggleSecondary = (challengeId: any, taskKey: any) => {
+  const toggleSecondary = (challengeId, taskKey) => {
     setSecondaryKpis(prev => ({
       ...prev,
       [challengeId]: {
@@ -7700,7 +7697,7 @@ export default function App() {
   const [tempChecked, setTempChecked] = useState<KpiMap>({});
   const [dayType, setDayType] = useState('full'); // 'full' | 'scaled' | 'recovery'
 
-  const toggleRegimen = (id: any) => {
+  const toggleRegimen = (id) => {
     setRegimenChecked(p => {
       const updated = { ...p, [id]: !p[id] };
       if (sb && user) {
@@ -7716,7 +7713,7 @@ export default function App() {
       return updated;
     });
   };
-  const toggleTemp = (id: any) => setTempChecked(p => ({ ...p, [id]: !p[id] }));
+  const toggleTemp = (id) => setTempChecked(p => ({ ...p, [id]: !p[id] }));
 
   // Reset regimen checks at midnight
   const getTodayKey = () => new Date().toISOString().split('T')[0];
@@ -7751,7 +7748,7 @@ export default function App() {
   }, []);
 
   // Apply theme vars whenever theme changes
-  const setTheme = (id: any) => { setThemeState(id); applyThemeVars(id); };
+  const setTheme = (id) => { setThemeState(id); applyThemeVars(id); };
   useEffect(() => { applyThemeVars(theme); }, [theme]);
 
   // Re-parse --accent into RGB for DynamicBackground's canvas gradients.
@@ -7797,7 +7794,7 @@ export default function App() {
     });
   }, [user, profile]);
 
-  const toggle = (key: any) => {
+  const toggle = (key) => {
     setKpis(p => {
       const next = { ...p, [key]: !p[key] };
       if (sb && user) {
@@ -7872,7 +7869,7 @@ export default function App() {
     });
   }, [googleSync.isConnected, challenges, kpis]);
 
-  const handleAuthed = (name: any) => {
+  const handleAuthed = (name) => {
     if (name) setUserName(name);
     setLoaderMode("inapp");
     setStage("loader");
@@ -7909,7 +7906,7 @@ export default function App() {
 
       // Insert tasks — nonNeg may be array or false
       const nonNegArr = Array.isArray(nonNeg) ? nonNeg : [];
-      const kpis = tasks.map((t: any, i: any) => ({
+      const kpis = tasks.map((t, i) => ({
         challenge_id: chRow.id,
         key:          `task_${chRow.id}_${i}`,
         label:        t.label,
@@ -7950,7 +7947,7 @@ export default function App() {
     setModal(null); setLibModal(false);
   };
 
-  const handleDeleteChallenge = async (challengeId: any) => {
+  const handleDeleteChallenge = async (challengeId) => {
     if (!sb || !user) return;
     try {
       await sb.from("challenge_tasks").delete().eq("challenge_id", challengeId);
@@ -7976,23 +7973,23 @@ export default function App() {
     } catch(e) { console.warn("delete account:", e); }
   };
 
-  const handleLibPick = (tpl: any, isSecondary: any) => {
+  const handleLibPick = (tpl, isSecondary) => {
     setLibModal(false);
-    setModal({ ...tpl, _mode: isSecondary?"secondary":"main", maxDays: isSecondary ? challenges.main?.totalDays : undefined });
+    setModal({ ...tpl, _mode: isSecondary?"secondary":"main", maxDays: isSecondary ? challenges.main.totalDays : undefined });
   };
 
   const addSecondary = () => { if (challenges.secondary.length >= 3) return; setLibModal(true); };
 
-  const handleViewChallenge = (challenge: any, type: any) => {
-    setDetailModal({ type, challenge: { ...challenge, kpis: (challenge.kpis||[]).map((k: any) =>({ key:k.key||`task_${Math.random().toString(36).slice(2)}`, label:k.label||"", cat:k.cat||"other", nonNeg:k.nonNeg||false })) } });
+  const handleViewChallenge = (challenge, type) => {
+    setDetailModal({ type, challenge: { ...challenge, kpis: (challenge.kpis||[]).map(k=>({ key:k.key||`task_${Math.random().toString(36).slice(2)}`, label:k.label||"", cat:k.cat||"other", nonNeg:k.nonNeg||false })) } });
   };
 
-  const handleEditChallenge = (updated: any) => {
+  const handleEditChallenge = (updated) => {
     setChallenges(c => {
-      if (updated.id === c.main?.id) return { ...c, main: { ...c.main, kpis: updated.kpis } };
+      if (updated.id === c.main.id) return { ...c, main: { ...c.main, kpis: updated.kpis } };
       return { ...c, secondary: c.secondary.map(s => s.id===updated.id ? {...s, kpis:updated.kpis} : s) };
     });
-    if (updated.id === challenges.main?.id) setKpis(prev => ({ ...Object.fromEntries(updated.kpis.map((k: any) =>[k.key,false])), ...prev }));
+    if (updated.id === challenges.main.id) setKpis(prev => ({ ...Object.fromEntries(updated.kpis.map(k=>[k.key,false])), ...prev }));
     setDetailModal(null);
   };
 
@@ -8011,14 +8008,14 @@ export default function App() {
     const load = async () => {
       try {
         const { data } = await sb.from("checkins")
-          .select("date,score").eq("challenge_id", challenges.main?.id);
+          .select("date,score").eq("challenge_id", challenges.main.id);
         if (data) {
           const map = {};
           data.forEach(c => { map[c.date] = c.score; });
           
           // CLIENT-SIDE AUTO-LOG: Backfill 0% for any missed days
           const today = todayStr();
-          const startDate = challenges.main?.start_date || challenges.main?.created_at?.split("T")[0];
+          const startDate = challenges.main.start_date || challenges.main.created_at?.split("T")[0];
           if (startDate) {
             const missedDays = [];
             const start = new Date(startDate + "T12:00:00");
@@ -8036,7 +8033,7 @@ export default function App() {
             // Backfill missed days with 0%
             if (missedDays.length > 0) {
               const inserts = missedDays.map(date => ({
-                challenge_id: challenges.main?.id,
+                challenge_id: challenges.main.id,
                 date,
                 score: 0,
                 completed_keys: [],
@@ -8048,7 +8045,7 @@ export default function App() {
               missedDays.forEach(date => { map[date] = 0; });
               
               // Reset streak to 0 since we missed days
-              await sb.from("challenges").update({ streak: 0 }).eq("id", challenges.main?.id);
+              await sb.from("challenges").update({ streak: 0 }).eq("id", challenges.main.id);
               setChallenges(prev => ({
                 ...prev,
                 main: { ...prev.main, streak: 0 },
@@ -8179,7 +8176,7 @@ export default function App() {
   }, [challenges.main?.id, allCheckins, lastRegimenLogDate, user?.id]);
 
   // ── Momentum formula ──────────────────────────────────────
-  const computeMomentum = (prevMomentum: any) => {
+  const computeMomentum = (prevMomentum) => {
     const dow = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const todayRegimen = dayType === 'scaled'
       ? (regimen.days[dow] || []).filter(t => t.nonNeg)
@@ -8210,7 +8207,7 @@ export default function App() {
   };
 
   // ── Log a day ─────────────────────────────────────────────
-  const handleLogDay = async (done: any, total: any) => {
+  const handleLogDay = async (done, total) => {
     if (loggedToday || !challenges.main) return;
     const score = total > 0 ? Math.round((done / total) * 100) : 0;
     const today = todayStr();
@@ -8286,7 +8283,7 @@ export default function App() {
 
         // 6. Compute + save momentum
         const newMomentum = computeMomentum(momentum);
-        await sb.from("profiles").update({ momentum: newMomentum }).eq("id", user?.id);
+        await sb.from("profiles").update({ momentum: newMomentum }).eq("id", user.id);
         setMomentum(newMomentum);
 
       } catch(e) { console.warn("save checkin:", e); }
@@ -8351,7 +8348,7 @@ export default function App() {
   }, [kpis, secondaryKpis, regimenChecked]);
 
   const activeChallenge = hasChallenge
-    ? { ...challenges.main, kpis: challenges.main?.kpis || [], wall: challenges.main?.wall || buildWall() }
+    ? { ...challenges.main, kpis: challenges.main.kpis || [], wall: challenges.main.wall || buildWall() }
     : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() };
   const level = getLevel(totalDaysForged);
   const nextLevel = LEVELS.find(l => l.minDays > totalDaysForged);
@@ -8398,15 +8395,15 @@ export default function App() {
           onAddSecondary={addSecondary}
           onViewChallenge={handleViewChallenge}
           onStartChallenge={() => setPage("library")}
-          onUpdateChallengeTasks={(newTasks: any) => {
+          onUpdateChallengeTasks={(newTasks) => {
             if (!challenges.main) return;
             const updated = { ...challenges.main, kpis: newTasks };
             setChallenges(prev => ({ ...prev, main: updated }));
             // Persist to Supabase
             if (sb && user) {
-              if (newTasks?.length === 0) return; // safety guard — never wipe all tasks
-              const rows = newTasks?.map((t: any, i: any) => ({
-                challenge_id: challenges.main?.id,
+              if (newTasks.length === 0) return; // safety guard — never wipe all tasks
+              const rows = newTasks.map((t, i) => ({
+                challenge_id: challenges.main.id,
                 key: t.key,
                 label: t.label,
                 cat: t.cat || 'other',
