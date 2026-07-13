@@ -7,23 +7,13 @@ import { createClient, type User, type SupabaseClient } from "@supabase/supabase
 import { LEVELS, getLevel } from "./constants/levels";
 import { TEMPLATES, TASK_CATEGORIES } from "./constants/templates";
 import { ALL_THEMES, THEME_ORDER, applyThemeVars } from "./constants/themes";
-import { 
+import {
   NAV,
-  IconDashboard,
-  IconTracking,
-  IconLibrary,
-  IconPartners,
-  IconSettings,
-  IconTalos,
-  NavIcon 
 } from "./constants/navigation";
-import { 
-  getTodayStr, 
-  getChallengeDate, 
-  fmtDate, 
-  fmtCellDate, 
-  fmtFullDate, 
-  greeting 
+import {
+  getChallengeDate,
+  fmtDate,
+  fmtFullDate,
 } from "./utils/dates";
 import { 
   pct, 
@@ -48,7 +38,7 @@ import { useGoogleSync } from "./hooks/useGoogleSync";
 // ============================================================
 const EMPTY_CHALLENGES = { main: null, secondary: [] };
 const EMPTY_KPIS = {};
-const INIT_KPIS = Object.fromEntries(TEMPLATES[0].kpis.map(k => [k.key, false]));
+const _INIT_KPIS = Object.fromEntries(TEMPLATES[0].kpis.map(k => [k.key, false]));
 
 // TODO: type this — App.tsx is an ~8,500-line monolith being migrated to TS
 // incrementally. The domain shapes below capture the fields actually used,
@@ -2202,7 +2192,7 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
     }
 
     function drawFrame() {
-      ctx.clearRect(0,0,canvas?.width,canvas?.height);
+      ctx.clearRect(0,0,canvas!.width,canvas!.height);
       const arr = particles.current;
       for (let i=arr.length-1;i>=0;i--) {
         const p=arr[i];
@@ -2255,7 +2245,7 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
     }
 
     function forgeLetter(idx: any, startDelay: any) {
-      return new Promise(resolve => {
+      return new Promise<void>(resolve => {
         setTimeout(() => {
           const el=letterEls[idx] as HTMLElement;
           if (!el) { resolve(); return; }
@@ -2320,7 +2310,7 @@ const WeldCanvas = ({ onDone }: { onDone: () => void }) => {
     run();
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
+      cancelAnimationFrame(rafRef.current as any);
       intervalsRef.current.forEach(clearInterval);
     };
   }, []);
@@ -2605,9 +2595,9 @@ const OnboardInduct = ({ onDone, userName }: { onDone: () => void; userName: str
 // ============================================================
 // ONBOARDING — Screen 4: Pick Your Challenge
 // ============================================================
-const DIFF_COLOR = { Hard:"#BF5D5D", Intense:"#D4B22A", Moderate:"#5DBF8A", "You decide":"#4A8FD4" };
+const DIFF_COLOR: Record<string, string> = { Hard:"#BF5D5D", Intense:"#D4B22A", Moderate:"#5DBF8A", "You decide":"#4A8FD4" };
 
-const OnboardChallenge = ({ onStart, onSkip }: { onStart: (tpl: any, customTasks?: any) => void; onSkip: () => void }) => {
+const OnboardChallenge = ({ onStart, onSkip }: { onStart: (tpl: any, customTasks?: any, nonNegs?: any) => void; onSkip: () => void }) => {
   const [selected,   setSelected]   = useState<any>(null);
   const [editTasks,  setEditTasks]  = useState(false);
   const [tasks,      setTasks]      = useState<any[]>([]);
@@ -2903,7 +2893,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSaved, setSessionSaved] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sessionStartRef = useRef<number | null>(null);
+  const _sessionStartRef = useRef<number | null>(null);
 
   const workSecs = () => preset === 3 ? customWork * 60 : TIMER_PRESETS[preset].work * 60;
   const brkSecs  = () => preset === 3 ? customBrk  * 60 : TIMER_PRESETS[preset].brk  * 60;
@@ -2961,20 +2951,20 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
   };
 
   const pauseTimer = () => {
-    clearInterval(timerRef.current);
+    clearInterval(timerRef.current as any);
     setPausedPhase(phase);
     setPhase("paused");
   };
 
   const resumeTimer = () => {
-    setPhase(pausedPhase);  // restores work|break — useEffect picks it up with current timeLeft
+    setPhase(pausedPhase as string);  // restores work|break — useEffect picks it up with current timeLeft
     setPausedPhase(null);
   };
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null); // null | "saved" | "min_time" | "error"
 
   const endSession = async () => {
-    clearInterval(timerRef.current);
+    clearInterval(timerRef.current as any);
     // Calculate final focused time including current work phase if active
     const finalFocused = totalFocused + (phase === "work" ? workSecs() - timeLeft : 0);
     // Save session to Supabase
@@ -2990,7 +2980,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
-          clearInterval(timerRef.current);
+          clearInterval(timerRef.current as any);
           if (phase === "work") {
             setTotalFocused(f => f + workSecs());
             setCycle(c => c + 1);
@@ -3003,7 +2993,7 @@ const DeepWork = ({ challenge, kpis, toggle, onExit, sb, user, onSessionSaved }:
         return t - 1;
       });
     }, 1000);
-    return () => clearInterval(timerRef.current);
+    return () => clearInterval(timerRef.current as any);
   }, [phase]);
 
   // Track task completions during session
@@ -3274,13 +3264,13 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }: { tasks: Kpi[]; taskSt
   };
 
   const catSummary = Object.entries(
-    tasks.reduce((acc, t) => {
+    tasks.reduce((acc: Record<string, { done: number; total: number }>, t) => {
       const cat = t.cat || "other";
       if (!acc[cat]) acc[cat] = { done:0, total:0 };
       acc[cat].total++;
       if (taskState[t.key]) acc[cat].done++;
       return acc;
-    }, {})
+    }, {} as Record<string, { done: number; total: number }>)
   );
 
   return (
@@ -3298,7 +3288,7 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }: { tasks: Kpi[]; taskSt
           </div>
           <div className="ring-cats">
             {catSummary.map(([cat, s]: [any, any]) => {
-              const info = TASK_CATEGORIES[cat] || TASK_CATEGORIES.other;
+              const info = TASK_CATEGORIES[cat as keyof typeof TASK_CATEGORIES] || TASK_CATEGORIES.other;
               return (
                 <div key={cat} style={{
                   fontFamily:"'IBM Plex Mono',monospace", fontWeight:'var(--mono-weight)', fontSize:8, letterSpacing:".1em",
@@ -3320,9 +3310,9 @@ const TaskGrid = ({ tasks, taskState, toggle, isScaled }: { tasks: Kpi[]; taskSt
       <div className="tasks-grid">
         {tasks.map(t => {
           const isDone    = taskState[t.key];
-          const cat       = TASK_CATEGORIES[t.cat || "other"] || TASK_CATEGORIES.other;
+          const cat       = TASK_CATEGORIES[(t.cat || "other") as keyof typeof TASK_CATEGORIES] || TASK_CATEGORIES.other;
           const cardColor = isScaled ? "#D4B22A" : cat.color;
-          const label     = isScaled ? (SCALED_LABELS[t.key] || t.label + " (scaled)") : t.label;
+          const label     = isScaled ? ((SCALED_LABELS as Record<string, string>)[t.key] || t.label + " (scaled)") : t.label;
 
           return (
             <div
@@ -3436,7 +3426,7 @@ const RecoveryModal = ({ onClose, onOwnIt, onInvoke, recoveryUsed }: { onClose: 
 // ============================================================
 // CHECK-IN MODE BAR
 // ============================================================
-const CheckInBar = ({ mode, setMode, recoveryUsed, onRecoveryClick, scaledDaysThisWeek }: { mode: string; setMode: (m: string) => void; recoveryUsed: boolean; onRecoveryClick: () => void; scaledDaysThisWeek: number }) => {
+const CheckInBar = ({ mode, setMode, recoveryUsed: _recoveryUsed, onRecoveryClick, scaledDaysThisWeek }: { mode: string; setMode: (m: string) => void; recoveryUsed: boolean; onRecoveryClick: () => void; scaledDaysThisWeek: number }) => {
   const scaledLocked = scaledDaysThisWeek >= 2;
 
   return (
@@ -3477,7 +3467,7 @@ const CheckInBar = ({ mode, setMode, recoveryUsed, onRecoveryClick, scaledDaysTh
 // ============================================================
 // CHALLENGE ARENA
 // ============================================================
-const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { challenges: ChallengesState; onAddSecondary: () => void; onViewChallenge: (c: Challenge, type: string) => void }) => {
+const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { challenges: ChallengesState; onAddSecondary: () => void; onViewChallenge: (c: Challenge | null, type: string) => void }) => {
   const { main, secondary } = challenges;
   const mainPct   = pct(main?.dayNum, main?.totalDays);
   const remaining = 3 - secondary.length;
@@ -3565,7 +3555,7 @@ const ChallengeArena = ({ challenges, onAddSecondary, onViewChallenge }: { chall
 // ============================================================
 // AI INSIGHT BLOCK
 // ============================================================
-const MOCK_INSIGHTS = {
+const _MOCK_INSIGHTS = {
   Stoic:           "Day 28. Workout 1 completion is at 94% — hold the standard. Diet compliance drops every Thursday; identify the variable and eliminate it. 61% on reading is the weak link. Either commit or remove it from the list.",
   Coach:           "You're building something real here — 12 days straight is no accident. I'm noticing a Thursday pattern where your energy dips. Let's front-load your hardest tasks before midweek. Your reading habit is the one to protect right now — it compounds quietly.",
   "Drill Sergeant": "28 days in and reading is sitting at 61%. That's not a habit, that's a suggestion. Thursday is where discipline goes to die for you — not anymore. Tighten up or admit you didn't actually want this.",
@@ -3703,11 +3693,11 @@ const AIInsight = ({ tone, mission, challenge, kpis, checkins }: { tone: string;
 // ============================================================
 // HOME
 // ============================================================
-const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, checkins = {} }: { challenge: Challenge; challenges: ChallengesState; kpis: KpiMap; toggle: (key: string) => void; onDW: () => void; tone: string; mission: string; onAddSecondary: () => void; userName: string; onViewChallenge: (c: Challenge, type: string) => void; onLogDay: (done: number, total: number) => void; loggedToday: boolean; checkins?: ScoreMap }) => {
+const _Home = ({ challenge, challenges, kpis, toggle, onDW: _onDW, tone, mission, onAddSecondary, userName, onViewChallenge, onLogDay, loggedToday, checkins = {} }: { challenge: Challenge; challenges: ChallengesState; kpis: KpiMap; toggle: (key: string) => void; onDW: () => void; tone: string; mission: string; onAddSecondary: () => void; userName: string; onViewChallenge: (c: Challenge | null, type: string) => void; onLogDay: (done: number, total: number) => void; loggedToday: boolean; checkins?: ScoreMap }) => {
   const safekpis = challenge.kpis || [];
   const done  = safekpis.filter(k => kpis[k.key]).length;
   const total = safekpis.length;
-  const p     = pct(challenge.dayNum, challenge.totalDays);
+  const _p    = pct(challenge.dayNum, challenge.totalDays);
 
   const [dayMode,            setDayMode]            = useState("full");
   const [recoveryUsed,       setRecoveryUsed]       = useState(false);
@@ -3723,7 +3713,7 @@ const Home = ({ challenge, challenges, kpis, toggle, onDW, tone, mission, onAddS
 
   const h = new Date().getHours();
   const timeOfDay = h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
-  const JARVIS_MESSAGES = {
+  const _JARVIS_MESSAGES = {
     morning:   `Day ${challenge.dayNum} is live. ${challenge.totalDays - challenge.dayNum} days remain on your main challenge. Your streak is at ${challenge.streak} — don't let it end here.`,
     afternoon: mission || `Day ${challenge.dayNum} of ${challenge.totalDays}. Stay locked in.`,
     evening:   `Evening check-in. ${done === total ? "All tasks done — strong close." : `${total - done} task${total-done===1?"":"s"} still open. Finish strong.`}`,
@@ -4027,7 +4017,7 @@ const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; l
   // Calculate stats (no cycles)
   const totalSessions = sessions.length;
   const totalMinutes = Math.round(sessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / 60);
-  const avgMinutes = totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0;
+  const _avgMinutes = totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0;
 
   // Build graph data based on range
   const buildGraphData = () => {
@@ -4071,7 +4061,7 @@ const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; l
 
   // Recent sessions (last 5 or 20)
   const recentSessions = [...sessions]
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, showAll ? 20 : 5);
 
   if (loading) {
@@ -4261,8 +4251,8 @@ const FocusSessions = ({ sessions = [], loading = false }: { sessions?: any[]; l
 // ============================================================
 // WALL
 // ============================================================
-const groupByMonth = (wall: any) => {
-  const months = {};
+const _groupByMonth = (wall: any) => {
+  const months: Record<string, any> = {};
   wall.forEach((d: any) => {
     const key = d.date.slice(0, 7);
     const label = new Date(d.date + "T00:00:00").toLocaleString("en-US", { month: "long", year: "numeric" });
@@ -4327,7 +4317,7 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
   // Build unique challenge list (active + history, deduped)
   const allChallengesList = React.useMemo(() => {
     const seen = new Set();
-    const list = [];
+    const list: any[] = [];
     // Active challenges first
     [challenges.main, ...(challenges.secondary || [])].filter(Boolean).forEach(c => {
       if (!seen.has(c?.id)) {
@@ -4385,7 +4375,7 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
     for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split("T")[0];
       const isInChallenge = d >= challengeStartDate && d <= challengeEndDate;
-      const dayNum = isInChallenge ? Math.floor((d - challengeStartDate) / msPerDay) + 1 : null;
+      const dayNum = isInChallenge ? Math.floor((d.getTime() - challengeStartDate.getTime()) / msPerDay) + 1 : null;
       const isToday = dateStr === challengeToday;
       const isFuture = d > today;
       const isBeforeChallenge = d < challengeStartDate;
@@ -4575,9 +4565,9 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
           <div className="card" style={{ padding:"16px 12px", overflowX:"auto" }}>
             {(() => {
               const weeks = [];
-              let currentWeek = [];
+              let currentWeek: any[] = [];
               
-              wallDays.forEach((d, i) => {
+              wallDays.forEach((d, _i) => {
                 const dayOfWeek = new Date(d.date + "T12:00:00").getDay();
                 currentWeek.push(d);
                 if (dayOfWeek === 6) {
@@ -4587,8 +4577,8 @@ const Wall = ({ challenge, challenges, checkins = {}, allCheckins = {}, challeng
               });
               if (currentWeek.length > 0) weeks.push(currentWeek);
               
-              const monthLabels = [];
-              let lastMonth = null;
+              const monthLabels: any[] = [];
+              let lastMonth: any = null;
               weeks.forEach((week, wi) => {
                 const firstDay = week.find(d => d);
                 if (firstDay) {
@@ -4785,7 +4775,7 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }: { challen
             ) : (
               <div className="cdm-task-list">
                 {tasks.map(t => {
-                  const cat = TASK_CATEGORIES[t.cat || "other"] || TASK_CATEGORIES.other;
+                  const cat = TASK_CATEGORIES[(t.cat || "other") as keyof typeof TASK_CATEGORIES] || TASK_CATEGORIES.other;
                   return (
                     <div key={t.key} className="cdm-task-row">
                       <div className="cdm-task-label">{t.label}</div>
@@ -4815,7 +4805,7 @@ const ChallengeDetailModal = ({ challenge, mission, onClose, onEdit }: { challen
 // ============================================================
 // LIBRARY
 // ============================================================
-const Library = ({ onPick, isSecondaryMode, onClose, hasMain }: { onPick: (tpl: any, isSecondary?: boolean, nonNegs?: any) => void; isSecondaryMode?: boolean; onClose?: () => void; hasMain?: boolean }) => {
+const Library = ({ onPick, isSecondaryMode, onClose: _onClose, hasMain }: { onPick: (tpl: any, isSecondary?: boolean, nonNegs?: any) => void; isSecondaryMode?: boolean; onClose?: () => void; hasMain?: boolean }) => {
   const [mode,   setMode]   = useState(isSecondaryMode || hasMain ? "secondary" : "main");
   const [active, setActive] = useState<string | null>(null); // selected template for detail panel
   const [selectedNonNegs, setSelectedNonNegs] = useState<string[]>([]); // non-negotiable task keys
@@ -4836,7 +4826,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }: { onPick: (tpl: 
     );
   };
 
-  const DIFF_COLOUR = { "Hard":"var(--err)", "Intense":"var(--warn)", "Moderate":"var(--ok)", "You decide":"var(--text-2)" };
+  const DIFF_COLOUR: Record<string, string> = { "Hard":"var(--err)", "Intense":"var(--warn)", "Moderate":"var(--ok)", "You decide":"var(--text-2)" };
 
   return (
     <div className={isSecondaryMode ? "" : "page"} style={isSecondaryMode ? { padding:"28px" } : { maxWidth:"100%" }}>
@@ -5041,7 +5031,7 @@ const Library = ({ onPick, isSecondaryMode, onClose, hasMain }: { onPick: (tpl: 
 // ============================================================
 // SETTINGS
 // ============================================================
-const Settings = ({ theme, setTheme, tone, setTone, userName, setUserName }: { theme: string; setTheme: (t: string) => void; tone: string; setTone: (t: string) => void; userName: string; setUserName: (n: string) => void }) => {
+const _Settings = ({ theme, setTheme, tone, setTone, userName, setUserName }: { theme: string; setTheme: (t: string) => void; tone: string; setTone: (t: string) => void; userName: string; setUserName: (n: string) => void }) => {
   const themes = [
     { id:"forge", c:"#D4922A", l:"Forge" },
     { id:"slate", c:"#2A4A38", l:"Slate" },
@@ -5154,7 +5144,7 @@ const ChallengeWizard = ({ tpl, onClose, onStart, isSecondary, maxDays }: { tpl:
   };
 
   // Map logical step to STEPS label
-  const stepLabel = STEPS[step - 1];
+  const _stepLabel = STEPS[step - 1];
 
   // Which step index is "Start Date"
   const startDateStep = STEPS.indexOf("Start Date") + 1;
@@ -5434,8 +5424,8 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
   const [showProto,       setShowProto]    = useState(false);
   const [selectedProto,   setSelectedProto]= useState("spotter");
   const [showFlare,       setShowFlare]    = useState(false);
-  const [flareUsedMap,    setFlareUsedMap] = useState({});
-  const [rxnSent,         setRxnSent]      = useState({});
+  const [flareUsedMap,    setFlareUsedMap] = useState<Record<string, any>>({});
+  const [rxnSent,         setRxnSent]      = useState<Record<string, any>>({});
   const [noteText,        setNoteText]     = useState("");
   const [postedNote,      setPostedNote]   = useState<any>(null); // { text, timestamp }
   const [editingNote,     setEditingNote]  = useState(false);
@@ -5480,14 +5470,14 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
     const tick = () => {
       const now = new Date(), mid = new Date(now);
       mid.setHours(24,0,0,0);
-      const d = mid - now;
+      const d = mid.getTime() - now.getTime();
       const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
       setCdStr(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`);
       setCdUrgent(h < 3);
     };
     tick();
     cdIntervalRef.current = setInterval(tick, 1000);
-    return () => clearInterval(cdIntervalRef.current);
+    return () => clearInterval(cdIntervalRef.current as any);
   }, []);
 
   // Load partners
@@ -5505,7 +5495,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
       const chalMap = Object.fromEntries((chalRows||[]).map(c => [c.user_id, c]));
       
       // Build last 30 days date array
-      const last30Dates = [];
+      const last30Dates: string[] = [];
       for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -5516,7 +5506,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
       const myMainChallengeId = challenges?.main?.id;
       
       // Fetch MY checkins for last 30 days
-      let myCheckinsMap = {};
+      let myCheckinsMap: Record<string, any> = {};
       if (myMainChallengeId) {
         const { data: myCheckins } = await sb
           .from("checkins")
@@ -5528,7 +5518,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
       
       // Fetch ALL partner checkins for last 30 days (for all partner challenges)
       const partnerChallengeIds = (chalRows || []).map(c => c.id);
-      let partnerCheckinsMap = {}; // { visibleId: { date: score } }
+      let partnerCheckinsMap: Record<string, any> = {}; // { visibleId: { date: score } }
       if (partnerChallengeIds.length > 0) {
         const { data: partnerCheckins } = await sb
           .from("checkins")
@@ -5613,7 +5603,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
         setTutorialStep(0);
         setShowTutorial(true);
       }
-    } catch(e) { setJoinError(e.message); }
+    } catch(e: any) { setJoinError(e.message); }
     finally { setJoinLoading(false); }
   };
 
@@ -5627,7 +5617,7 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
 
   // My challenge data
   const myChallenge = challenges?.main;
-  const myStatus = "gold"; // placeholder — real impl reads kpis from parent
+  const _myStatus = "gold"; // placeholder — real impl reads kpis from parent
 
   // Get partner status dot color
   const statusColor = (s: any) => s==="gold" ? "#F5C842" : s==="ember" ? "var(--accent)" : "#2E2C28";
@@ -5689,8 +5679,8 @@ const Partners = ({ user, profile, challenges, sb }: { user: User | null | undef
   );
 
   // Build history grid cells - now uses real data from ap.syncHistory
-  const hColors = { gold:"#F5C842", ember:"var(--accent)", desync:"#D4922A22", miss:"var(--bg-3)" };
-  const hOpacity = { gold:.9, ember:.75, desync:1, miss:1 };
+  const hColors: Record<string, string> = { gold:"#F5C842", ember:"var(--accent)", desync:"#D4922A22", miss:"var(--bg-3)" };
+  const hOpacity: Record<string, number> = { gold:.9, ember:.75, desync:1, miss:1 };
 
   function renderProtoOverlay() {
     return (
@@ -6320,7 +6310,7 @@ const Tutorial = ({ onDone }: { onDone: () => void }) => {
   const next = () => { if (isLast) onDone(); else setStep(s => s + 1); };
 
   const PAD = 12;
-  const spotStyle = targetRect ? {
+  const spotStyle: React.CSSProperties | null = targetRect ? {
     position: "fixed",
     top: targetRect.top - PAD,
     left: targetRect.left - PAD,
@@ -6335,8 +6325,8 @@ const Tutorial = ({ onDone }: { onDone: () => void }) => {
   } : null;
 
   // Tooltip position relative to spotlight
-  const tooltipStyle = () => {
-    const base = {
+  const tooltipStyle = (): React.CSSProperties => {
+    const base: React.CSSProperties = {
       position: "fixed", zIndex: 9999,
       background: "var(--bg-2)",
       border: "1px solid var(--border-accent)",
@@ -6352,8 +6342,8 @@ const Tutorial = ({ onDone }: { onDone: () => void }) => {
     if (current.position === "right") {
       const idealLeft = targetRect.left + targetRect.width + PAD + 16;
       // If it would overflow, flip to left of the target instead
-      const fitsRight = idealLeft + base.width + 16 <= W;
-      const left = fitsRight ? idealLeft : targetRect.left - base.width - PAD - 16;
+      const fitsRight = idealLeft + (base.width as number) + 16 <= W;
+      const left = fitsRight ? idealLeft : targetRect.left - (base.width as number) - PAD - 16;
       return { ...base, top: targetRect.top - PAD, left: Math.max(8, left) };
     }
     if (current.position === "bottom") {
@@ -6405,13 +6395,13 @@ const Tutorial = ({ onDone }: { onDone: () => void }) => {
 // ============================================================
 // TALOS tone prompts — used by Edge Function but defined here for reference
 
-const TALOS_TONE_PROMPTS = {
+const _TALOS_TONE_PROMPTS = {
   "Stoic":          "You are TALOS — calm, minimal, precise. No hype. Acknowledge what was done, note what remains. Short sentences.",
   "Coach":          "You are TALOS — warm, encouraging, direct. Celebrate wins, push for more. Sound like a great coach who believes in the user.",
   "Drill Sergeant": "You are TALOS — intense, demanding, no excuses. Acknowledge completions quickly then immediately push for the next task. High energy.",
 };
 
-const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb, user, challenges }: { challenge: Challenge; kpis: KpiMap; onTickTasks: (keys: string[]) => void; onLogDay: (done: number, total: number) => void; loggedToday: boolean; tone: string; sb: Sb; user: User | null | undefined; challenges: ChallengesState }) => {
+const Talos = ({ challenge, kpis, onTickTasks, onLogDay, loggedToday, tone, sb: _sb, user: _user, challenges }: { challenge: Challenge; kpis: KpiMap; onTickTasks: (keys: string[]) => void; onLogDay: (...args: any[]) => void; loggedToday: boolean; tone: string; sb: Sb; user: User | null | undefined; challenges: ChallengesState }) => {
   const [messages,    setMessages]    = useState([
     { role:"talos", text: tone === "Drill Sergeant"
         ? "TALOS online. What did you get done? Talk to me."
@@ -6784,7 +6774,7 @@ const AuthScreen = ({ onAuthed }: { onAuthed: (name?: string) => void }) => {
         if (error) throw error;
       }
       onAuthed(name || email.split("@")[0]);
-    } catch(e) { setErr(e.message); }
+    } catch(e: any) { setErr(e.message); }
     finally { setLoading(false); }
   };
 
@@ -6792,7 +6782,7 @@ const AuthScreen = ({ onAuthed }: { onAuthed: (name?: string) => void }) => {
     setErr(""); setLoading(true);
     try {
       if (!sb) throw new Error("Supabase not configured.");
-      await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin} });    } catch(e) { setErr(e.message); setLoading(false); }
+      await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin} });    } catch(e: any) { setErr(e.message); setLoading(false); }
   };
 
   return (
@@ -6922,7 +6912,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(
           import.meta.env.VITE_VAPID_PUBLIC_KEY || ""
-        ),
+        ) as any,
       });
 
       const keys = sub.toJSON().keys || {};
@@ -6951,7 +6941,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       setNotifEnabled(true);
       setNotifSaved(true);
       setTimeout(() => setNotifSaved(false), 3000);
-    } catch(e) { flash("err", e.message); }
+    } catch(e: any) { flash("err", e.message); }
     finally { setNotifLoading(false); }
   };
 
@@ -6986,7 +6976,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       setUserName(nameVal.trim());
       onSaveProfile({ full_name: nameVal.trim() });
       flash("ok","Name updated.");
-    } catch(e) { flash("err",e.message); }
+    } catch(e: any) { flash("err",e.message); }
     finally { setSaving(false); }
   };
 
@@ -6998,7 +6988,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       await sb.auth.updateUser({ email: emailVal });
       flash("ok","Confirmation sent to new email. Click the link to confirm.");
       setEmailVal("");
-    } catch(e) { flash("err",e.message); }
+    } catch(e: any) { flash("err",e.message); }
     finally { setSaving(false); }
   };
 
@@ -7011,7 +7001,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
       await sb.auth.updateUser({ password: pwNew });
       flash("ok","Password updated.");
       setPwNew(""); setPwConfirm("");
-    } catch(e) { flash("err",e.message); }
+    } catch(e: any) { flash("err",e.message); }
     finally { setSaving(false); }
   };
 
@@ -7079,7 +7069,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
             <div className="srow-desc">Eleven environments. Pick your headspace.</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
               {THEME_ORDER.map(id => {
-                const t = ALL_THEMES[id]; const on = theme===id;
+                const t = ALL_THEMES[id as keyof typeof ALL_THEMES]; const on = theme===id;
                 return (
                   <div key={id} onClick={()=>handleTheme(id)} style={{
                     background:on?"var(--accent-lo)":"var(--bg-2)",
@@ -7416,7 +7406,7 @@ const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName,
 // ACCENT COLOUR — parsed from the CSS var the current theme sets, for
 // DynamicBackground's canvas gradients (which need raw RGB, not a CSS string)
 // ============================================================
-const getAccentRGB = () => {
+const getAccentRGB = (): [number, number, number] => {
   const raw = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
   if (raw.startsWith("#")) {
     const hex = raw.slice(1);
@@ -7424,10 +7414,10 @@ const getAccentRGB = () => {
       parseInt(hex.slice(0, 2), 16),
       parseInt(hex.slice(2, 4), 16),
       parseInt(hex.slice(4, 6), 16),
-    ];
+    ] as [number, number, number];
   }
   const m = raw.match(/(\d+),\s*(\d+),\s*(\d+)/);
-  return m ? [+m[1], +m[2], +m[3]] : [212, 146, 42];
+  return (m ? [+m[1], +m[2], +m[3]] : [212, 146, 42]) as [number, number, number];
 };
 
 // ============================================================
@@ -7499,7 +7489,7 @@ export default function App() {
         
         // Calculate days elapsed (day 1 = start date, day 2 = next day, etc.)
         const msPerDay = 24 * 60 * 60 * 1000;
-        const dayNum = Math.floor((todayForCalc - startDate) / msPerDay) + 1;
+        const dayNum = Math.floor((todayForCalc.getTime() - startDate.getTime()) / msPerDay) + 1;
 
         return {
           id:         ch.id,
@@ -7543,7 +7533,7 @@ export default function App() {
           .maybeSingle();
 
         // Build kpi state - start all as false, then apply today's completed keys
-        const kpiState = {};
+        const kpiState: Record<string, boolean> = {};
         main.kpis.forEach((k: any) => { kpiState[k.key] = false; });
         
         if (todayCheckin?.completed_keys) {
@@ -7664,7 +7654,7 @@ export default function App() {
   const handleProfileImageUpload = (file: any) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target?.result;
+      const dataUrl = e.target?.result as string;
       setProfileImageUrl(dataUrl);
       localStorage.setItem('forge_profile_image', dataUrl);
     };
@@ -7799,7 +7789,7 @@ export default function App() {
 
   const toggle = (key: any) => {
     setKpis(p => {
-      const next = { ...p, [key]: !p[key] };
+      const next: Record<string, boolean> = { ...p, [key]: !p[key] };
       if (sb && user) {
         const today = new Date().toISOString().split("T")[0];
 
@@ -7824,7 +7814,9 @@ export default function App() {
           // Google Tasks sync — fire-and-forget, only on newly-completed tasks
           if (next[key] && googleSync.isConnected && secChallenge.gtask_list_id) {
             const task = (secChallenge.kpis || []).find(k => k.key === key);
-            if (task) void googleSync.pushTaskCompletion(task, secChallenge.gtask_list_id);
+            // TODO: structural type mismatch - needs design review (App.tsx's local
+            // Kpi vs useGoogleSync.ts's ChallengeTask — align across files)
+            if (task) void googleSync.pushTaskCompletion(task as any, secChallenge.gtask_list_id);
           }
         } else if (challenges.main) {
           // Persist main challenge ticks
@@ -7842,7 +7834,9 @@ export default function App() {
           // Google Tasks sync — fire-and-forget, only on newly-completed tasks
           if (next[key] && googleSync.isConnected && challenges.main.gtask_list_id) {
             const task = (challenges.main.kpis || []).find(k => k.key === key);
-            if (task) void googleSync.pushTaskCompletion(task, challenges.main.gtask_list_id);
+            // TODO: structural type mismatch - needs design review (App.tsx's local
+            // Kpi vs useGoogleSync.ts's ChallengeTask — align across files)
+            if (task) void googleSync.pushTaskCompletion(task as any, challenges.main.gtask_list_id);
           }
         }
       }
@@ -7861,7 +7855,9 @@ export default function App() {
     if (!googleSync.isConnected || !challenges.main?.gtask_list_id) return;
     googleTasksPolledRef.current = true;
 
-    googleSync.pollTaskCompletions(challenges, kpis).then(updates => {
+    // TODO: structural type mismatch - needs design review (App.tsx's local
+    // ChallengesState vs useGoogleSync.ts's Challenges — align across files)
+    googleSync.pollTaskCompletions(challenges as any, kpis).then(updates => {
       // toggle() re-pushes completion back to Google — a harmless no-op
       // PATCH for tasks that got us here in the first place, but it keeps
       // toggle() as the single source of truth for "mark this done" rather
@@ -7878,7 +7874,7 @@ export default function App() {
     setStage("loader");
   };
 
-  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary, tag, startDate }) => {
+  const handleStartChallenge = async ({ name, days, mission: m, nonNeg, tasks, isSecondary, tag, startDate }: any) => {
     if (!user?.id || !sb) return;
     try {
       // Archive existing main if replacing
@@ -7989,8 +7985,8 @@ export default function App() {
 
   const handleEditChallenge = (updated: any) => {
     setChallenges(c => {
-      if (updated.id === c.main?.id) return { ...c, main: { ...c.main, kpis: updated.kpis } };
-      return { ...c, secondary: c.secondary.map(s => s.id===updated.id ? {...s, kpis:updated.kpis} : s) };
+      if (updated.id === c.main?.id) return { ...c, main: { ...c.main, kpis: updated.kpis } } as ChallengesState;
+      return { ...c, secondary: c.secondary.map(s => s.id===updated.id ? {...s, kpis:updated.kpis} : s) } as ChallengesState;
     });
     if (updated.id === challenges.main?.id) setKpis(prev => ({ ...Object.fromEntries(updated.kpis.map((k: any) =>[k.key,false])), ...prev }));
     setDetailModal(null);
@@ -8013,7 +8009,7 @@ export default function App() {
         const { data } = await sb.from("checkins")
           .select("date,score").eq("challenge_id", challenges.main?.id);
         if (data) {
-          const map = {};
+          const map: Record<string, any> = {};
           data.forEach(c => { map[c.date] = c.score; });
           
           // CLIENT-SIDE AUTO-LOG: Backfill 0% for any missed days
@@ -8023,7 +8019,7 @@ export default function App() {
             const missedDays = [];
             const start = new Date(startDate + "T12:00:00");
             const todayDate = new Date(today + "T12:00:00");
-            const msPerDay = 24 * 60 * 60 * 1000;
+            const _msPerDay = 24 * 60 * 60 * 1000;
             
             // Check each day from start to yesterday
             for (let d = new Date(start); d < todayDate; d.setDate(d.getDate() + 1)) {
@@ -8052,7 +8048,7 @@ export default function App() {
               setChallenges(prev => ({
                 ...prev,
                 main: { ...prev.main, streak: 0 },
-              }));
+              } as ChallengesState));
               
               console.log("Auto-logged missed days:", missedDays);
             }
@@ -8089,7 +8085,7 @@ export default function App() {
         .in("challenge_id", challengeIds);
       
       // Group checkins by challenge_id
-      const checkinsByChallenge = {};
+      const checkinsByChallenge: Record<string, any> = {};
       let totalForgedDays = 0;
       (allCheckinRows || []).forEach(c => {
         if (!checkinsByChallenge[c.challenge_id]) checkinsByChallenge[c.challenge_id] = {};
@@ -8102,7 +8098,7 @@ export default function App() {
         const checkinCount = Object.keys(checkinsByChallenge[c.id] || {}).length;
         return checkinCount > 1 || !c.archived;
       }).map(c => {
-        const scores = Object.values(checkinsByChallenge[c.id] || {});
+        const scores: any[] = Object.values(checkinsByChallenge[c.id] || {});
         return {
           id: c.id,
           name: c.name,
@@ -8166,7 +8162,7 @@ export default function App() {
     if (!lastLogDate || lastLogDate >= todayLocal) return;
 
     const daysMissed = Math.round(
-      (new Date(todayLocal) - new Date(lastLogDate)) / 86400000
+      (new Date(todayLocal).getTime() - new Date(lastLogDate).getTime()) / 86400000
     ) - 1;
 
     if (daysMissed <= 0) return;
@@ -8182,8 +8178,8 @@ export default function App() {
   const computeMomentum = (prevMomentum: any) => {
     const dow = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const todayRegimen = dayType === 'scaled'
-      ? (regimen.days[dow] || []).filter(t => t.nonNeg)
-      : (regimen.days[dow] || []);
+      ? (regimen.days?.[dow] || []).filter(t => t.nonNeg)
+      : (regimen.days?.[dow] || []);
 
     const sources = [
       ...(challenges.main?.kpis || []).map(t => ({
@@ -8193,7 +8189,7 @@ export default function App() {
       ...((challenges.secondary || []).flatMap(ch =>
         (ch.kpis || []).map(t => ({
           weight: t.non_neg ? 3 : 1,
-          done: !!(secondaryKpis[ch.id]?.[t.key]),
+          done: !!(secondaryKpis[ch.id || '']?.[t.key]),
         }))
       )),
       ...todayRegimen.map(t => ({
@@ -8267,7 +8263,7 @@ export default function App() {
         const dayNum      = challenges.main.dayNum || 1;
         const passingDays = (allCheckins || []).filter(c => c.score > 0).length;
         // Days passed = number of days we could have logged (including today since we just logged)
-        const daysPassed  = passingDays > 0 ? Math.max(passingDays, dayNum - 1 + 1) : dayNum;
+        const _daysPassed = passingDays > 0 ? Math.max(passingDays, dayNum - 1 + 1) : dayNum;
         // Simpler: after logging, completed days = dayNum (since today is now complete)
         const completedDays = dayNum;
         const newConsistency = completedDays > 0 ? Math.min(100, Math.round((passingDays / completedDays) * 100)) : 0;
@@ -8282,7 +8278,7 @@ export default function App() {
         setChallenges(prev => ({
           ...prev,
           main: { ...prev.main, streak: newStreak, consistency: newConsistency },
-        }));
+        } as ChallengesState));
 
         // 6. Compute + save momentum
         const newMomentum = computeMomentum(momentum);
@@ -8300,7 +8296,7 @@ export default function App() {
       const now  = new Date();
       const next = new Date(now);
       next.setHours(24, 0, 0, 0);
-      const ms = next - now;
+      const ms = next.getTime() - now.getTime();
       const n = now;
       const endingDayStr = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
       return setTimeout(async () => {
@@ -8350,9 +8346,9 @@ export default function App() {
     setMomentum(computeMomentum(persistedMomentum));
   }, [kpis, secondaryKpis, regimenChecked]);
 
-  const activeChallenge = hasChallenge
+  const activeChallenge = (hasChallenge
     ? { ...challenges.main, kpis: challenges.main?.kpis || [], wall: challenges.main?.wall || buildWall() }
-    : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() };
+    : { id:null, name:"No Active Challenge", tag:"", dayNum:0, totalDays:1, streak:0, consistency:0, color:"#9A9690", kpis:[], wall:buildWall() }) as Challenge;
   const level = getLevel(totalDaysForged);
   const nextLevel = LEVELS.find(l => l.minDays > totalDaysForged);
   const daysToNext = nextLevel ? nextLevel.minDays - totalDaysForged : 0;
@@ -8374,7 +8370,9 @@ export default function App() {
           userName={userName}
           memberSince={user?.created_at}
           mission={mission}
-          challenge={activeChallenge}
+          // TODO: structural type mismatch - needs design review (App.tsx's local
+          // Challenge vs ProfilePage.tsx's ProfileChallenge — align across files)
+          challenge={activeChallenge as any}
           checkins={Object.entries(checkins).map(([date, score]) => ({ date, score }))}
           longestStreak={activeChallenge?.streak || 0}
           consistency={activeChallenge?.consistency || 0}
@@ -8387,8 +8385,11 @@ export default function App() {
     if (page==="home") {
       return (
         <DashboardV2
-          challenge={activeChallenge}
-          challenges={challenges}
+          // TODO: structural type mismatch - needs design review (App.tsx's local
+          // Challenge/ChallengesState vs DashboardV2.tsx's DashChallenge/ChallengesShape —
+          // align across files)
+          challenge={activeChallenge as any}
+          challenges={challenges as any}
           kpis={kpis}
           toggle={toggle}
           checkins={checkins}
@@ -8525,7 +8526,7 @@ export default function App() {
                   <span style={{fontSize:18,fontWeight:500,color:"var(--text-0)"}}>{totalDaysForged}</span>
                 </div>
                 <div className="lvl-tooltip-list">
-                  {LEVELS.map((l, i) => {
+                  {LEVELS.map((l, _i) => {
                     const isActive = l.id === level.id;
                     const isAchieved = totalDaysForged >= l.minDays;
                     return (
@@ -8590,7 +8591,7 @@ export default function App() {
         memberSince={user?.created_at}
         mission={mission}
         challenge={activeChallenge}
-        checkins={Object.entries(checkins).map(([date, score]) => ({ date, score }))}
+        checkins={Object.entries(checkins).map(([date, score]) => ({ date, score })) as any}
         longestStreak={activeChallenge?.streak || 0}
         consistency={activeChallenge?.consistency || 0}
         daysForged={totalDaysForged}
