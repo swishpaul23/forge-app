@@ -6792,7 +6792,7 @@ const AuthScreen = ({ onAuthed }: { onAuthed: (name?: string) => void }) => {
     setErr(""); setLoading(true);
     try {
       if (!sb) throw new Error("Supabase not configured.");
-      await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin + "/app" } });    } catch(e) { setErr(e.message); setLoading(false); }
+      await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin} });    } catch(e) { setErr(e.message); setLoading(false); }
   };
 
   return (
