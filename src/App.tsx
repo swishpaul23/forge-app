@@ -7440,7 +7440,17 @@ export default function App() {
   const loadProfile = useCallback(async (uid: any) => {
     if (!uid || !sb) return;
     try {
-      const { data } = await sb.from("profiles").select("*").eq("id", uid).single();
+      // .maybeSingle() instead of .single() — a missing row (e.g. the
+      // on_auth_user_created trigger hasn't landed yet right after a fresh
+      // Google sign-up) must resolve to null, not throw. .single() throwing
+      // here was silently caught below and left `profile` stuck at null
+      // forever, which stranded the user on the auth screen even though
+      // they were already authenticated.
+      const { data } = await sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+      if (!data) {
+        console.warn(`[auth] No profile row found yet for user ${uid} — profile-dependent stage transitions will stay pending until one appears.`);
+        return;
+      }
       if (data) {
         if (!data.invite_code) {
           const code = genInviteCode();
@@ -7459,7 +7469,7 @@ export default function App() {
           .maybeSingle();
         if (lastRegimenLog) setLastRegimenLogDate(lastRegimenLog.date);
       }
-    } catch(e) { console.warn("profile load:", e); }
+    } catch(e) { console.warn("[auth] profile load failed:", e); }
   }, []);
 
   // Load challenges + today's kpi state from Supabase
