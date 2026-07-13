@@ -1009,11 +1009,7 @@ const DashboardV2 = ({
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>CONSISTENCY</div>
             </div>
             <div style={{ textAlign: 'center' }}>
-<<<<<<< HEAD:src/components/pages/DashboardV2.jsx
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)', textShadow: '0 0 16px var(--accent)44' }}>{challenge ? pct(challenge.dayNum, challenge.totalDays) : 0}%</div>
-=======
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)' }}>{challenge ? pct(challenge.dayNum!, challenge.totalDays!) : 0}%</div>
->>>>>>> 52f070282fa500026a05d9f7d4ccd807b6731df9:src/components/pages/DashboardV2.tsx
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)', textShadow: '0 0 16px var(--accent)44' }}>{challenge ? pct(challenge.dayNum!, challenge.totalDays!) : 0}%</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>COMPLETE</div>
             </div>
           </div>

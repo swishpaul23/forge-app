@@ -6852,11 +6852,7 @@ const AuthScreen = ({ onAuthed }: { onAuthed: (name?: string) => void }) => {
 // ============================================================
 // SETTINGS SCREEN (Supabase-wired: email, password, themes)
 // ============================================================
-<<<<<<< HEAD:src/App.jsx
-const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile, challenges, onDeleteChallenge, onDeleteAccount, sb, googleSync }) => {
-=======
-const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile, challenges, onDeleteChallenge, onDeleteAccount, sb }: { theme: string; setTheme: (t: string) => void; tone: string; setTone: (t: string) => void; userName: string; setUserName: (n: string) => void; onSaveProfile: (updates: any) => void; profile: any; challenges: ChallengesState; onDeleteChallenge: (id: string) => void; onDeleteAccount: () => void; sb: Sb }) => {
->>>>>>> migration/to-typescript:src/App.tsx
+const SettingsScreen = ({ theme, setTheme, tone, setTone, userName, setUserName, onSaveProfile, profile, challenges, onDeleteChallenge, onDeleteAccount, sb, googleSync }: { theme: string; setTheme: (t: string) => void; tone: string; setTone: (t: string) => void; userName: string; setUserName: (n: string) => void; onSaveProfile: (updates: any) => void; profile: any; challenges: ChallengesState; onDeleteChallenge: (id: string) => void; onDeleteAccount: () => void; sb: Sb; googleSync: ReturnType<typeof useGoogleSync> }) => {
   const tones = ["Stoic","Coach","Drill Sergeant"];
   const [nameVal,     setNameVal]     = useState(userName);
   const [emailVal,    setEmailVal]    = useState("");
