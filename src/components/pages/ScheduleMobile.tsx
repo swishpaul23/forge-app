@@ -38,6 +38,7 @@ interface ScheduleMobileProps {
   regimen?: { days?: Record<string, RegimenTask[]> } | null;
   regimenChecked?: Record<string, boolean>;
   toggleRegimen?: (key: string) => void;
+  googleSync?: Parameters<typeof useTimeBlocks>[2];
 }
 
 const SLOT_H = 36;
@@ -51,13 +52,8 @@ const fmtTime = (h: number) => {
   return `${disp}:${mm}${ap}`;
 };
 
-<<<<<<< HEAD:src/components/pages/ScheduleMobile.jsx
-const ScheduleMobile = ({ sb, user, challenges, kpis, toggle, regimen, regimenChecked, toggleRegimen, googleSync }) => {
+const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, googleSync }: ScheduleMobileProps) => {
   const { blocks, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user, googleSync);
-=======
-const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen }: ScheduleMobileProps) => {
-  const { blocks, loadBlocks, saveBlock, deleteBlock, toggleComplete } = useTimeBlocks(sb, user);
->>>>>>> migration/to-typescript:src/components/pages/ScheduleMobile.tsx
   const { tags, saveTag } = useUserTags(sb, user);
 
   const [menuState,    setMenuState]    = useState<MenuState | null>(null);
