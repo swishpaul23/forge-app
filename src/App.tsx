@@ -6782,7 +6782,7 @@ const AuthScreen = ({ onAuthed }: { onAuthed: (name?: string) => void }) => {
     setErr(""); setLoading(true);
     try {
       if (!sb) throw new Error("Supabase not configured.");
-      await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin} });    } catch(e: any) { setErr(e.message); setLoading(false); }
+      await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: `${window.location.origin}/app`} });    } catch(e: any) { setErr(e.message); setLoading(false); }
   };
 
   return (
@@ -7602,29 +7602,13 @@ export default function App() {
       navigator.serviceWorker.register("/sw.js").catch(console.warn);
   }, []);
 
-  // TEMP DEBUG: diagnosing "Unable to exchange external code" OAuth error — remove once resolved
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-    const oauthError = url.searchParams.get("error") || hashParams.get("error");
-    const oauthErrorCode = url.searchParams.get("error_code") || hashParams.get("error_code");
-    const oauthErrorDesc = url.searchParams.get("error_description") || hashParams.get("error_description");
-    const oauthCode = url.searchParams.get("code");
-    if (oauthError || oauthErrorDesc || oauthCode) {
-      console.log("[oauth-debug] full callback URL:", window.location.href);
-      console.log("[oauth-debug] error:", oauthError, "| error_code:", oauthErrorCode, "| error_description:", oauthErrorDesc, "| code param present:", !!oauthCode);
-    }
-  }, []);
-
   useEffect(() => {
     if (!sb) { setUser(null); return; }
     sb.auth.getSession().then(({ data: { session } }) => {
-      console.log("[oauth-debug] initial getSession() ->", session ? `session for ${session.user.id}` : "no session");
       setUser(session?.user ?? null);
       if (session?.user) { loadProfile(session.user.id); loadChallenges(session.user.id); }
     });
     const { data: { subscription } } = sb.auth.onAuthStateChange((_e, session) => {
-      console.log("[oauth-debug] onAuthStateChange event:", _e, "-> session:", session ? `yes (${session.user.id})` : "no");
       setUser(session?.user ?? null);
       if (session?.user) { loadProfile(session.user.id); loadChallenges(session.user.id); }
       else { setProfile(null); setChallenges(EMPTY_CHALLENGES); setKpis(EMPTY_KPIS); }
