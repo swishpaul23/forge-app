@@ -145,7 +145,7 @@ const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, 
     <div style={{ padding: "16px 0 80px" }}>
       {/* Header */}
       <div style={{ padding: "0 16px", marginBottom: 16 }}>
-        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".2em", color: "var(--text-2)", marginBottom: 4 }}>Schedule</div>
+        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, letterSpacing: ".2em", color: "var(--text-2)", marginBottom: 4 }}>Schedule</div>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 32, color: "var(--text-0)", lineHeight: 1 }}>Today</div>
       </div>
 
@@ -155,7 +155,7 @@ const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, 
         <div style={{ width: 44, flexShrink: 0 }}>
           {displayHours.map(h => (
             <div key={h} style={{ height: SLOT_H * 2, display: "flex", alignItems: "flex-start", justifyContent: "flex-end", paddingRight: 8, paddingTop: 3 }}>
-              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, color: "var(--text-3)", letterSpacing: ".04em" }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, color: "var(--text-3)", letterSpacing: ".04em" }}>
                 {h < 12 ? `${h === 0 ? "12" : h}am` : h === 12 ? "12pm" : `${h-12}pm`}
               </span>
             </div>
@@ -202,7 +202,7 @@ const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, 
                 }}
               >
                 <span>{block.label}</span>
-                <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 8, opacity: .7 }}>{fmtTime(block.start_time)}</span>
+                <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, opacity: .7 }}>{fmtTime(block.start_time)}</span>
               </div>
             );
           })}
@@ -220,14 +220,14 @@ const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, 
             padding: "16px 20px 32px", zIndex: 101, maxHeight: "85vh", overflowY: "auto",
           }}>
             <div style={{ width: 36, height: 4, background: "var(--bg-3)", borderRadius: 2, margin: "0 auto 16px" }} />
-            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 12 }}>
               {menuState.block ? "Edit block" : "New block"}
             </div>
 
             {/* Unscheduled tasks */}
             {!menuState.block && unscheduled.length > 0 && (
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>From your tasks</div>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>From your tasks</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                   {unscheduled.map(t => (
                     <div key={t.key} onClick={() => handleSave(t)}
@@ -251,14 +251,14 @@ const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, 
             {/* Time + duration */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
               <div>
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 6 }}>Start</div>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 6 }}>Start</div>
                 <select value={startTime} onChange={e => setStartTime(parseFloat(e.target.value))}
                   style={{ width: "100%", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px 10px", fontSize: 13, color: "var(--text-0)", fontFamily: "'IBM Plex Mono',monospace", outline: "none" }}>
                   {ALL_SLOTS.map(s => <option key={s} value={s}>{fmtTime(s)}</option>)}
                 </select>
               </div>
               <div>
-                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 6 }}>Duration</div>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 6 }}>Duration</div>
                 <select value={duration} onChange={e => setDuration(parseFloat(e.target.value))}
                   style={{ width: "100%", background: "var(--bg-2)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px 10px", fontSize: 13, color: "var(--text-0)", fontFamily: "'IBM Plex Mono',monospace", outline: "none" }}>
                   {DUR_OPTIONS.map(d => <option key={d} value={d}>{d === 0.5 ? "30 min" : `${d} hr${d > 1 ? "s" : ""}`}</option>)}
@@ -267,7 +267,7 @@ const ScheduleMobile = ({ sb, user, challenges, toggle, regimen, toggleRegimen, 
             </div>
 
             {/* Tags */}
-            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>Tag</div>
+            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: "var(--mono-weight)", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text-2)", marginBottom: 8 }}>Tag</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
               {tags.map(t => (
                 <div key={t.id} onClick={() => setSelTag(selTag === t.id ? null : t.id)}
