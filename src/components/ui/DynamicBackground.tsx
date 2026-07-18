@@ -18,11 +18,14 @@ const THEME_BG_MAP: Record<string, BgType> = {
   mars:           "particle_void", // spec: mars_red
   orbit:          "node_grid",     // spec: orbit_navy
   iron:           "node_grid",
-  slate:          "node_grid",
   tensor_violet:  "node_grid",
   neutrals:       "topography",    // spec: elevated_neutrals
   digital:        "topography",
   pastel:         "topography",    // not in spec — assigned here
+  slate:          "topography",    // moved off node_grid — it rendered as a
+                                    // flat grey wash with no visible dot grid on
+                                    // light themes; topography is confirmed
+                                    // working on the other light themes
   alpha_green:    "topography",
   glacial_silver: "topography",
 };
@@ -190,8 +193,8 @@ function renderTopography(
   const scaleX = W / TOPO_GW;
   const scaleY = H / TOPO_GH;
 
-  ctx.lineWidth = isLight ? 0.8 : 1.0;
-  ctx.strokeStyle = rgba(accent, isLight ? 0.12 : 0.25);
+  ctx.lineWidth = isLight ? 1.4:0.32
+  ctx.strokeStyle = rgba(accent, isLight ? 0.4: 0.25);
 
   for (const contour of polygons) {
     const path = new Path2D();
