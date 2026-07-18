@@ -138,12 +138,12 @@ const MobileRegimenBlock = ({ regimen, today, onEdit }: { regimen?: Regimen | nu
 
   return (
     <>
-      <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '14px 16px' }}>
+      <div style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '14px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '.08em', color: 'var(--accent)' }}>WEEKLY REGIMEN</div>
           <button onClick={onEdit} style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-2)',
-            padding: '5px 12px', background: 'var(--bg-2)', border: '1px solid var(--border-1)',
+            padding: '5px 12px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-1)',
             borderRadius: 6, cursor: 'pointer',
           }}>Edit</button>
         </div>
@@ -177,7 +177,7 @@ const MobileRegimenBlock = ({ regimen, today, onEdit }: { regimen?: Regimen | nu
         {/* Inline task list on tap */}
         {tappedDay && tappedTasks.length > 0 && (
           <div style={{ marginTop: 12, borderTop: '1px solid var(--border-0)', paddingTop: 10 }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
               {DAY_LABELS_FULL[tappedDay].toUpperCase()}
             </div>
             {tappedTasks.map((task, i) => (
@@ -245,7 +245,7 @@ const MobileTaskCard = ({ task, checked, onToggle, color = "var(--accent)" }: { 
     style={{
       display: 'flex', alignItems: 'center', gap: 10,
       padding: '12px 14px',
-      background: checked ? `${color}12` : 'var(--bg-2)',
+      background: checked ? `${color}12` : 'var(--bg-card-solid)',
       border: `1px solid ${checked ? `${color}40` : 'var(--border-1)'}`,
       borderRadius: 10,
       cursor: 'pointer',
@@ -458,7 +458,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
                   }}
                 >
                   <NonNegIcon size={10} color={task.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
-                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 8, color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                 </div>
                 <div onClick={() => removeTask((task.id || task.key)!)} style={{
                   width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -521,7 +521,7 @@ const TaskEditorSheet = ({ isOpen, onClose, title, tasks, onSave, type, editDay,
 // ============================================================
 const TaskSectionCard = ({ title, color, done, total, onClick }: { title: string; color: string; done: number; total: number; onClick: () => void }) => (
   <div onClick={onClick} style={{
-    background: 'var(--bg-1)', border: '1px solid var(--border-0)',
+    background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)',
     borderRadius: 12, padding: '16px 18px', cursor: 'pointer',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
   }}>
@@ -673,11 +673,11 @@ const DashboardMobile = ({
       </div>
 
       {/* TALOS */}
-      <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+      <div style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '.08em', color: 'var(--ok)' }}>TALOS</div>
           <div onClick={onRefreshTalos} style={{
-            padding: '4px 10px', background: 'var(--bg-2)', border: '1px solid var(--border-1)',
+            padding: '4px 10px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-1)',
             borderRadius: 6, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-2)',
           }}>↻</div>
         </div>
@@ -688,13 +688,13 @@ const DashboardMobile = ({
 
       {/* DAY TYPE TOGGLE */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 4, background: 'var(--bg-2)', padding: 4, borderRadius: 10 }}>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--bg-card-inner)', padding: 4, borderRadius: 10 }}>
           {[{ id: 'full', label: 'FULL DAY', icon: '●' }, { id: 'scaled', label: 'SCALED', icon: '◐' }].map(type => {
             const isActive = (dayType || 'full') === type.id;
             return (
               <button key={type.id} onClick={() => onSetDayType && onSetDayType(type.id)} style={{
                 flex: 1, padding: '10px', border: 'none', borderRadius: 8,
-                background: isActive ? 'var(--bg-0)' : 'transparent',
+                background: isActive ? 'var(--bg-card-inner)' : 'transparent',
                 boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
                 fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 500,
                 color: isActive ? 'var(--text-0)' : 'var(--text-2)',
@@ -706,14 +706,14 @@ const DashboardMobile = ({
           })}
         </div>
         {isScaled && (
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-2)', marginTop: 8, textAlign: 'center' }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-2)', marginTop: 8, textAlign: 'center' }}>
             Complete non-negotiables to keep streak. Max 2 scaled days/week.
           </div>
         )}
       </div>
 
       {/* PROGRESS SUMMARY */}
-      <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '16px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '16px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, lineHeight: 1 }}>{pct(totalDone, totalTasks)}%</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>{totalTasks - totalDone} tasks left today</div>
@@ -751,7 +751,7 @@ const DashboardMobile = ({
           />
         )}
         {regimenTotal === 0 && challengeKpis.length === 0 && (
-          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 32, textAlign: 'center' }}>
+          <div style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 32, textAlign: 'center' }}>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, marginBottom: 6 }}>No tasks today</div>
             <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 11, color: 'var(--text-2)' }}>Set up your regimen or start a challenge</div>
           </div>
@@ -764,7 +764,7 @@ const DashboardMobile = ({
         disabled={loggedToday}
         style={{
           width: '100%', padding: 16,
-          background: loggedToday ? 'var(--bg-2)' : 'var(--accent)',
+          background: loggedToday ? 'var(--bg-card-inner)' : 'var(--accent)',
           border: 'none', borderRadius: 12,
           fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: '.1em',
           color: loggedToday ? 'var(--text-2)' : 'var(--bg-0)',

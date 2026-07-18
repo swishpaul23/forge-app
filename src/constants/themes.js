@@ -6,9 +6,10 @@
 // that's what DynamicBackground's card-transparency spec actually defined —
 // see LIGHT_THEMES in DynamicBackground.tsx for which theme ids get which.
 const ELEVATION_DARK = {
-  "--bg-page":       "rgba(5,5,4,0.60)",
-  "--bg-card":       "rgba(12,12,10,0.75)",
-  "--bg-card-inner": "rgba(17,17,16,0.80)",
+  "--bg-page":       "rgba(5,5,4,0.30)",
+  "--bg-card":       "rgba(12,12,10,0.55)",
+  "--bg-card-inner": "rgba(17,17,16,0.65)",
+  "--bg-card-solid": "rgba(12,12,10,0.92)",
   "--text-label":    "#6A6560",
   "--text-sub":      "#8A8580",
   "--text-body":     "#B8B4AE",
@@ -16,13 +17,18 @@ const ELEVATION_DARK = {
 };
 
 const ELEVATION_LIGHT = {
-  "--bg-page":       "rgba(245,244,240,0.65)",
-  "--bg-card":       "rgba(255,253,248,0.78)",
-  "--bg-card-inner": "rgba(248,246,240,0.82)",
-  "--text-label":    "#6A6560",
-  "--text-sub":      "#4A4744",
-  "--text-body":     "#2A2A26",
+  "--bg-page":       "rgba(245,244,240,0.55)",
+  "--bg-card":       "rgba(255,253,248,0.88)",
+  "--bg-card-inner": "rgba(248,246,240,0.92)",
+  "--bg-card-solid": "rgba(240,238,234,0.97)",
   "--text-primary":  "#0A0A08",
+  "--text-body":     "#2A2A26",
+  "--text-label":    "#4A4744",
+  "--text-sub":      "#6A6560",
+  "--text-0": "#0A0A08",
+  "--text-1": "#1A1A16",
+  "--text-2": "#3A3835",
+  "--text-3": "#6A6560",
 };
 
 export const THEMES = {
@@ -214,11 +220,50 @@ export const ALL_THEMES = {
       ...ELEVATION_DARK,
     },
   },
+  tensor_violet: {
+    label: "Tensor Violet",
+    desc: "Deep indigo. Node-grid focus.",
+    swatch: "#7B5EA7",
+    vars: {
+      ...ELEVATION_DARK,
+      "--accent": "#7B5EA7", "--accent-lo": "#7B5EA718", "--accent-mid": "#7B5EA755",
+      "--bg-0": "#0A0810", "--bg-1": "#100D18", "--bg-2": "#181420", "--bg-3": "#201B2A", "--bg-4": "#282235",
+      "--text-0": "#E8E4F0", "--text-1": "#B0A8C8", "--text-2": "#7A7090", "--text-3": "#3A3248",
+      "--border-0": "#1E1A2A", "--border-1": "#2A2438", "--border-accent": "#7B5EA730",
+      "--ok": "#5DBF8A", "--warn": "#D4B22A", "--err": "#BF5D5D", "--mono-weight": "300",
+    },
+  },
+  alpha_green: {
+    label: "Alpha Green",
+    desc: "Terminal green. Signal over noise.",
+    swatch: "#2ECC71",
+    vars: {
+      ...ELEVATION_DARK,
+      "--accent": "#2ECC71", "--accent-lo": "#2ECC7118", "--accent-mid": "#2ECC7155",
+      "--bg-0": "#060A08", "--bg-1": "#0A100C", "--bg-2": "#101810", "--bg-3": "#182018", "--bg-4": "#202820",
+      "--text-0": "#E0F0E8", "--text-1": "#A8C8B0", "--text-2": "#608870", "--text-3": "#2A4030",
+      "--border-0": "#1A2A1E", "--border-1": "#243828", "--border-accent": "#2ECC7130",
+      "--ok": "#2ECC71", "--warn": "#D4B22A", "--err": "#BF5D5D", "--mono-weight": "300",
+    },
+  },
+  glacial_silver: {
+    label: "Glacial Silver",
+    desc: "Cold light. Quiet contours.",
+    swatch: "#C8D4DC",
+    vars: {
+      ...ELEVATION_LIGHT,
+      "--accent": "#6A8090", "--accent-lo": "#6A809018", "--accent-mid": "#6A809055",
+      "--bg-0": "#F0F4F6", "--bg-1": "#E8EEF2", "--bg-2": "#DDE5EA", "--bg-3": "#D0DAE0", "--bg-4": "#C4D0D8",
+      "--border-0": "#C8D4DC", "--border-1": "#B8C8D0", "--border-accent": "#6A809030",
+      "--ok": "#2E8B57", "--warn": "#B8860B", "--err": "#CD5C5C", "--mono-weight": "300",
+    },
+  },
 };
 
 export const THEME_ORDER = [
   "forge", "slate", "iron", "neutrals", "digital",
-  "dusk", "pastel", "mono", "orbit", "mars", "plasma"
+  "dusk", "pastel", "mono", "orbit", "mars", "plasma",
+  "tensor_violet", "alpha_green", "glacial_silver"
 ];
 
 export function applyThemeVars(themeId) {

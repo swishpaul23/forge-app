@@ -3,7 +3,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg-0:#080807; --bg-1:#0F0F0D; --bg-2:#161613; --bg-3:#1E1E1A; --bg-4:#252520;
+    --bg-0:#080807; --bg-1:#0F0F0D; --bg-2:#161613; --bg-3:#1E1E1A; --bg-4:#252520; --background:transparent;
     --accent:#D4922A; --accent-lo:#D4922A18; --accent-mid:#D4922A55;
     --text-0:#EDEAE3; --text-1:#B8B4AE; --text-2:#8A857E; --text-3:#2E2C28;
     --border-0:#1E1E1A; --border-1:#2A2A25; --border-accent:#D4922A30;
@@ -14,9 +14,10 @@
        themes) live in constants/themes.js since that's how every other
        theme-aware color in this app is set (applyThemeVars), not CSS
        attribute selectors. */
-    --bg-page:       rgba(5,  5,  4,  0.60);
-    --bg-card:       rgba(12, 12, 10, 0.75);
-    --bg-card-inner: rgba(17, 17, 16, 0.80);
+    --bg-page:       rgba(5,  5,  4,  0.30);
+    --bg-card:       rgba(12, 12, 10, 0.55);
+    --bg-card-inner: rgba(17, 17, 16, 0.65);
+    --bg-card-solid: rgba(12, 12, 10, 0.92);
 
     /* Text hierarchy — additive, parallel to --text-0/1/2/3 above (which
        stay as-is; too much existing CSS depends on them to rename).
@@ -27,8 +28,27 @@
     --text-primary: #EDEAE3;
   }
 
-  html, body { height:100%; background:var(--bg-0); color:var(--text-0); overflow-x:hidden; }
-  body { font-family:'DM Sans',sans-serif; font-weight:400; line-height:1.5; font-size:17px; }
+  html {
+    height:100%;
+    background:#0E0E12;
+  }
+  
+  body {
+    min-height:100%;
+    background:transparent;
+    color:var(--text-0);
+    overflow-x:hidden;
+  
+    font-family:'DM Sans',sans-serif;
+    font-weight:400;
+    line-height:1.5;
+    font-size:17px;
+  }
+
+  #root {
+    min-height:100%;
+    background:transparent;
+  }
 
   /* Film grain overlay */
   body::after {
@@ -71,7 +91,7 @@
   /* ICON RAIL */
   .rail {
     width:58px; min-height:100vh;
-    background:var(--bg-1);
+    background:var(--bg-card-solid);
     border-right:1px solid var(--border-0);
     display:flex; flex-direction:column; align-items:center;
     padding:18px 0;
@@ -128,7 +148,7 @@
   .topbar {
     height:50px; border-bottom:1px solid var(--border-0);
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 28px; background:var(--bg-0);
+    padding:0 28px; background:var(--bg-card-solid);
     position:sticky; top:0; z-index:50;
     width:100%; align-self:stretch;
   }
@@ -148,7 +168,7 @@
   
   .lvl-tooltip {
     position:absolute; top:calc(100% + 8px); right:0; z-index:100;
-    background:var(--bg-1); border:1px solid var(--border-0); border-radius:10px;
+    background:var(--bg-card); border:1px solid var(--border-0); border-radius:10px;
     padding:14px 16px; min-width:200px;
     opacity:0; visibility:hidden; transform:translateY(-4px);
     transition:opacity .18s, transform .18s, visibility .18s;
@@ -315,7 +335,7 @@
 
   /* BANNER — challenge hero */
   .banner {
-    background:var(--bg-1); border:1px solid var(--border-accent);
+    background:var(--bg-card); border:1px solid var(--border-accent);
     border-radius:12px; padding:26px 30px;
     position:relative; overflow:hidden;
   }
@@ -854,7 +874,7 @@
   .cin-bar {
     display:flex; gap:6px; margin-bottom:14px;
     padding:10px 14px;
-    background:var(--bg-1); border:1px solid var(--border-0);
+    background:var(--bg-card); border:1px solid var(--border-0);
     border-radius:10px; align-items:center; flex-wrap:wrap;
   }
   .cin-label {
@@ -966,7 +986,7 @@
 
   /* CARDS */
   .card {
-    background:var(--bg-1); border:1px solid var(--border-0);
+    background:var(--bg-card); border:1px solid var(--border-0);
     border-radius:10px; padding:20px;
     transition:border-color .18s;
   }
@@ -1061,7 +1081,7 @@
   .ow-layout { display:flex; height:100%; overflow:hidden; }
 
   /* Overwatch sidebar */
-  .ow-sidebar { width:340px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
+  .ow-sidebar { width:340px; flex-shrink:0; background:var(--bg-card); border-right:1px solid var(--border-0); display:flex; flex-direction:column; overflow:hidden; }
   .ow-head { padding:18px 16px 14px; border-bottom:1px solid var(--border-0); flex-shrink:0; }
   .ow-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:5px; display:flex; align-items:center; gap:7px; }
   .ow-tag::before { content:'◆'; font-size:7px; }
@@ -1070,7 +1090,7 @@
   .ow-add:hover { background:var(--accent-mid); }
 
   /* You card */
-  .you-card { margin:8px 8px 0; padding:12px 14px; background:var(--bg-0); border:1px solid var(--border-accent); border-radius:10px; position:relative; overflow:hidden; flex-shrink:0; }
+  .you-card { margin:8px 8px 0; padding:12px 14px; background:var(--bg-card); border:1px solid var(--border-accent); border-radius:10px; position:relative; overflow:hidden; flex-shrink:0; }
   .you-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 100% 0%, var(--accent-lo), transparent); pointer-events:none; }
   .you-card-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
   .you-ring { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:14px; flex-shrink:0; position:relative; z-index:1; }
@@ -1112,8 +1132,8 @@
   .proto-badge.ally { color:#4A8FD4; background:#4A8FD414; border:1px solid #4A8FD430; }
 
   /* Detail panel */
-  .ow-detail { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg-0); }
-  .ow-detail-back { display:none; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border-0); background:var(--bg-1); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2); cursor:pointer; border-top:none; border-left:none; border-right:none; width:100%; text-align:left; flex-shrink:0; }
+  .ow-detail { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg-page); }
+  .ow-detail-back { display:none; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border-0); background:var(--bg-card); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2); cursor:pointer; border-top:none; border-left:none; border-right:none; width:100%; text-align:left; flex-shrink:0; }
   .ow-detail-head { padding:18px 22px 16px; border-bottom:1px solid var(--border-0); flex-shrink:0; position:relative; overflow:hidden; }
   .ow-detail-head-bg { position:absolute; inset:0; pointer-events:none; }
   .ow-detail-top { display:flex; align-items:flex-start; gap:14px; margin-bottom:12px; }
@@ -1141,19 +1161,19 @@
 
   /* Stat cards */
   .ow-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-  .ow-stat { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:13px 15px; }
+  .ow-stat { background:var(--bg-card); border:1px solid var(--border-0); border-radius:9px; padding:13px 15px; }
   .ow-stat-n { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.02em; line-height:1; }
   .ow-stat-l { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-2); margin-top:3px; }
 
   /* Countdown */
-  .ow-countdown { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; display:flex; align-items:center; gap:14px; }
+  .ow-countdown { background:var(--bg-card); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; display:flex; align-items:center; gap:14px; }
   .ow-cd-time { font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:.04em; line-height:1; font-variant-numeric:tabular-nums; transition:color .3s; }
   .ow-cd-time.urgent { color:var(--err); }
   .ow-cd-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); margin-bottom:3px; }
   .ow-cd-sub { font-size:12px; color:var(--text-1); line-height:1.5; }
 
   /* Sync */
-  .ow-sync { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; }
+  .ow-sync { background:var(--bg-card); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; }
   .ow-sync-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .ow-sync-title { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); }
   .ow-sync-pct { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:.02em; line-height:1; }
@@ -1165,7 +1185,7 @@
   .ow-sync-dot { width:6px; height:6px; border-radius:50%; }
 
   /* Ally note */
-  .ow-ally-note { background:var(--bg-1); border:1px solid #4A8FD430; border-radius:9px; padding:14px 16px; }
+  .ow-ally-note { background:var(--bg-card); border:1px solid #4A8FD430; border-radius:9px; padding:14px 16px; }
   .ow-ally-note-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .ow-ally-note-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; color:#4A8FD4; }
   .ow-ally-note-timer { font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--text-2); letter-spacing:.06em; }
@@ -1175,7 +1195,7 @@
   .ow-rxn:hover,.ow-rxn.sent { background:#4A8FD418; border-color:#4A8FD440; }
 
   /* Your note */
-  .ow-your-note { background:var(--bg-1); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; }
+  .ow-your-note { background:var(--bg-card); border:1px solid var(--border-0); border-radius:9px; padding:14px 16px; }
   .ow-your-note-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); margin-bottom:7px; }
   .ow-note-input { width:100%; background:var(--bg-2); border:1px solid var(--border-0); border-radius:6px; padding:9px 11px; color:var(--text-0); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; resize:none; line-height:1.5; transition:border-color .15s; }
   .ow-note-input:focus { border-color:#4A8FD450; }
