@@ -207,7 +207,7 @@ const TaskCard = ({ task, checked, onToggle, color = "var(--accent)" }: { task: 
     style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '14px 16px',
-      background: checked ? `${color}12` : 'var(--bg-2)',
+      background: checked ? `${color}12` : 'var(--bg-card-solid)',
       border: `1px solid ${checked ? `${color}40` : 'var(--border-1)'}`,
       borderRadius: 10,
       cursor: 'pointer',
@@ -237,7 +237,7 @@ const TaskCard = ({ task, checked, onToggle, color = "var(--accent)" }: { task: 
 // ============================================================
 const TaskColumn = ({ title, tasks, color, done, total, checked, onToggle }: { title: string; tasks: Task[]; color: string; done: number; total: number; checked: CheckedMap; onToggle: (key: string) => void }) => (
   <div style={{
-    background: 'var(--bg-1)',
+    background: 'var(--bg-card-solid)',
     border: '1px solid var(--border-1)',
     borderRadius: 14,
     padding: 20,
@@ -431,7 +431,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }: { cha
           {/* YOUR OBJECTIVE (renamed from YOUR MISSION) */}
           {challenge.objective && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 8 }}>YOUR OBJECTIVE</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 8 }}>YOUR OBJECTIVE</div>
               <div style={{
                 padding: '12px 16px', background: 'var(--bg-2)', borderRadius: 10,
                 borderLeft: `3px solid ${accentColor}`,
@@ -443,7 +443,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }: { cha
 
           {/* Daily Tasks */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)' }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: 'var(--text-3)' }}>
               DAILY TASKS ({localKpis.length})
             </div>
             <button onClick={() => setIsEditing(!isEditing)} style={{
@@ -473,7 +473,7 @@ const ChallengeDetailModal = ({ challenge, type, onClose, onUpdateTasks }: { cha
                       }}
                     >
                       <NonNegIcon size={12} color={kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: kpi.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                     </div>
                     <div onClick={() => removeTask(kpi.key!)} style={{
                       width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -589,8 +589,8 @@ const ChallengeCards = ({ challenges, onViewChallenge }: { challenges: Challenge
           <div style={{ width: `${mainPct}%`, height: '100%', background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s ease' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-3)' }}>DAY 1</div>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, color: 'var(--text-3)' }}>DAY {main.totalDays}</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-3)' }}>DAY 1</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-3)' }}>DAY {main.totalDays}</div>
         </div>
       </div>
       </div>
@@ -603,7 +603,7 @@ const ChallengeCards = ({ challenges, onViewChallenge }: { challenges: Challenge
               key={c.id}
               onClick={() => onViewChallenge(c, 'secondary')}
               style={{
-                background: 'var(--bg-1)',
+                background: 'var(--bg-card)',
                 border: '1px solid var(--border-0)',
                 borderRadius: 12, padding: '16px 18px', cursor: 'pointer',
                 flex: 1, transition: 'border-color .15s',
@@ -615,7 +615,7 @@ const ChallengeCards = ({ challenges, onViewChallenge }: { challenges: Challenge
             >
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#7F77DD' }} />
               
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: '#7F77DD', marginBottom: 6 }}>SECONDARY</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: '#7F77DD', marginBottom: 6 }}>SECONDARY</div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, lineHeight: 1.1, marginBottom: 8 }}>{c.name!.toUpperCase()}</div>
               <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, color: 'var(--text-warm)', marginBottom: 12 }}>DAY {c.dayNum} · {c.totalDays! - c.dayNum!} LEFT</div>
               <div style={{ height: 3, background: 'var(--bg-3)', borderRadius: 2 }}>
@@ -716,7 +716,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }: {
         </div>
 
         <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px' }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 12 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: 'var(--text-3)', marginBottom: 12 }}>
             {DAY_LABELS_FULL[editDay].toUpperCase()} TASKS
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -738,7 +738,7 @@ const RegimenEditorModal = ({ regimen, editDay, setEditDay, onSave, onClose }: {
                   }}
                 >
                   <NonNegIcon size={12} color={task.nonNeg ? 'var(--ok)' : 'var(--text-3)'} />
-                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.05em', color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.05em', color: task.nonNeg ? 'var(--ok)' : 'var(--text-3)' }}>NON-NEG</span>
                 </div>
                 <div onClick={() => removeTask(task.id!)} style={{
                   width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -810,14 +810,14 @@ const RegimenWeekBox = ({ regimen, today, onEdit }: { regimen?: Regimen | null; 
 
   return (
     <div style={{
-      background: 'var(--bg-1)', border: '1px solid var(--border-0)',
+      background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)',
       borderRadius: 12, padding: '18px 20px', position: 'relative',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: '.08em', color: 'var(--accent)' }}>WEEKLY REGIMEN</div>
         <button onClick={onEdit} style={{
           fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-2)',
-          padding: '6px 14px', background: 'var(--bg-2)', border: '1px solid var(--border-1)',
+          padding: '6px 14px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-1)',
           borderRadius: 6, cursor: 'pointer',
         }}>Edit</button>
       </div>
@@ -860,7 +860,7 @@ const RegimenWeekBox = ({ regimen, today, onEdit }: { regimen?: Regimen | null; 
           zIndex: 50,
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 9, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 10, letterSpacing: '.12em', color: 'var(--accent)', marginBottom: 8 }}>
             {DAY_LABELS_FULL[hoveredDay].toUpperCase()}
           </div>
           {hoveredTasks.map((task, i) => (
@@ -1004,11 +1004,11 @@ const DashboardV2 = ({
           </div>
           <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
             <MomentumMeter momentum={momentum} minWidth={260} />
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ background: 'var(--bg-card-solid)', borderRadius: 10, padding: '12px 16px', textAlign: 'center' }}>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--ok)', textShadow: '0 0 16px var(--accent)44' }}>{challenge?.consistency || 0}%</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>CONSISTENCY</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ background: 'var(--bg-card-solid)', borderRadius: 10, padding: '12px 16px', textAlign: 'center' }}>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, lineHeight: 1, color: 'var(--accent)', textShadow: '0 0 16px var(--accent)44' }}>{challenge ? pct(challenge.dayNum!, challenge.totalDays!) : 0}%</div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500, color: 'var(--text-2)', letterSpacing: '.1em', marginTop: 4 }}>COMPLETE</div>
             </div>
@@ -1020,7 +1020,7 @@ const DashboardV2 = ({
       <div
         onClick={() => setShowMissionModal(true)}
         style={{
-          borderLeft: '3px solid var(--accent)', background: 'var(--bg-1)',
+          borderLeft: '3px solid var(--accent)', background: 'var(--bg-card-solid)',
           borderRadius: '0 10px 10px 0', padding: '14px 20px', marginBottom: 20, cursor: 'pointer',
         }}
       >
@@ -1031,12 +1031,12 @@ const DashboardV2 = ({
 
       {/* BENTO ROW */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: 14, marginBottom: 20 }}>
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '18px 20px' }}>
+        <div style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)', borderRadius: 12, padding: '18px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: '.08em', color: 'var(--ok)' }}>TALOS</div>
             <div onClick={onRefreshTalos} style={{
               fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-2)',
-              padding: '6px 12px', background: 'var(--bg-2)', border: '1px solid var(--border-1)',
+              padding: '6px 12px', background: 'var(--bg-card-inner)', border: '1px solid var(--border-1)',
               borderRadius: 6, cursor: 'pointer',
             }}>↻</div>
           </div>
@@ -1054,13 +1054,13 @@ const DashboardV2 = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.06em' }}>TODAY:</div>
-          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-2)', padding: 4, borderRadius: 8 }}>
+          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-card-inner)', padding: 4, borderRadius: 8 }}>
             {[{ id: 'full', label: 'FULL DAY', icon: '●' }, { id: 'scaled', label: 'SCALED', icon: '◐' }].map(type => {
               const isActive = (dayType || 'full') === type.id;
               return (
                 <button key={type.id} onClick={() => onSetDayType && onSetDayType(type.id)} style={{
                   padding: '8px 16px', border: 'none', borderRadius: 6,
-                  background: isActive ? 'var(--bg-0)' : 'transparent',
+                  background: isActive ? 'var(--bg-card-inner)' : 'transparent',
                   boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
                   fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500,
                   color: isActive ? 'var(--text-0)' : 'var(--text-2)',
@@ -1102,7 +1102,7 @@ const DashboardV2 = ({
           <TaskColumn title={secondary[0].name!.toUpperCase()} tasks={secondaryTaskList.map(k => ({ id: k.key, key: k.key, label: k.label, nonNeg: k.nonNeg }))} color="#7F77DD" done={secondaryDone} total={secondaryTaskList.length} checked={secondaryCheckedState} onToggle={(key) => toggleSecondary && toggleSecondary(secondary[0].id!, key)} />
         )}
         {regimenTotal === 0 && challengeKpis.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', background: 'var(--bg-1)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 48, textAlign: 'center' }}>
+          <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card-solid)', border: '1px solid var(--border-0)', borderRadius: 12, padding: 48, textAlign: 'center' }}>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, marginBottom: 8 }}>No tasks today</div>
             <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 'var(--mono-weight)', fontSize: 12, color: 'var(--text-2)' }}>Start a challenge or set up your weekly regimen</div>
           </div>
@@ -1114,7 +1114,7 @@ const DashboardV2 = ({
         disabled={loggedToday}
         style={{
           width: '100%', padding: 18,
-          background: loggedToday ? 'var(--bg-2)' : 'var(--accent)',
+          background: loggedToday ? 'var(--bg-card-inner)' : 'var(--accent)',
           border: 'none', borderRadius: 10,
           fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: '.1em',
           color: loggedToday ? 'var(--text-2)' : 'var(--bg-0)',
